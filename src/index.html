@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <title>image viewer</title>
+    <link rel="stylesheet" href="css/index.css">
+    <style>
+        html, body {
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Hello, this is an image viewer.</h1>
+    <a id="openViewer" href="javascript:;">open viewer</a>
+    <div class="image-viewer">
+        <div class="item" data-index="0">
+            <div class="viewer">
+                <img id="lo" data-src="images/1.png">
+            </div>
+        </div>
+        <div class="item" data-index="1">
+            <div class="viewer">
+                <img data-src="images/2.gif">
+            </div>
+        </div>
+        <div class="item" data-index="2">
+            <div class="viewer">
+                <img data-src="images/3.png">
+            </div>
+        </div>
+    </div>
+</div>
+<script src="js/touch.js"></script>
+<script src="js/imageViewer.js"></script>
+<script type="text/javascript">
+    var images = ['images/1.png', 'images/2.gif', 'images/3.png'];
+
+    var imageViewer = new window.ImageViewer(images);
+    console.log(imageViewer);
+
+    document.getElementById('openViewer').addEventListener('click', function () {
+    }, false);
+</script>
+</body>
+</html>
