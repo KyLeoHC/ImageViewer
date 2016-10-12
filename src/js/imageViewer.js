@@ -28,12 +28,12 @@
         this.el.style.transform = getTransformStyle(this.scale, this.translateX, this.translateY);
     }
 
-    Viewer.prototype.init = function () {
+    Viewer.prototype.init = function (displayIndex) {
         var image = query('img', this.el)[0];
         image.src = this.src;
         image.onload = function () {
             this.scale = 1;
-            this.translateX = this.index * this.width;
+            this.translateX = displayIndex * this.width;
             this.translateY = -this.el.clientHeight / 2;
             this.el.style.transform = getTransformStyle(this.scale, this.translateX, this.translateY);
         }.bind(this);
@@ -41,52 +41,74 @@
 
     Viewer.prototype.removeAnimation = function () {
         this.el.classList.remove(itemAnimationClass);
+        return this;
     };
 
     Viewer.prototype.scale = function (scale) {
         scale = isNaN(scale) ? this.scale : scale;
         this.el.style.transform = getTransformStyle(scale, this.translateX, this.translateY);
+        return this;
     };
 
     Viewer.prototype.translate = function (translateX, translateY) {
         this.currentX = isNaN(translateX) ? this.translateX : (translateX + this.translateX);
         this.currentY = isNaN(translateY) ? this.translateY : (translateY + this.translateY);
         this.el.style.transform = getTransformStyle(this.scale, this.currentX, this.currentY);
+        return this;
     };
 
     Viewer.prototype.translateEnd = function (translateX, translateY) {
         this.translateX = isNaN(translateX) ? this.currentX : translateX;
         this.translateY = isNaN(translateY) ? this.currentY : translateY;
+        return this;
     };
 
-    Viewer.prototype.switchToPrev = function () {
-
+    Viewer.prototype.swipeToPrev = function () {
+        this.init(-1);
+        return this;
     };
 
-    Viewer.prototype.switchToNext = function () {
+    Viewer.prototype.swipeToCurrent = function () {
+        this.init(0);
+        return this;
+    };
 
+    Viewer.prototype.swipeToNext = function () {
+        this.init(1);
+        return this;
     };
     /********************* Viewer类 end***************************/
 
     /********************* ImageViewer类 start***************************/
     function ImageViewer(images) {
         this.el = query('.image-viewer')[0];
+        this.itemList = query('.item');
         this.width = this.el.clientWidth;
         this.height = this.el.clientHeight;
         this.images = images;
         this.viewers = [];
-        this.currentIndex = 0;
+        this.currentIndex = 1;
         this.init();
         this.bindEvent();
     }
 
+    ImageViewer.prototype.swipeInByIndex = function (index) {
+        this.currentIndex = isNaN(index) ? this.currentIndex : index;
+
+        var prevViewer = this.getPrevViewer(),
+            currentViewer = this.getCurrentViewer(),
+            nextViewer = this.getNextViewer();
+
+        prevViewer && prevViewer.swipeToPrev();
+        currentViewer && currentViewer.swipeToCurrent();
+        nextViewer && nextViewer.swipeToNext();
+    };
+
     ImageViewer.prototype.init = function () {
-        var itemList = query('.item');
-        itemList.forEach(function (item, index) {
+        this.itemList.forEach(function (item, index) {
             this.viewers.push(new Viewer(this.images[index], item, index, this.width));
         }.bind(this));
-
-        this.viewers[this.currentIndex].init();
+        this.swipeInByIndex();
     };
 
     ImageViewer.prototype.bindEvent = function () {
