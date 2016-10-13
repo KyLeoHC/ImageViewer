@@ -6,8 +6,16 @@
     <title>image viewer</title>
     <link rel="stylesheet" href="css/index.css">
     <style>
-        html, body {
+        html, body, .container {
             height: 100%;
+            overflow: hidden;
+            margin: 0px;
+        }
+
+        #debug {
+            position: fixed;
+            top: 0px;
+            color: white;
         }
     </style>
 </head>
@@ -16,27 +24,29 @@
     <h1>Hello, this is an image viewer.</h1>
     <a id="openViewer" href="javascript:;">open viewer</a>
     <div class="image-viewer">
-        <div class="item" data-index="0">
-            <div class="viewer">
+        <div class="viewer" data-index="0">
+            <div class="panel">
                 <img>
             </div>
         </div>
-        <div class="item" data-index="1">
-            <div class="viewer">
+        <div class="viewer" data-index="1">
+            <div class="panel">
                 <img>
             </div>
         </div>
-        <div class="item" data-index="2">
-            <div class="viewer">
+        <div class="viewer" data-index="2">
+            <div class="panel">
                 <img>
             </div>
         </div>
     </div>
+    <div id="debug">1/1</div>
 </div>
+<script src="js/hammer.js"></script>
 <script src="js/touch.js"></script>
 <script src="js/imageViewer.js"></script>
 <script type="text/javascript">
-    var images = ['images/1.png', 'images/2.gif', 'images/3.png', 'images/4.jpeg'];
+    var images = ['images/1.png', 'images/3.png', 'images/4.jpeg'];
 
     var imageViewer = new window.ImageViewer(images);
     console.log(imageViewer);
