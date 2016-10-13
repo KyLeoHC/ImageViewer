@@ -1,5 +1,5 @@
 (function (window, document, undefined) {
-    var touch = window.touch;
+    var touch = window.touch, Hammer = window.Hammer;
     var itemAnimationClass = 'item-animation';
     var debugEl = query('#debug')[0];
     var stopSwipe = false;
@@ -65,24 +65,45 @@
     };
 
     Viewer.prototype._bindEvent = function () {
-        touch.on(this.panelEl, 'dragstart', function (event) {
+        var mc = new Hammer.Manager(this.panelEl);
+        mc.add(new Hammer.Pan());
+        mc.on('panstart', function (event) {
             stopSwipe = this.panelEl.clientWidth * this.scale > this.width;
             if (stopSwipe) {
-                event.stopPropagation();
+                event.srcEvent.stopPropagation();
             }
         }.bind(this));
-        touch.on(this.panelEl, 'drag', function (event) {
+        mc.on('panmove', function (event) {
             if (stopSwipe) {
-                event.stopPropagation();
-                this.translatePanel(event.distanceX, event.distanceY);
+                event.srcEvent.stopPropagation();
+                this.translatePanel(event.deltaX, event.deltaY);
             }
         }.bind(this));
-        touch.on(this.panelEl, 'dragend', function (event) {
+        mc.on('panend', function (event) {
             if (stopSwipe) {
-                event.stopPropagation();
+                event.srcEvent.stopPropagation();
                 this.translatePanelEnd();
             }
         }.bind(this));
+        /*
+         touch.on(this.panelEl, 'dragstart', function (event) {
+         stopSwipe = this.panelEl.clientWidth * this.scale > this.width;
+         if (stopSwipe) {
+         event.stopPropagation();
+         }
+         }.bind(this));
+         touch.on(this.panelEl, 'drag', function (event) {
+         if (stopSwipe) {
+         event.stopPropagation();
+         this.translatePanel(event.distanceX, event.distanceY);
+         }
+         }.bind(this));
+         touch.on(this.panelEl, 'dragend', function (event) {
+         if (stopSwipe) {
+         event.stopPropagation();
+         this.translatePanelEnd();
+         }
+         }.bind(this));*/
     };
 
     Viewer.prototype.addAnimation = function () {
@@ -128,8 +149,10 @@
 
     Viewer.prototype.translate = function (translateX, translateY) {
         this.currentX = isNaN(translateX) ? this.translateX : (translateX + this.translateX);
+        this.currentY = this.translateY;
+        /*
         this.currentY = isNaN(translateY) || this.el.clientHeight * this.scale < this.height
-            ? this.translateY : (translateY + this.translateY);
+            ? this.translateY : (translateY + this.translateY);*/
         this.el.style.transform = getTranslateStyle(this.currentX, this.currentY);
         return this;
     };
@@ -190,18 +213,17 @@
     };
 
     ImageViewer.prototype._bindEvent = function () {
-        touch.config = {
-            swipeTime: 50,             //触发swipe事件的最大时长
-            swipeMinDistance: 5,       //swipe移动最小距离
-            swipeFactor: 1
-        };
-        touch.on(this.el, 'doubletap', this.reset.bind(this));
-        touch.on(this.el, 'dragstart', '.viewer', this.dealWithMoveActionStart.bind(this));
-        touch.on(this.el, 'drag', '.viewer', this.dealWithMoveAction.bind(this));
-        touch.on(this.el, 'dragend', '.viewer', this.dealWithMoveActionEnd.bind(this));
-        touch.on(this.el, 'pinchstart', '.viewer', this.dealWithScaleActionStart.bind(this));
-        touch.on(this.el, 'pinch', '.viewer', this.dealWithScaleAction.bind(this));
-        touch.on(this.el, 'pinchend', '.viewer', this.dealWithScaleActionEnd.bind(this));
+        var mc = new Hammer.Manager(this.el);
+        mc.add([new Hammer.Pinch(), new Hammer.Pan(), new Hammer.Tap({
+            taps: 2
+        })]);
+        mc.on('tap', this.reset.bind(this));
+        mc.on('panstart', this.dealWithMoveActionStart.bind(this));
+        mc.on('panmove', this.dealWithMoveAction.bind(this));
+        mc.on('panend', this.dealWithMoveActionEnd.bind(this));
+        mc.on('pinchstart', this.dealWithScaleActionStart.bind(this));
+        mc.on('pinch', this.dealWithScaleAction.bind(this));
+        mc.on('pinchend', this.dealWithScaleActionEnd.bind(this));
     };
 
     ImageViewer.prototype.reset = function () {
@@ -224,15 +246,15 @@
         var prevViewer = this.getPrevViewer(),
             currentViewer = this.getCurrentViewer(),
             nextViewer = this.getNextViewer();
-
-        prevViewer && prevViewer.translate(event.distanceX);
-        currentViewer && currentViewer.translate(event.distanceX, event.distanceY);
-        nextViewer && nextViewer.translate(event.distanceX);
+        console.log(event);
+        prevViewer && prevViewer.translate(event.deltaX);
+        currentViewer && currentViewer.translate(event.deltaX, event.deltaY);
+        nextViewer && nextViewer.translate(event.deltaX);
     };
 
     ImageViewer.prototype.dealWithMoveActionEnd = function (event) {
         if (stopSwipe)return;
-        var distanceX = event.distanceX, index;
+        var distanceX = event.deltaX, index;
         var prevViewer = this.getPrevViewer(),
             nextViewer = this.getNextViewer();
         console.log(event);
