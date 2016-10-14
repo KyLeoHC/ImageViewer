@@ -1,21 +1,28 @@
 (function (window, document, undefined) {
     var Hammer = window.Hammer;
-    var itemAnimationClass = 'item-animation';
+    var itemAnimationClass = 'viewer-animation';
     var stopSwipe = false;
 
     function setTranslateStyle(el, x, y) {
-        var styleTemplate = 'translate3d($X, $Y, 0)';
+        var styleTemplate = 'translate3d($X,$Y,0)';
         el.style.transform = styleTemplate.replace('$X', x + 'px').replace('$Y', y + 'px');
     }
 
     function setScaleAndTranslateStyle(el, scale, x, y) {
-        var styleTemplate = 'scale3d($scale,$scale,1) translate3d($X, $Y, 0)';
+        var styleTemplate = 'scale3d($scale,$scale,1) translate3d($X,$Y,0)';
         el.style.transform = styleTemplate.replace(/\$scale/g, scale + '').replace('$X', x + 'px').replace('$Y', y + 'px');
     }
 
     function query(selector, el) {
         el = el || document;
         return el.querySelectorAll(selector);
+    }
+
+    function removeElement(element) {
+        var parentElement = element.parentNode;
+        if (parentElement) {
+            parentElement.removeChild(element);
+        }
     }
 
     /********************* Viewer类 start***************************/
@@ -30,10 +37,10 @@
         this.realHeight = 0;
         this.translateX = this.index * this.width;
         this.translateY = 0;
-        this.currentX = 0; //当前正在移动的X轴距离(临时保存,当事件结束后,会赋值回translateX)
-        this.currentY = 0; //当前正在移动的Y轴距离(临时保存,当事件结束后,会赋值回translateY)
+        this.currentX = 0;         //当前正在移动的X轴距离(临时保存,当事件结束后,会赋值回translateX)
+        this.currentY = 0;         //当前正在移动的Y轴距离(临时保存,当事件结束后,会赋值回translateY)
         this.scale = 1;
-        this.currentScale = 1; //当前正在缩放的倍数(临时保存,当事件结束后,会赋值回scale)
+        this.currentScale = 1;     //当前正在缩放的倍数(临时保存,当事件结束后,会赋值回scale)
         this.translatePanelX = 0;
         this.translatePanelY = 0;
         this.currentPanelX = 0;
@@ -42,13 +49,15 @@
         this._bindEvent();
     }
 
-    Viewer.prototype._init = function (displayIndex, resetScale) {
+    Viewer.prototype._init = function (displayIndex, resetScale, fn) {
         var image = query('img', this.el)[0];
         image.src = this.src;
         displayIndex = displayIndex || 0;
         image.onload = function () {
             if (resetScale) {
                 this.scale = 1;
+                image.style.width = image.width > this.width ? '100%' : (image.width + 'px');
+                image.style.height = image.height > this.height ? '100%' : (image.height + 'px');
             }
             this.translatePanelX = 0;
             this.translatePanelY = 0;
@@ -60,6 +69,7 @@
             this.translateY = -this.el.clientHeight / 2;
             setScaleAndTranslateStyle(this.panelEl, this.scale, this.translatePanelX, this.translatePanelY);
             setTranslateStyle(this.el, this.translateX, this.translateY);
+            fn && fn.apply(this);
         }.bind(this);
         return this;
     };
@@ -75,24 +85,25 @@
         mc.on('panmove', function (event) {
             if (stopSwipe) {
                 event.srcEvent.stopPropagation();
-                this.translatePanel(event.deltaX, event.deltaY);
+                this._translatePanel(event.deltaX, event.deltaY);
             }
         }.bind(this));
         mc.on('panend', function (event) {
             if (stopSwipe) {
                 event.srcEvent.stopPropagation();
-                this.translatePanelEnd();
+                this._translatePanelEnd();
             }
         }.bind(this));
     };
 
     Viewer.prototype.isScale = function () {
-        var difference = Math.abs(this.scale - 1);
-        return difference > 0.01;
+        return Math.abs(this.scale - 1) > 0.01;
     };
 
-    Viewer.prototype.addAnimation = function () {
-        this.el.classList.add(itemAnimationClass);
+    Viewer.prototype.addAnimation = function (needAnimation) {
+        if (needAnimation || needAnimation === undefined) {
+            this.el.classList.add(itemAnimationClass);
+        }
         return this;
     };
 
@@ -101,8 +112,8 @@
         return this;
     };
 
-    Viewer.prototype.pinch = function (scale) {
-        var currentScale = isNaN(scale) ? this.scale : (scale + this.scale);
+    Viewer.prototype._pinch = function (scale) {
+        var currentScale = scale + this.scale;
         if (currentScale > 0.5 && currentScale < 2) {
             this.currentScale = currentScale;
             setScaleAndTranslateStyle(this.panelEl, this.currentScale, this.translatePanelX, this.translatePanelY);
@@ -110,7 +121,7 @@
         return this;
     };
 
-    Viewer.prototype.pinchEnd = function (scale) {
+    Viewer.prototype._pinchEnd = function (scale) {
         this.scale = isNaN(scale) ? this.currentScale : scale;
         this.realWidth = this.panelEl.clientWidth * this.scale;
         this.realHeight = this.panelEl.clientHeight * this.scale;
@@ -121,77 +132,110 @@
         return this;
     };
 
-    Viewer.prototype.translatePanel = function (translatePanelX, translatePanelY) {
-        if (this.realWidth <= this.width && this.realHeight <= this.height)return;
-        this.currentPanelX = isNaN(translatePanelX) || this.realWidth <= this.width
-            ? this.translatePanelX : (translatePanelX / this.scale + this.translatePanelX);
-        this.currentPanelY = isNaN(translatePanelY) || this.realHeight <= this.height
-            ? this.translatePanelY : (translatePanelY / this.scale + this.translatePanelY);
+    Viewer.prototype._translatePanel = function (translatePanelX, translatePanelY) {
+        if (this.realWidth <= this.width && this.realHeight <= this.height)return this;
+
+        var currentPanelX, currentPanelY, differ;
+        differ = (this.realWidth - this.width) / 2;//拖动边界判断
+        if (differ > 0) {
+            currentPanelX = translatePanelX / this.scale + this.translatePanelX;
+            this.currentPanelX = currentPanelX > -differ && currentPanelX < differ ? currentPanelX : this.currentPanelX;
+        }
+
+        differ = (this.realHeight - this.height) / 2;//拖动边界判断
+        if (differ > 0) {
+            currentPanelY = translatePanelY / this.scale + this.translatePanelY;
+            this.currentPanelY = currentPanelY > -differ && currentPanelY < differ ? currentPanelY : this.currentPanelY;
+        }
+
         setScaleAndTranslateStyle(this.panelEl, this.scale, this.currentPanelX, this.currentPanelY);
         return this;
     };
 
-    Viewer.prototype.translatePanelEnd = function (translatePanelX, translatePanelY) {
-        if (this.realWidth <= this.width && this.realHeight <= this.height)return;
+    Viewer.prototype._translatePanelEnd = function (translatePanelX, translatePanelY) {
+        if (this.realWidth <= this.width && this.realHeight <= this.height)return this;
         this.translatePanelX = isNaN(translatePanelX) ? this.currentPanelX : translatePanelX;
         this.translatePanelY = isNaN(translatePanelY) ? this.currentPanelY : translatePanelY;
         return this;
     };
 
-    Viewer.prototype.translate = function (translateX, translateY) {
+    Viewer.prototype._translate = function (translateX) {
         this.currentX = isNaN(translateX) ? this.translateX : (translateX + this.translateX);
         this.currentY = this.translateY;
         setTranslateStyle(this.el, this.currentX, this.currentY);
         return this;
     };
 
-    Viewer.prototype.swipeToPrev = function () {
-        this.addAnimation()._init(-1, true);
+    Viewer.prototype.swipeToPrev = function (needAnimation) {
+        this.addAnimation(needAnimation)._init(-1, true);
         return this;
     };
 
-    Viewer.prototype.swipeToCurrent = function (needReset) {
-        this.addAnimation()._init(0, needReset);
+    Viewer.prototype.swipeToCurrent = function (needReset, needAnimation) {
+        this.addAnimation(needAnimation)._init(0, needReset, function () {
+            stopSwipe = this.isScale();
+        });
         return this;
     };
 
-    Viewer.prototype.swipeToNext = function () {
-        this.addAnimation()._init(1, true);
+    Viewer.prototype.swipeToNext = function (needAnimation) {
+        this.addAnimation(needAnimation)._init(1, true);
         return this;
     };
     /********************* Viewer类 end***************************/
 
     /********************* ImageViewer类 start***************************/
     function ImageViewer(images) {
-        this.el = query('.image-viewer')[0];
-        this.itemList = query('.viewer');
+        this.images = images || [];
+        this._create();
+
         this.width = this.el.clientWidth;
         this.height = this.el.clientHeight;
-        this.images = images;
         this.viewers = [];
-        this.currentIndex = 1;
+        this.currentIndex = 0; //起始坐标，从0开始
         this.scaleStart = 1;
+
         this._init();
         this._bindEvent();
     }
 
-    ImageViewer.prototype.swipeInByIndex = function (index) {
+    ImageViewer.prototype.swipeInByIndex = function (index, needAnimation) {
         this.currentIndex = isNaN(index) ? this.currentIndex : index;
 
         var prevViewer = this.getPrevViewer(),
             currentViewer = this.getCurrentViewer(),
             nextViewer = this.getNextViewer();
 
-        prevViewer && prevViewer.swipeToPrev();
-        currentViewer && currentViewer.swipeToCurrent();
-        nextViewer && nextViewer.swipeToNext();
+        prevViewer && prevViewer.swipeToPrev(needAnimation);
+        currentViewer && currentViewer.swipeToCurrent(true, needAnimation);
+        nextViewer && nextViewer.swipeToNext(needAnimation);
+    };
+
+    ImageViewer.prototype._create = function () {
+        this.el = query('.image-viewer')[0];
+        if (this.el) {
+            removeElement(this.el);
+        }
+        var imageViewerTemplate = '<div class="image-viewer">{{viewers}}</div>',
+            viewerTemplate = '<div class="viewer"><div class="panel"><img></div></div>';
+        var viewers = '', divEl;
+        this.images.forEach(function () {
+            viewers += viewerTemplate;
+        });
+        imageViewerTemplate = imageViewerTemplate.replace('{{viewers}}', viewers);
+
+        divEl = document.createElement('div');
+        divEl.innerHTML = imageViewerTemplate;
+        this.el = divEl.firstElementChild;
+        query('body')[0].appendChild(this.el);
+        this.itemList = this.el.childNodes;
     };
 
     ImageViewer.prototype._init = function () {
         this.itemList.forEach(function (item, index) {
             this.viewers.push(new Viewer(this.images[index], item, index, this.width, this.height));
         }.bind(this));
-        this.swipeInByIndex();
+        this.swipeInByIndex(undefined, false);
     };
 
     ImageViewer.prototype._bindEvent = function () {
@@ -199,20 +243,20 @@
         mc.add([new Hammer.Pinch(), new Hammer.Pan(), new Hammer.Tap({
             taps: 2
         })]);
-        mc.on('tap', this.reset.bind(this));
-        mc.on('panstart', this.dealWithMoveActionStart.bind(this));
-        mc.on('panmove', this.dealWithMoveAction.bind(this));
-        mc.on('panend', this.dealWithMoveActionEnd.bind(this));
-        mc.on('pinchstart', this.dealWithScaleActionStart.bind(this));
-        mc.on('pinch', this.dealWithScaleAction.bind(this));
-        mc.on('pinchend', this.dealWithScaleActionEnd.bind(this));
+        mc.on('tap', this._reset.bind(this));
+        mc.on('panstart', this._dealWithMoveActionStart.bind(this));
+        mc.on('panmove', this._dealWithMoveAction.bind(this));
+        mc.on('panend', this._dealWithMoveActionEnd.bind(this));
+        mc.on('pinchstart', this._dealWithScaleActionStart.bind(this));
+        mc.on('pinch', this._dealWithScaleAction.bind(this));
+        mc.on('pinchend', this._dealWithScaleActionEnd.bind(this));
     };
 
-    ImageViewer.prototype.reset = function () {
+    ImageViewer.prototype._reset = function () {
         this.getCurrentViewer().swipeToCurrent(true);
     };
 
-    ImageViewer.prototype.dealWithMoveActionStart = function () {
+    ImageViewer.prototype._dealWithMoveActionStart = function () {
         if (stopSwipe)return;
         var prevViewer = this.getPrevViewer(),
             currentViewer = this.getCurrentViewer(),
@@ -223,18 +267,18 @@
         nextViewer && nextViewer.removeAnimation();
     };
 
-    ImageViewer.prototype.dealWithMoveAction = function (event) {
+    ImageViewer.prototype._dealWithMoveAction = function (event) {
         if (stopSwipe)return;
         var prevViewer = this.getPrevViewer(),
             currentViewer = this.getCurrentViewer(),
             nextViewer = this.getNextViewer();
 
-        prevViewer && prevViewer.translate(event.deltaX);
-        currentViewer && currentViewer.translate(event.deltaX, event.deltaY);
-        nextViewer && nextViewer.translate(event.deltaX);
+        prevViewer && prevViewer._translate(event.deltaX);
+        currentViewer && currentViewer._translate(event.deltaX);
+        nextViewer && nextViewer._translate(event.deltaX);
     };
 
-    ImageViewer.prototype.dealWithMoveActionEnd = function (event) {
+    ImageViewer.prototype._dealWithMoveActionEnd = function (event) {
         if (stopSwipe)return;
         var distanceX = event.deltaX, index;
         var prevViewer = this.getPrevViewer(),
@@ -250,16 +294,16 @@
         this.swipeInByIndex(index);
     };
 
-    ImageViewer.prototype.dealWithScaleActionStart = function (event) {
+    ImageViewer.prototype._dealWithScaleActionStart = function (event) {
         this.scaleStart = event.scale;
     };
 
-    ImageViewer.prototype.dealWithScaleAction = function (event) {
-        this.getCurrentViewer().pinch(event.scale - this.scaleStart);
+    ImageViewer.prototype._dealWithScaleAction = function (event) {
+        this.getCurrentViewer()._pinch(event.scale - this.scaleStart);
     };
 
-    ImageViewer.prototype.dealWithScaleActionEnd = function (event) {
-        this.getCurrentViewer().pinchEnd();
+    ImageViewer.prototype._dealWithScaleActionEnd = function (event) {
+        this.getCurrentViewer()._pinchEnd();
     };
 
     ImageViewer.prototype.getPrevViewer = function () {

@@ -23,6 +23,7 @@
 <div class="container">
     <h1>Hello, this is an image viewer.</h1>
     <a id="openViewer" href="javascript:;">open viewer</a>
+    <!--
     <div class="image-viewer">
         <div class="viewer" data-index="0">
             <div class="panel">
@@ -40,13 +41,12 @@
             </div>
         </div>
     </div>
-    <div id="debug">1/1</div>
+    -->
 </div>
 <script src="js/hammer.js"></script>
-<script src="js/touch.js"></script>
 <script src="js/imageViewer.js"></script>
 <script type="text/javascript">
-    var images = ['images/1.png', 'images/3.png', 'images/4.jpeg'];
+    var images = ['images/1.png', 'images/2.gif', 'images/3.png', 'images/4.jpeg'];
 
     var imageViewer = new window.ImageViewer(images);
     console.log(imageViewer);

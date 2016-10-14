@@ -1,4 +1,4 @@
-.item-animation {
+.viewer-animation {
     -webkit-transition: transform .4s; /* Safari 和 Chrome */
     -moz-transition: transform .4s; /* Firefox 4 */
     -o-transition: transform .4s; /* Opera */
@@ -6,7 +6,6 @@
 }
 
 .image-viewer {
-    display: inline-block;
     position: absolute;
     top: 0px;
     left: 0px;
@@ -48,10 +47,12 @@
 }
 
 .image-viewer .panel {
+    display: inline-block;
     overflow: hidden;
 }
 
+/*
 .image-viewer .viewer img {
     width: 100%;
     height: 100%;
-}
+}*/
