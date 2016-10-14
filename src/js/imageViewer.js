@@ -8,11 +8,6 @@
         el.style.transform = styleTemplate.replace('$X', x + 'px').replace('$Y', y + 'px');
     }
 
-    function setScaleStyle(el, scale) {
-        var styleTemplate = 'scale($scale,$scale)';
-        el.style.transform = styleTemplate.replace(/\$scale/g, scale + '');
-    }
-
     function setScaleAndTranslateStyle(el, scale, x, y) {
         var styleTemplate = 'scale3d($scale,$scale,1) translate3d($X, $Y, 0)';
         el.style.transform = styleTemplate.replace(/\$scale/g, scale + '').replace('$X', x + 'px').replace('$Y', y + 'px');
@@ -50,16 +45,21 @@
     Viewer.prototype._init = function (displayIndex, resetScale) {
         var image = query('img', this.el)[0];
         image.src = this.src;
+        displayIndex = displayIndex || 0;
         image.onload = function () {
-            this.scale = resetScale ? 1 : this.scale;
+            if (resetScale) {
+                this.scale = 1;
+            }
+            this.translatePanelX = 0;
+            this.translatePanelY = 0;
+            this.currentPanelX = 0;
+            this.currentPanelY = 0;
             this.realWidth = this.panelEl.clientWidth * this.scale;
             this.realHeight = this.panelEl.clientHeight * this.scale;
             this.translateX = displayIndex * this.width;
-            this.translateY = -this.el.clientHeight * this.scale / 2;
-            this.translatePanelX = 0;
-            this.translatePanelY = 0;
+            this.translateY = -this.el.clientHeight / 2;
+            setScaleAndTranslateStyle(this.panelEl, this.scale, this.translatePanelX, this.translatePanelY);
             setTranslateStyle(this.el, this.translateX, this.translateY);
-            setScaleAndTranslateStyle(this.panelEl, this.scale, 0, 0);
         }.bind(this);
         return this;
     };
@@ -68,7 +68,6 @@
         var mc = new Hammer.Manager(this.panelEl);
         mc.add(new Hammer.Pan());
         mc.on('panstart', function (event) {
-            stopSwipe = this.isScale();
             if (stopSwipe) {
                 event.srcEvent.stopPropagation();
             }
@@ -115,10 +114,15 @@
         this.scale = isNaN(scale) ? this.currentScale : scale;
         this.realWidth = this.panelEl.clientWidth * this.scale;
         this.realHeight = this.panelEl.clientHeight * this.scale;
+        if (this.realWidth < this.width || this.realHeight < this.height) {
+            this._init();
+        }
+        stopSwipe = this.isScale();
         return this;
     };
 
     Viewer.prototype.translatePanel = function (translatePanelX, translatePanelY) {
+        if (this.realWidth <= this.width && this.realHeight <= this.height)return;
         this.currentPanelX = isNaN(translatePanelX) || this.realWidth <= this.width
             ? this.translatePanelX : (translatePanelX / this.scale + this.translatePanelX);
         this.currentPanelY = isNaN(translatePanelY) || this.realHeight <= this.height
@@ -128,6 +132,7 @@
     };
 
     Viewer.prototype.translatePanelEnd = function (translatePanelX, translatePanelY) {
+        if (this.realWidth <= this.width && this.realHeight <= this.height)return;
         this.translatePanelX = isNaN(translatePanelX) ? this.currentPanelX : translatePanelX;
         this.translatePanelY = isNaN(translatePanelY) ? this.currentPanelY : translatePanelY;
         return this;
@@ -223,7 +228,7 @@
         var prevViewer = this.getPrevViewer(),
             currentViewer = this.getCurrentViewer(),
             nextViewer = this.getNextViewer();
-        console.log(event);
+
         prevViewer && prevViewer.translate(event.deltaX);
         currentViewer && currentViewer.translate(event.deltaX, event.deltaY);
         nextViewer && nextViewer.translate(event.deltaX);
@@ -234,7 +239,7 @@
         var distanceX = event.deltaX, index;
         var prevViewer = this.getPrevViewer(),
             nextViewer = this.getNextViewer();
-        console.log(event);
+
         if (Math.abs(distanceX) < this.width / 4) {
             index = undefined;
         } else if (distanceX > 0) {
