@@ -4,22 +4,22 @@
     var debugEl = query('#debug')[0];
     var stopSwipe = false;
 
-    function getTranslateStyle(x, y) {
-        var strStyle = 'translate3d($X, $Y, 0)';
-        var style = strStyle.replace('$X', x + 'px').replace('$Y', y + 'px');
-        return style;
+    function setTranslateStyle(el, x, y) {
+        var styleTemplate = 'translate3d($X, $Y, 0)';
+        var style = styleTemplate.replace('$X', x + 'px').replace('$Y', y + 'px');
+        el.style.transform = style;
     }
 
-    function getScaleStyle(scale) {
-        var strStyle = 'scale3d($scale,$scale,1)';
-        var style = strStyle.replace(/\$scale/g, scale + '');
-        return style;
+    function setTransformOriginStyle(el, x, y) {
+        var styleTemplate = '$X $Y', style;
+        style = styleTemplate.replace('$X', x + 'px').replace('$Y', y + 'px');
+        el.style.transformOrigin = style;
     }
 
-    function getScaleAndTranslateStyle(scale, x, y) {
-        var strStyle = 'scale3d($scale,$scale,1) translate3d($X, $Y, 0)';
-        var style = strStyle.replace(/\$scale/g, scale + '').replace('$X', x + 'px').replace('$Y', y + 'px');
-        return style;
+    function setScaleStyle(el, scale) {
+        var styleTemplate = 'scale3d($scale,$scale,1)';
+        var style = styleTemplate.replace(/\$scale/g, scale + '');
+        el.style.transform = style;
     }
 
     function query(selector, el) {
@@ -45,7 +45,7 @@
         this.translatePanelY = 0;
         this.currentPanelX = 0;
         this.currentPanelY = 0;
-        this.el.style.transform = getTranslateStyle(this.translateX, this.translateY);
+        setTranslateStyle(this.el, this.translateX, this.translateY);
         this._bindEvent();
     }
 
@@ -58,8 +58,8 @@
             this.translateY = -this.el.clientHeight * this.scale / 2;
             this.translatePanelX = 0;
             this.translatePanelY = 0;
-            this.el.style.transform = getTranslateStyle(this.translateX, this.translateY);
-            this.panelEl.style.transform = getScaleAndTranslateStyle(this.scale, 0, 0);
+            setTranslateStyle(this.el, this.translateX, this.translateY);
+            setScaleStyle(this.panelEl, this.scale);
         }.bind(this);
         return this;
     };
@@ -85,25 +85,6 @@
                 this.translatePanelEnd();
             }
         }.bind(this));
-        /*
-         touch.on(this.panelEl, 'dragstart', function (event) {
-         stopSwipe = this.panelEl.clientWidth * this.scale > this.width;
-         if (stopSwipe) {
-         event.stopPropagation();
-         }
-         }.bind(this));
-         touch.on(this.panelEl, 'drag', function (event) {
-         if (stopSwipe) {
-         event.stopPropagation();
-         this.translatePanel(event.distanceX, event.distanceY);
-         }
-         }.bind(this));
-         touch.on(this.panelEl, 'dragend', function (event) {
-         if (stopSwipe) {
-         event.stopPropagation();
-         this.translatePanelEnd();
-         }
-         }.bind(this));*/
     };
 
     Viewer.prototype.addAnimation = function () {
@@ -124,7 +105,7 @@
         } else {
             this.currentScale = this.currentScale < 0.5 ? 0.5 : this.currentScale;
         }
-        this.panelEl.style.transform = getScaleAndTranslateStyle(this.currentScale, this.translatePanelX, this.translatePanelY);
+        setScaleStyle(this.panelEl, this.currentScale);
         return this;
     };
 
@@ -134,10 +115,15 @@
     };
 
     Viewer.prototype.translatePanel = function (translatePanelX, translatePanelY) {
-        this.currentPanelX = isNaN(translatePanelX) ? this.translatePanelX : ((translatePanelX + this.translatePanelX) / this.scale);
-        this.currentPanelY = isNaN(translatePanelY) || this.el.clientHeight * this.scale <= this.height
-            ? this.translatePanelY : ((translatePanelY + this.translatePanelY) / this.scale);
-        this.panelEl.style.transform = getScaleAndTranslateStyle(this.scale, this.currentPanelX, this.currentPanelY);
+        var realWidth = this.el.clientWidth * this.scale,
+            realHeight = this.el.clientHeight * this.scale;
+        this.currentPanelX = isNaN(translatePanelX) || realWidth <= this.width
+            ? this.translatePanelX : ((translatePanelX + this.translatePanelX));
+        this.currentPanelY = isNaN(translatePanelY) || realHeight <= this.height
+            ? this.translatePanelY : ((translatePanelY + this.translatePanelY) / 2);
+        this.currentPanelX = this.scale > 1 ? -this.currentPanelX : this.currentPanelX;
+        this.currentPanelY = this.scale > 1 ? -this.currentPanelY : this.currentPanelY;
+        setTransformOriginStyle(this.panelEl, this.currentPanelX, this.currentPanelY);
         return this;
     };
 
@@ -151,9 +137,9 @@
         this.currentX = isNaN(translateX) ? this.translateX : (translateX + this.translateX);
         this.currentY = this.translateY;
         /*
-        this.currentY = isNaN(translateY) || this.el.clientHeight * this.scale < this.height
-            ? this.translateY : (translateY + this.translateY);*/
-        this.el.style.transform = getTranslateStyle(this.currentX, this.currentY);
+         this.currentY = isNaN(translateY) || this.el.clientHeight * this.scale < this.height
+         ? this.translateY : (translateY + this.translateY);*/
+        setTranslateStyle(this.el, this.currentX, this.currentY);
         return this;
     };
 
