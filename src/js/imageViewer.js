@@ -7,16 +7,6 @@
     var itemAnimationClass = 'viewer-animation';
     var stopSwipe = false;
 
-    function setTranslateStyle(el, x, y) {
-        var styleTemplate = 'translate3d($X,$Y,0)';
-        el.style.transform = styleTemplate.replace('$X', x + 'px').replace('$Y', y + 'px');
-    }
-
-    function setScaleAndTranslateStyle(el, scale, x, y) {
-        var styleTemplate = 'scale3d($scale,$scale,1) translate3d($X,$Y,0)';
-        el.style.transform = styleTemplate.replace(/\$scale/g, scale + '').replace('$X', x + 'px').replace('$Y', y + 'px');
-    }
-
     function query(selector, el) {
         el = el || document;
         return el.querySelectorAll(selector);
@@ -27,6 +17,16 @@
         if (parentElement) {
             parentElement.removeChild(element);
         }
+    }
+
+    function setTranslateStyle(el, x, y) {
+        var styleTemplate = 'translate3d($X,$Y,0)';
+        el.style.transform = styleTemplate.replace('$X', x + 'px').replace('$Y', y + 'px');
+    }
+
+    function setScaleAndTranslateStyle(el, scale, x, y) {
+        var styleTemplate = 'scale3d($scale,$scale,1) translate3d($X,$Y,0)';
+        el.style.transform = styleTemplate.replace(/\$scale/g, scale + '').replace('$X', x + 'px').replace('$Y', y + 'px');
     }
 
     /********************* Viewer类 start***************************/
