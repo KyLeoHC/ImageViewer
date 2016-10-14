@@ -1,25 +1,21 @@
 (function (window, document, undefined) {
-    var touch = window.touch, Hammer = window.Hammer;
+    var Hammer = window.Hammer;
     var itemAnimationClass = 'item-animation';
-    var debugEl = query('#debug')[0];
     var stopSwipe = false;
 
     function setTranslateStyle(el, x, y) {
         var styleTemplate = 'translate3d($X, $Y, 0)';
-        var style = styleTemplate.replace('$X', x + 'px').replace('$Y', y + 'px');
-        el.style.transform = style;
-    }
-
-    function setTransformOriginStyle(el, x, y) {
-        var styleTemplate = '$X $Y', style;
-        style = styleTemplate.replace('$X', x + 'px').replace('$Y', y + 'px');
-        el.style.transformOrigin = style;
+        el.style.transform = styleTemplate.replace('$X', x + 'px').replace('$Y', y + 'px');
     }
 
     function setScaleStyle(el, scale) {
-        var styleTemplate = 'scale3d($scale,$scale,1)';
-        var style = styleTemplate.replace(/\$scale/g, scale + '');
-        el.style.transform = style;
+        var styleTemplate = 'scale($scale,$scale)';
+        el.style.transform = styleTemplate.replace(/\$scale/g, scale + '');
+    }
+
+    function setScaleAndTranslateStyle(el, scale, x, y) {
+        var styleTemplate = 'scale3d($scale,$scale,1) translate3d($X, $Y, 0)';
+        el.style.transform = styleTemplate.replace(/\$scale/g, scale + '').replace('$X', x + 'px').replace('$Y', y + 'px');
     }
 
     function query(selector, el) {
@@ -35,6 +31,8 @@
         this.index = index;
         this.width = width;
         this.height = height;
+        this.realWidth = 0;
+        this.realHeight = 0;
         this.translateX = this.index * this.width;
         this.translateY = 0;
         this.currentX = 0; //当前正在移动的X轴距离(临时保存,当事件结束后,会赋值回translateX)
@@ -54,12 +52,14 @@
         image.src = this.src;
         image.onload = function () {
             this.scale = resetScale ? 1 : this.scale;
+            this.realWidth = this.panelEl.clientWidth * this.scale;
+            this.realHeight = this.panelEl.clientHeight * this.scale;
             this.translateX = displayIndex * this.width;
             this.translateY = -this.el.clientHeight * this.scale / 2;
             this.translatePanelX = 0;
             this.translatePanelY = 0;
             setTranslateStyle(this.el, this.translateX, this.translateY);
-            setScaleStyle(this.panelEl, this.scale);
+            setScaleAndTranslateStyle(this.panelEl, this.scale, 0, 0);
         }.bind(this);
         return this;
     };
@@ -68,7 +68,7 @@
         var mc = new Hammer.Manager(this.panelEl);
         mc.add(new Hammer.Pan());
         mc.on('panstart', function (event) {
-            stopSwipe = this.panelEl.clientWidth * this.scale > this.width;
+            stopSwipe = this.isScale();
             if (stopSwipe) {
                 event.srcEvent.stopPropagation();
             }
@@ -87,6 +87,11 @@
         }.bind(this));
     };
 
+    Viewer.prototype.isScale = function () {
+        var difference = Math.abs(this.scale - 1);
+        return difference > 0.01;
+    };
+
     Viewer.prototype.addAnimation = function () {
         this.el.classList.add(itemAnimationClass);
         return this;
@@ -98,32 +103,27 @@
     };
 
     Viewer.prototype.pinch = function (scale) {
-        //debugEl.innerText = this.currentScale + '/' + scale;
-        this.currentScale = isNaN(scale) ? this.scale : (scale + this.scale);
-        if (this.currentScale > 1) {
-            this.currentScale = this.currentScale > 2 ? 2 : this.currentScale;
-        } else {
-            this.currentScale = this.currentScale < 0.5 ? 0.5 : this.currentScale;
+        var currentScale = isNaN(scale) ? this.scale : (scale + this.scale);
+        if (currentScale > 0.5 && currentScale < 2) {
+            this.currentScale = currentScale;
+            setScaleAndTranslateStyle(this.panelEl, this.currentScale, this.translatePanelX, this.translatePanelY);
         }
-        setScaleStyle(this.panelEl, this.currentScale);
         return this;
     };
 
     Viewer.prototype.pinchEnd = function (scale) {
         this.scale = isNaN(scale) ? this.currentScale : scale;
+        this.realWidth = this.panelEl.clientWidth * this.scale;
+        this.realHeight = this.panelEl.clientHeight * this.scale;
         return this;
     };
 
     Viewer.prototype.translatePanel = function (translatePanelX, translatePanelY) {
-        var realWidth = this.el.clientWidth * this.scale,
-            realHeight = this.el.clientHeight * this.scale;
-        this.currentPanelX = isNaN(translatePanelX) || realWidth <= this.width
-            ? this.translatePanelX : ((translatePanelX + this.translatePanelX));
-        this.currentPanelY = isNaN(translatePanelY) || realHeight <= this.height
-            ? this.translatePanelY : ((translatePanelY + this.translatePanelY) / 2);
-        this.currentPanelX = this.scale > 1 ? -this.currentPanelX : this.currentPanelX;
-        this.currentPanelY = this.scale > 1 ? -this.currentPanelY : this.currentPanelY;
-        setTransformOriginStyle(this.panelEl, this.currentPanelX, this.currentPanelY);
+        this.currentPanelX = isNaN(translatePanelX) || this.realWidth <= this.width
+            ? this.translatePanelX : (translatePanelX / this.scale + this.translatePanelX);
+        this.currentPanelY = isNaN(translatePanelY) || this.realHeight <= this.height
+            ? this.translatePanelY : (translatePanelY / this.scale + this.translatePanelY);
+        setScaleAndTranslateStyle(this.panelEl, this.scale, this.currentPanelX, this.currentPanelY);
         return this;
     };
 
@@ -136,16 +136,7 @@
     Viewer.prototype.translate = function (translateX, translateY) {
         this.currentX = isNaN(translateX) ? this.translateX : (translateX + this.translateX);
         this.currentY = this.translateY;
-        /*
-         this.currentY = isNaN(translateY) || this.el.clientHeight * this.scale < this.height
-         ? this.translateY : (translateY + this.translateY);*/
         setTranslateStyle(this.el, this.currentX, this.currentY);
-        return this;
-    };
-
-    Viewer.prototype.translateEnd = function (translateX, translateY) {
-        this.translateX = isNaN(translateX) ? this.currentX : translateX;
-        this.translateY = isNaN(translateY) ? this.currentY : translateY;
         return this;
     };
 
@@ -244,7 +235,7 @@
         var prevViewer = this.getPrevViewer(),
             nextViewer = this.getNextViewer();
         console.log(event);
-        if (Math.abs(distanceX) < this.width / 3) {
+        if (Math.abs(distanceX) < this.width / 4) {
             index = undefined;
         } else if (distanceX > 0) {
             index = prevViewer ? prevViewer.index : undefined;
@@ -255,12 +246,10 @@
     };
 
     ImageViewer.prototype.dealWithScaleActionStart = function (event) {
-        //console.log(event);
         this.scaleStart = event.scale;
     };
 
     ImageViewer.prototype.dealWithScaleAction = function (event) {
-        //console.log(this.getCurrentViewer());
         this.getCurrentViewer().pinch(event.scale - this.scaleStart);
     };
 
