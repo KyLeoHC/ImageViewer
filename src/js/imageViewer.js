@@ -1,3 +1,7 @@
+/**
+ * 图片滚动预览插件
+ * by KyLeo 2016.10.14
+ */
 (function (window, document, undefined) {
     var Hammer = window.Hammer;
     var itemAnimationClass = 'viewer-animation';
@@ -212,13 +216,13 @@
     };
 
     ImageViewer.prototype._create = function () {
+        var imageViewerTemplate = '<div class="image-viewer">{{viewers}}</div>',
+            viewerTemplate = '<div class="viewer"><div class="panel"><img></div></div>';
+        var viewers = '', divEl;
         this.el = query('.image-viewer')[0];
         if (this.el) {
             removeElement(this.el);
         }
-        var imageViewerTemplate = '<div class="image-viewer">{{viewers}}</div>',
-            viewerTemplate = '<div class="viewer"><div class="panel"><img></div></div>';
-        var viewers = '', divEl;
         this.images.forEach(function () {
             viewers += viewerTemplate;
         });
