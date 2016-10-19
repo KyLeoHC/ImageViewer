@@ -13,6 +13,8 @@
     height: 100%;
     background-color: black;
     font-size: 0px;
+    -webkit-transform: translate3d(0, 0, 0);
+    -moz-transform: translate3d(0, 0, 0);
     transform: translate3d(0, 0, 0);
     overflow: hidden;
 
@@ -32,8 +34,10 @@
     position: absolute;
     top: 50%;
     width: 100%;
-    transform: translate3d(0, -50%, 0);
     text-align: center;
+    -webkit-transform: translate3d(0, -50%, 0);
+    -moz-transform: translate3d(0, -50%, 0);
+    transform: translate3d(0, -50%, 0);
 
     -webkit-backface-visibility: hidden;
     -moz-backface-visibility: hidden;

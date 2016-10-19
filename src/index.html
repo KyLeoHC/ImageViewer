@@ -18,6 +18,7 @@
             color: white;
         }
     </style>
+    <!--<script src="js/debuggap.js"></script>-->
 </head>
 <body>
 <div class="container">
@@ -47,9 +48,10 @@
 <script src="js/imageViewer.js"></script>
 <script type="text/javascript">
     var images = ['images/1.png', 'images/2.gif', 'images/3.png', 'images/4.jpeg'];
-
-    var imageViewer = new window.ImageViewer(images);
-    console.log(imageViewer);
+    var imageViewer = new ImageViewer(images, {
+        //enableScale: false,
+        startIndex: 1
+    });
 
     document.getElementById('openViewer').addEventListener('click', function () {
     }, false);

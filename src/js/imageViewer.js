@@ -6,6 +6,20 @@
     var Hammer = window.Hammer;
     var itemAnimationClass = 'viewer-animation';
     var stopSwipe = false;
+    var transformProp = (function getTransformProperty() {
+        var props = ['transform', 'webkitTransform', 'MozTransform', 'oTransform', 'msTransform'];
+        var style = document.createElement('div').style, availProp = '';
+        props.forEach(function (prop) {
+            if (style[prop] !== undefined) {
+                availProp = prop;
+            }
+        });
+        return availProp;
+    })();
+
+    function warn(msg) {
+        console.warn('[ImageViewer]:' + msg);
+    }
 
     function query(selector, el) {
         el = el || document;
@@ -21,12 +35,12 @@
 
     function setTranslateStyle(el, x, y) {
         var styleTemplate = 'translate3d($X,$Y,0)';
-        el.style.transform = styleTemplate.replace('$X', x + 'px').replace('$Y', y + 'px');
+        el.style[transformProp] = styleTemplate.replace('$X', x + 'px').replace('$Y', y + 'px');
     }
 
     function setScaleAndTranslateStyle(el, scale, x, y) {
         var styleTemplate = 'scale3d($scale,$scale,1) translate3d($X,$Y,0)';
-        el.style.transform = styleTemplate.replace(/\$scale/g, scale + '').replace('$X', x + 'px').replace('$Y', y + 'px');
+        el.style[transformProp] = styleTemplate.replace(/\$scale/g, scale + '').replace('$X', x + 'px').replace('$Y', y + 'px');
     }
 
     /********************* Viewer类 start***************************/
@@ -49,15 +63,14 @@
         this.translatePanelY = 0;
         this.currentPanelX = 0;
         this.currentPanelY = 0;
+
+        this.isLoaded = false;
         setTranslateStyle(this.el, this.translateX, this.translateY);
         this._bindEvent();
     }
 
     Viewer.prototype._init = function (displayIndex, resetScale, fn) {
-        var image = query('img', this.el)[0];
-        image.src = this.src;
-        displayIndex = displayIndex || 0;
-        image.onload = function () {
+        var _initImage = function () {
             if (resetScale) {
                 this.scale = 1;
                 image.style.width = image.width > this.width ? '100%' : (image.width + 'px');
@@ -69,12 +82,22 @@
             this.currentPanelY = 0;
             this.realWidth = this.panelEl.clientWidth * this.scale;
             this.realHeight = this.panelEl.clientHeight * this.scale;
-            this.translateX = displayIndex * this.width;
+            this.translateX = (displayIndex || 0) * this.width;
             this.translateY = -this.el.clientHeight / 2;
             setScaleAndTranslateStyle(this.panelEl, this.scale, this.translatePanelX, this.translatePanelY);
             setTranslateStyle(this.el, this.translateX, this.translateY);
             fn && fn.apply(this);
         }.bind(this);
+        var image = query('img', this.el)[0];
+        image.src = this.src;
+        if (this.isLoaded) {
+            _initImage();
+        } else {
+            image.onload = function () {
+                this.isLoaded = true;
+                _initImage();
+            }.bind(this);
+        }
         return this;
     };
 
@@ -98,22 +121,6 @@
                 this._translatePanelEnd();
             }
         }.bind(this));
-    };
-
-    Viewer.prototype.isScale = function () {
-        return Math.abs(this.scale - 1) > 0.01;
-    };
-
-    Viewer.prototype.addAnimation = function (needAnimation) {
-        if (needAnimation || needAnimation === undefined) {
-            this.el.classList.add(itemAnimationClass);
-        }
-        return this;
-    };
-
-    Viewer.prototype.removeAnimation = function () {
-        this.el.classList.remove(itemAnimationClass);
-        return this;
     };
 
     Viewer.prototype._pinch = function (scale) {
@@ -170,6 +177,22 @@
         return this;
     };
 
+    Viewer.prototype.isScale = function () {
+        return Math.abs(this.scale - 1) > 0.01;
+    };
+
+    Viewer.prototype.addAnimation = function (needAnimation) {
+        if (needAnimation || needAnimation === undefined) {
+            this.el.classList.add(itemAnimationClass);
+        }
+        return this;
+    };
+
+    Viewer.prototype.removeAnimation = function () {
+        this.el.classList.remove(itemAnimationClass);
+        return this;
+    };
+
     Viewer.prototype.swipeToPrev = function (needAnimation) {
         this.addAnimation(needAnimation)._init(-1, true);
         return this;
@@ -189,40 +212,26 @@
     /********************* Viewer类 end***************************/
 
     /********************* ImageViewer类 start***************************/
-    function ImageViewer(images) {
-        this.images = images || [];
-        this._create();
+    function ImageViewer(images, opt) {
+        this.images = images || []; //图片数据
+        this.enableScale = opt.enableScale === undefined ? true : opt.enableScale;//是否开启图片缩放功能
+        this.currentIndex = opt.startIndex || 0; //起始坐标，从0开始
 
+        this._create();
         this.width = this.el.clientWidth;
         this.height = this.el.clientHeight;
         this.viewers = [];
-        this.currentIndex = 0; //起始坐标，从0开始
         this.scaleStart = 1;
-
         this._init();
         this._bindEvent();
     }
-
-    ImageViewer.prototype.swipeInByIndex = function (index, needAnimation) {
-        this.currentIndex = isNaN(index) ? this.currentIndex : index;
-
-        var prevViewer = this.getPrevViewer(),
-            currentViewer = this.getCurrentViewer(),
-            nextViewer = this.getNextViewer();
-
-        prevViewer && prevViewer.swipeToPrev(needAnimation);
-        currentViewer && currentViewer.swipeToCurrent(true, needAnimation);
-        nextViewer && nextViewer.swipeToNext(needAnimation);
-    };
 
     ImageViewer.prototype._create = function () {
         var imageViewerTemplate = '<div class="image-viewer">{{viewers}}</div>',
             viewerTemplate = '<div class="viewer"><div class="panel"><img></div></div>';
         var viewers = '', divEl;
         this.el = query('.image-viewer')[0];
-        if (this.el) {
-            removeElement(this.el);
-        }
+        this.destroy();
         this.images.forEach(function () {
             viewers += viewerTemplate;
         });
@@ -236,9 +245,11 @@
     };
 
     ImageViewer.prototype._init = function () {
-        this.itemList.forEach(function (item, index) {
-            this.viewers.push(new Viewer(this.images[index], item, index, this.width, this.height));
-        }.bind(this));
+        var i, length, item;
+        for (i = 0, length = this.itemList.length; i < length; i++) {
+            item = this.itemList[i];
+            this.viewers.push(new Viewer(this.images[i], item, i, this.width, this.height));
+        }
         this.swipeInByIndex(undefined, false);
     };
 
@@ -247,13 +258,15 @@
         mc.add([new Hammer.Pinch(), new Hammer.Pan(), new Hammer.Tap({
             taps: 2
         })]);
-        mc.on('tap', this._reset.bind(this));
         mc.on('panstart', this._dealWithMoveActionStart.bind(this));
         mc.on('panmove', this._dealWithMoveAction.bind(this));
         mc.on('panend', this._dealWithMoveActionEnd.bind(this));
-        mc.on('pinchstart', this._dealWithScaleActionStart.bind(this));
-        mc.on('pinch', this._dealWithScaleAction.bind(this));
-        mc.on('pinchend', this._dealWithScaleActionEnd.bind(this));
+        if (this.enableScale) {
+            mc.on('tap', this._reset.bind(this));
+            mc.on('pinchstart', this._dealWithScaleActionStart.bind(this));
+            mc.on('pinch', this._dealWithScaleAction.bind(this));
+            mc.on('pinchend', this._dealWithScaleActionEnd.bind(this));
+        }
     };
 
     ImageViewer.prototype._reset = function () {
@@ -288,7 +301,7 @@
         var prevViewer = this.getPrevViewer(),
             nextViewer = this.getNextViewer();
 
-        if (Math.abs(distanceX) < this.width / 4) {
+        if (Math.abs(distanceX) < this.width / 5) {
             index = undefined;
         } else if (distanceX > 0) {
             index = prevViewer ? prevViewer.index : undefined;
@@ -321,6 +334,28 @@
     ImageViewer.prototype.getNextViewer = function () {
         return this.viewers[this.currentIndex + 1] || null;
     };
+
+    ImageViewer.prototype.swipeInByIndex = function (index, needAnimation) {
+        var currentIndex = isNaN(index) ? this.currentIndex : index;
+        var prevViewer, currentViewer, nextViewer;
+        if (-1 < currentIndex && currentIndex < this.images.length) {
+            this.currentIndex = currentIndex;
+            prevViewer = this.getPrevViewer();
+            currentViewer = this.getCurrentViewer();
+            nextViewer = this.getNextViewer();
+
+            prevViewer && prevViewer.swipeToPrev(needAnimation);
+            currentViewer && currentViewer.swipeToCurrent(true, needAnimation);
+            nextViewer && nextViewer.swipeToNext(needAnimation);
+        } else {
+            warn('illegal index!');
+        }
+    };
+
+    ImageViewer.prototype.destroy = function () {
+        this.el && removeElement(this.el);
+    };
     /********************* ImageViewer类 end***************************/
+
     window.ImageViewer = ImageViewer;
 })(window, document, undefined);
