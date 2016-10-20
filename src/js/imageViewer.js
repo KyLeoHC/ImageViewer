@@ -44,16 +44,17 @@
     }
 
     /********************* Viewer类 start***************************/
-    function Viewer(src, el, index, width, height) {
+    function Viewer(src, el, index, width, height, currentIndex) {
         this.el = el;
         this.panelEl = el.firstElementChild;
+        this.imageEl = null;
         this.src = src;
         this.index = index;
         this.width = width;
         this.height = height;
         this.realWidth = 0;
         this.realHeight = 0;
-        this.translateX = this.index * this.width;
+        this.translateX = this.index < currentIndex ? (-2 * this.width) : (2 * this.width);
         this.translateY = 0;
         this.currentX = 0;         //当前正在移动的X轴距离(临时保存,当事件结束后,会赋值回translateX)
         this.currentY = 0;         //当前正在移动的Y轴距离(临时保存,当事件结束后,会赋值回translateY)
@@ -64,17 +65,18 @@
         this.currentPanelX = 0;
         this.currentPanelY = 0;
 
-        this.isLoaded = false;
         setTranslateStyle(this.el, this.translateX, this.translateY);
         this._bindEvent();
     }
 
     Viewer.prototype._init = function (displayIndex, resetScale, fn) {
-        var _initImage = function () {
+        var _initImage = function (displayIndex) {
             if (resetScale) {
                 this.scale = 1;
-                image.style.width = image.width > this.width ? '100%' : (image.width + 'px');
-                image.style.height = image.height > this.height ? '100%' : (image.height + 'px');
+                this.imageEl.style.width = this.imageEl.width > this.width ?
+                    '100%' : (this.imageEl.width + 'px');
+                this.imageEl.style.height = this.imageEl.height > this.height ?
+                    '100%' : (this.imageEl.height + 'px');
             }
             this.translatePanelX = 0;
             this.translatePanelY = 0;
@@ -88,14 +90,13 @@
             setTranslateStyle(this.el, this.translateX, this.translateY);
             fn && fn.apply(this);
         }.bind(this);
-        var image = query('img', this.el)[0];
-        image.src = this.src;
-        if (this.isLoaded) {
-            _initImage();
+        if (this.imageEl) {
+            _initImage(displayIndex);
         } else {
-            image.onload = function () {
-                this.isLoaded = true;
-                _initImage();
+            this.imageEl = query('img', this.el)[0];
+            this.imageEl.src = this.src;
+            this.imageEl.onload = function () {
+                _initImage(displayIndex);
             }.bind(this);
         }
         return this;
@@ -213,6 +214,7 @@
 
     /********************* ImageViewer类 start***************************/
     function ImageViewer(images, opt) {
+        opt = opt || {};
         this.images = images || []; //图片数据
         this.enableScale = opt.enableScale === undefined ? true : opt.enableScale;//是否开启图片缩放功能
         this.currentIndex = opt.startIndex || 0; //起始坐标，从0开始
@@ -248,7 +250,7 @@
         var i, length, item;
         for (i = 0, length = this.itemList.length; i < length; i++) {
             item = this.itemList[i];
-            this.viewers.push(new Viewer(this.images[i], item, i, this.width, this.height));
+            this.viewers.push(new Viewer(this.images[i], item, i, this.width, this.height, this.currentIndex));
         }
         this.swipeInByIndex(undefined, false);
     };
@@ -354,6 +356,14 @@
 
     ImageViewer.prototype.destroy = function () {
         this.el && removeElement(this.el);
+    };
+
+    ImageViewer.prototype.close = function () {
+        this.el.style.display = 'none';
+    };
+
+    ImageViewer.prototype.open = function () {
+        this.el.style.display = 'block';
     };
     /********************* ImageViewer类 end***************************/
 

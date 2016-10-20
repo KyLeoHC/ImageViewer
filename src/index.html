@@ -11,49 +11,25 @@
             overflow: hidden;
             margin: 0px;
         }
-
-        #debug {
-            position: fixed;
-            top: 0px;
-            color: white;
-        }
     </style>
-    <!--<script src="js/debuggap.js"></script>-->
 </head>
 <body>
 <div class="container">
     <h1>Hello, this is an image viewer.</h1>
     <a id="openViewer" href="javascript:;">open viewer</a>
-    <!--
-    <div class="image-viewer">
-        <div class="viewer" data-index="0">
-            <div class="panel">
-                <img>
-            </div>
-        </div>
-        <div class="viewer" data-index="1">
-            <div class="panel">
-                <img>
-            </div>
-        </div>
-        <div class="viewer" data-index="2">
-            <div class="panel">
-                <img>
-            </div>
-        </div>
-    </div>
-    -->
 </div>
 <script src="js/hammer.js"></script>
 <script src="js/imageViewer.js"></script>
 <script type="text/javascript">
-    var images = ['images/1.png', 'images/2.gif', 'images/3.png', 'images/4.jpeg'];
+    var images = ['images/1.png', 'images/2.gif', 'images/3.png', 'images/4.jpeg', 'images/1.png', 'images/2.gif', 'images/3.png', 'images/4.jpeg'];
     var imageViewer = new ImageViewer(images, {
-        //enableScale: false,
-        startIndex: 1
+        enableScale: true,
+        startIndex: 3
     });
-
     document.getElementById('openViewer').addEventListener('click', function () {
+
+
+        console.log(imageViewer);
     }, false);
 </script>
 </body>
