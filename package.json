@@ -2,7 +2,8 @@
   "name": "ImageViewer",
   "version": "0.0.1",
   "scripts": {
-    "dev": "webpack-dev-server --inline --hot"
+    "dev": "webpack-dev-server --inline --hot",
+    "dist": "webpack"
   },
   "devDependencies": {
     "babel-core": "^6.17.0",
