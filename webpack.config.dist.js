@@ -6,8 +6,7 @@ var config = {
         imageViewer: './src/index'
     },
     output: {
-        path: path.resolve(__dirname, 'build'),
-        publicPath: '/build/',
+        path: path.resolve(__dirname, 'dist'),
         filename: '[name].js'
     },
     module: {
@@ -28,10 +27,12 @@ var config = {
     },
     plugins: [
         //new ExtractTextPlugin('imageViewer.css')
-    ],
-    devServer:{
-        contentBase:'./demo'
-    }
+        new webpack.optimize.UglifyJsPlugin({
+            compress: {
+                warnings: false
+            }
+        })
+    ]
 };
 
 module.exports = config;
