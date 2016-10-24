@@ -29,8 +29,8 @@ var config = {
     plugins: [
         //new ExtractTextPlugin('imageViewer.css')
     ],
-    devServer:{
-        contentBase:'./demo'
+    devServer: {
+        contentBase: './demo'
     }
 };
 
