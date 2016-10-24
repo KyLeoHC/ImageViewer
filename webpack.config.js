@@ -1,18 +1,15 @@
 var webpack = require('webpack');
 var ExtractTextPlugin = require("extract-text-webpack-plugin");
-
+var WebpackDevServer = require('webpack-dev-server');
+var path = require('path');
 var config = {
     entry: {
         imageViewer: './src/index'
     },
     output: {
-        path: './build',
+        path: path.resolve(__dirname, 'build'),
+        publicPath: '/build/',
         filename: '[name].js'
-    },
-    resolve: {
-        root: __dirname,
-        alias: {
-        }
     },
     module: {
         // avoid webpack trying to shim process
@@ -32,7 +29,10 @@ var config = {
     },
     plugins: [
         //new ExtractTextPlugin('imageViewer.css')
-    ]
+    ],
+    devServer:{
+        contentBase:'./demo'
+    }
 };
 
 module.exports = config;
