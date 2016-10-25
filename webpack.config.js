@@ -28,7 +28,6 @@ var config = {
         plugins: ['transform-runtime']
     },
     plugins: [
-        //new ExtractTextPlugin('imageViewer.css')
     ],
     devServer: {
         contentBase: './demo'
