@@ -110,6 +110,7 @@ class ImageViewer {
             index = nextViewer ? nextViewer.index : undefined;
         }
         this.swipeInByIndex(index);
+        console.log(event)
     };
 
     _dealWithScaleActionStart(event) {

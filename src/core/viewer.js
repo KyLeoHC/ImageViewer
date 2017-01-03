@@ -119,15 +119,25 @@ class Viewer {
         if (this.realWidth <= this.width && this.realHeight <= this.height)return this;
 
         let currentPanelX, currentPanelY, differ;
-        differ = (this.realWidth - this.width) / 2;//拖动边界判断
+        differ = (this.realWidth - this.width) / 2;//拖动边界判断,X轴上允许拖动的距离
         if (differ > 0) {
             currentPanelX = translatePanelX / this.scale + this.translatePanelX;
+            // if (currentPanelX > -differ && currentPanelX < differ) {
+            //     this.currentPanelX = currentPanelX;
+            // } else {
+            //     this.translatePanelX = this.currentPanelX;
+            // }
             this.currentPanelX = currentPanelX > -differ && currentPanelX < differ ? currentPanelX : this.currentPanelX;
         }
 
-        differ = (this.realHeight - this.height) / 2;//拖动边界判断
+        differ = (this.realHeight - this.height) / 2;//拖动边界判断,Y轴上允许拖动的距离
         if (differ > 0) {
             currentPanelY = translatePanelY / this.scale + this.translatePanelY;
+            // if (currentPanelY > -differ && currentPanelY < differ) {
+            //     this.currentPanelY = currentPanelY;
+            // } else {
+            //     this.translatePanelY = this.currentPanelY;
+            // }
             this.currentPanelY = currentPanelY > -differ && currentPanelY < differ ? currentPanelY : this.currentPanelY;
         }
 
