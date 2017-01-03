@@ -27,10 +27,11 @@ var config = {
         presets: ['es2015'],
         plugins: ['transform-runtime']
     },
-    plugins: [
-    ],
+    plugins: [],
     devServer: {
-        contentBase: './demo'
+        contentBase: './demo',
+        host: '0.0.0.0',
+        port: '8084'
     }
 };
 

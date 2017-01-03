@@ -1,7 +1,7 @@
-let itemAnimationClass = 'viewer-animation';
-let lockName = 'stopSwipe';
+const ITEM_ANIMATION_CLASS = 'viewer-animation';
+const LOCK_NAME = 'stopSwipe';
 
 export {
-    lockName,
-    itemAnimationClass
+    LOCK_NAME,
+    ITEM_ANIMATION_CLASS
 };

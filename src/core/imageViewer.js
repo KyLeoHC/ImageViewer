@@ -6,16 +6,15 @@ import {
     removeElement
 } from '../common/dom';
 import {
-    lockName
+    LOCK_NAME
 } from '../common/profile';
 import lock from '../common/lock';
 import Hammer from '../lib/hammer';
 import Viewer from './viewer';
 
 class ImageViewer {
-    constructor(images, opt) {
-        opt = opt || {};
-        this.images = images || []; //图片数据
+    constructor(images = [], opt = {}) {
+        this.images = images; //图片数据
         this.enableScale = opt.enableScale === undefined ? true : opt.enableScale;//是否开启图片缩放功能
         this.currentIndex = opt.startIndex || 0; //起始坐标，从0开始
 
@@ -29,21 +28,19 @@ class ImageViewer {
     }
 
     _create() {
-        let imageViewerTemplate = '<div class="image-viewer">{{viewers}}</div>',
-            viewerTemplate = '<div class="viewer"><div class="panel"><img></div></div>';
-        let viewers = '', divEl;
         this.el = query('.image-viewer')[0];
         this.destroy();
-        this.images.forEach(function () {
-            viewers += viewerTemplate;
-        });
-        imageViewerTemplate = imageViewerTemplate.replace('{{viewers}}', viewers);
+        let imageViewerTemplate = `<div class="image-viewer">${
+            this.images.map(function () {
+                return `<div class="viewer"><div class="panel"><img></div></div>`
+            }).join()
+            }</div>`;
 
-        divEl = document.createElement('div');
+        let divEl = document.createElement('div');
         divEl.innerHTML = imageViewerTemplate;
         this.el = divEl.firstElementChild;
         query('body')[0].appendChild(this.el);
-        this.itemList = this.el.childNodes;
+        this.itemList = this.el.children;
     };
 
     _init() {
@@ -53,7 +50,7 @@ class ImageViewer {
             this.viewers.push(new Viewer(this.images[i], item, i, this.width, this.height, this.currentIndex));
         }
         this.swipeInByIndex(undefined, false);
-        lock.addLock(lockName);
+        lock.addLock(LOCK_NAME);
     };
 
     _bindEvent() {
@@ -78,7 +75,7 @@ class ImageViewer {
     };
 
     _dealWithMoveActionStart() {
-        if (lock.getLockState(lockName))return;
+        if (lock.getLockState(LOCK_NAME))return;
         let prevViewer = this.getPrevViewer(),
             currentViewer = this.getCurrentViewer(),
             nextViewer = this.getNextViewer();
@@ -89,7 +86,7 @@ class ImageViewer {
     };
 
     _dealWithMoveAction(event) {
-        if (lock.getLockState(lockName))return;
+        if (lock.getLockState(LOCK_NAME))return;
         let prevViewer = this.getPrevViewer(),
             currentViewer = this.getCurrentViewer(),
             nextViewer = this.getNextViewer();
@@ -100,7 +97,7 @@ class ImageViewer {
     };
 
     _dealWithMoveActionEnd(event) {
-        if (lock.getLockState(lockName))return;
+        if (lock.getLockState(LOCK_NAME))return;
         let distanceX = event.deltaX, index;
         let prevViewer = this.getPrevViewer(),
             nextViewer = this.getNextViewer();

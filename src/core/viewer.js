@@ -4,8 +4,8 @@ import {
     setScaleAndTranslateStyle
 } from '../common/dom';
 import {
-    itemAnimationClass,
-    lockName
+    ITEM_ANIMATION_CLASS,
+    LOCK_NAME
 } from '../common/profile';
 import lock from '../common/lock';
 import Hammer from '../lib/hammer';
@@ -73,18 +73,18 @@ class Viewer {
         let mc = new Hammer.Manager(this.panelEl);
         mc.add(new Hammer.Pan());
         mc.on('panstart', (event) => {
-            if (lock.getLockState(lockName)) {
+            if (lock.getLockState(LOCK_NAME)) {
                 event.srcEvent.stopPropagation();
             }
         });
         mc.on('panmove', (event) => {
-            if (lock.getLockState(lockName)) {
+            if (lock.getLockState(LOCK_NAME)) {
                 event.srcEvent.stopPropagation();
                 this._translatePanel(event.deltaX, event.deltaY);
             }
         });
         mc.on('panend', (event) => {
-            if (lock.getLockState(lockName)) {
+            if (lock.getLockState(LOCK_NAME)) {
                 event.srcEvent.stopPropagation();
                 this._translatePanelEnd();
             }
@@ -107,7 +107,11 @@ class Viewer {
         if (this.realWidth < this.width || this.realHeight < this.height) {
             this._init();
         }
-        //stopSwipe = this.isScale();
+        if (this.isScale()) {
+            lock.getLock(LOCK_NAME);
+        } else {
+            lock.releaseLock(LOCK_NAME);
+        }
         return this;
     };
 
@@ -151,13 +155,13 @@ class Viewer {
 
     addAnimation(needAnimation) {
         if (needAnimation || needAnimation === undefined) {
-            this.el.classList.add(itemAnimationClass);
+            this.el.classList.add(ITEM_ANIMATION_CLASS);
         }
         return this;
     };
 
     removeAnimation() {
-        this.el.classList.remove(itemAnimationClass);
+        this.el.classList.remove(ITEM_ANIMATION_CLASS);
         return this;
     };
 
@@ -169,9 +173,9 @@ class Viewer {
     swipeToCurrent(needReset, needAnimation) {
         this.addAnimation(needAnimation)._init(0, needReset, () => {
             if (this.isScale()) {
-                lock.getLock(lockName);
+                lock.getLock(LOCK_NAME);
             } else {
-                lock.releaseLock(lockName);
+                lock.releaseLock(LOCK_NAME);
             }
         });
         return this;

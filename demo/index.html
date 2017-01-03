@@ -19,10 +19,10 @@
 </div>
 <script src="build/imageViewer.js"></script>
 <script type="text/javascript">
-    var images = ['images/1.png', 'images/2.gif', 'images/3.png', 'images/4.jpeg', 'images/1.png', 'images/2.gif', 'images/3.png', 'images/4.jpeg'];
+    var images = ['images/1.png', 'images/2.gif', 'images/3.png', 'images/4.jpeg', 'images/3.png', 'images/4.jpeg'];
     var imageViewer = new ImageViewer(images, {
         enableScale: true,
-        startIndex: 3
+        startIndex: 0
     });
     document.getElementById('openViewer').addEventListener('click', function () {
         console.log(imageViewer);

@@ -22,13 +22,11 @@ function removeElement(element) {
 }
 
 function setTranslateStyle(el, x, y) {
-    let styleTemplate = 'translate3d($X,$Y,0)';
-    el.style[transformProp] = styleTemplate.replace('$X', x + 'px').replace('$Y', y + 'px');
+    el.style[transformProp] = `translate3d(${x + 'px'},${y + 'px'},0)`;
 }
 
 function setScaleAndTranslateStyle(el, scale, x, y) {
-    let styleTemplate = 'scale3d($scale,$scale,1) translate3d($X,$Y,0)';
-    el.style[transformProp] = styleTemplate.replace(/\$scale/g, scale + '').replace('$X', x + 'px').replace('$Y', y + 'px');
+    el.style[transformProp] = `scale3d(${scale},${scale},1) translate3d(${x + 'px'},${y + 'px'},0)`;
 }
 
 export {
