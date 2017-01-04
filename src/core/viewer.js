@@ -25,12 +25,16 @@ class Viewer {
         this.translateY = 0;
         this.currentX = 0;         //当前正在移动的X轴距离(临时保存,当事件结束后,会赋值回translateX)
         this.currentY = 0;         //当前正在移动的Y轴距离(临时保存,当事件结束后,会赋值回translateY)
-        this.scale = 1;
+        this.scale = 1;            //缩放比例
         this.currentScale = 1;     //当前正在缩放的倍数(临时保存,当事件结束后,会赋值回scale)
-        this.translatePanelX = 0;
-        this.translatePanelY = 0;
-        this.currentPanelX = 0;
-        this.currentPanelY = 0;
+        this.translatePanelX = 0;  //最终图片面板所在的X轴坐标
+        this.translatePanelY = 0;  //最终图片面板所在的Y轴坐标
+        this.currentPanelX = 0;    //当前图片面板所在的X轴坐标（手指尚未离开屏幕）
+        this.currentPanelY = 0;    //当前图片面板所在的Y轴坐标（手指尚未离开屏幕）
+        this.allowDistanceX = 0;   //图片放大后，允许拖动的最大X轴距离
+        this.allowDistanceY = 0;   //图片放大后，允许拖动的最大Y轴距离
+        this.needResetX = false;   //拖动图片超出边界时，需要重置一下x轴的坐标
+        this.needResetY = false;   //拖动图片超出边界时，需要重置一下y轴的坐标
 
         setTranslateStyle(this.el, this.translateX, this.translateY);
         this._bindEvent();
@@ -40,6 +44,7 @@ class Viewer {
         let _initImage = (displayIndex) => {
             if (resetScale) {
                 this.scale = 1;
+                this.allowDistanceX = this.allowDistanceY = 0;
                 this.imageEl.style.width = this.imageEl.width > this.width ?
                     '100%' : (this.imageEl.width + 'px');
                 this.imageEl.style.height = this.imageEl.height > this.height ?
@@ -74,17 +79,20 @@ class Viewer {
         mc.add(new Hammer.Pan());
         mc.on('panstart', (event) => {
             if (lock.getLockState(LOCK_NAME)) {
+                event.preventDefault();
                 event.srcEvent.stopPropagation();
             }
         });
         mc.on('panmove', (event) => {
             if (lock.getLockState(LOCK_NAME)) {
+                event.preventDefault();
                 event.srcEvent.stopPropagation();
                 this._translatePanel(event.deltaX, event.deltaY);
             }
         });
         mc.on('panend', (event) => {
             if (lock.getLockState(LOCK_NAME)) {
+                event.preventDefault();
                 event.srcEvent.stopPropagation();
                 this._translatePanelEnd();
             }
@@ -104,6 +112,8 @@ class Viewer {
         this.scale = isNaN(scale) ? this.currentScale : scale;
         this.realWidth = this.panelEl.clientWidth * this.scale;
         this.realHeight = this.panelEl.clientHeight * this.scale;
+        this.allowDistanceX = (this.realWidth - this.width) / 2;
+        this.allowDistanceY = (this.realHeight - this.height) / 2;
         if (this.realWidth < this.width || this.realHeight < this.height) {
             this._init();
         }
@@ -118,37 +128,34 @@ class Viewer {
     _translatePanel(translatePanelX, translatePanelY) {
         if (this.realWidth <= this.width && this.realHeight <= this.height)return this;
 
-        let currentPanelX, currentPanelY, differ;
-        differ = (this.realWidth - this.width) / 2;//拖动边界判断,X轴上允许拖动的距离
-        if (differ > 0) {
-            currentPanelX = translatePanelX / this.scale + this.translatePanelX;
-            // if (currentPanelX > -differ && currentPanelX < differ) {
-            //     this.currentPanelX = currentPanelX;
-            // } else {
-            //     this.translatePanelX = this.currentPanelX;
-            // }
-            this.currentPanelX = currentPanelX > -differ && currentPanelX < differ ? currentPanelX : this.currentPanelX;
+        if (this.allowDistanceX > 0) {
+            this.currentPanelX = translatePanelX / this.scale + this.translatePanelX;
+            this.needResetX = !(-this.allowDistanceX < this.currentPanelX && this.currentPanelX < this.allowDistanceX);
         }
 
-        differ = (this.realHeight - this.height) / 2;//拖动边界判断,Y轴上允许拖动的距离
-        if (differ > 0) {
-            currentPanelY = translatePanelY / this.scale + this.translatePanelY;
-            // if (currentPanelY > -differ && currentPanelY < differ) {
-            //     this.currentPanelY = currentPanelY;
-            // } else {
-            //     this.translatePanelY = this.currentPanelY;
-            // }
-            this.currentPanelY = currentPanelY > -differ && currentPanelY < differ ? currentPanelY : this.currentPanelY;
+        if (this.allowDistanceY > 0) {
+            this.currentPanelY = translatePanelY / this.scale + this.translatePanelY;
+            this.needResetY = !(-this.allowDistanceY < this.currentPanelY && this.currentPanelY < this.allowDistanceY);
         }
 
         setScaleAndTranslateStyle(this.panelEl, this.scale, this.currentPanelX, this.currentPanelY);
         return this;
     };
 
-    _translatePanelEnd(translatePanelX, translatePanelY) {
+    _translatePanelEnd() {
         if (this.realWidth <= this.width && this.realHeight <= this.height)return this;
-        this.translatePanelX = isNaN(translatePanelX) ? this.currentPanelX : translatePanelX;
-        this.translatePanelY = isNaN(translatePanelY) ? this.currentPanelY : translatePanelY;
+        if (this.needResetX) {
+            this.translatePanelX = this.currentPanelX > 0 ? this.allowDistanceX : -this.allowDistanceX;
+        } else {
+            this.translatePanelX = this.currentPanelX;
+        }
+        if (this.needResetY) {
+            this.translatePanelY = this.currentPanelY > 0 ? this.allowDistanceY : -this.allowDistanceY;
+        } else {
+            this.translatePanelY = this.currentPanelY;
+        }
+        (this.needResetX || this.needResetY) && setScaleAndTranslateStyle(this.panelEl, this.scale, this.translatePanelX, this.translatePanelY);
+        this.needResetX = this.needResetY = false;
         return this;
     };
 

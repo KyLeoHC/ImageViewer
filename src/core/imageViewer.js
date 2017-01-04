@@ -15,6 +15,7 @@ import Viewer from './viewer';
 class ImageViewer {
     constructor(images = [], opt = {}) {
         this.images = images; //图片数据
+        this.opt = opt;
         this.enableScale = opt.enableScale === undefined ? true : opt.enableScale;//是否开启图片缩放功能
         this.currentIndex = opt.startIndex || 0; //起始坐标，从0开始
 
@@ -30,11 +31,12 @@ class ImageViewer {
     _create() {
         this.el = query('.image-viewer')[0];
         this.destroy();
-        let imageViewerTemplate = `<div class="image-viewer">${
-            this.images.map(function () {
+        let imageViewerTemplate =
+            `<div class="image-viewer">
+            ${this.images.map(function () {
                 return `<div class="viewer"><div class="panel"><img></div></div>`
-            }).join()
-            }</div>`;
+            }).join()}
+            </div>`;
 
         let divEl = document.createElement('div');
         divEl.innerHTML = imageViewerTemplate;
@@ -55,7 +57,7 @@ class ImageViewer {
 
     _bindEvent() {
         let mc = new Hammer.Manager(this.el);
-        let hPinch = new Hammer.Pinch(),
+        let hPinch = new Hammer.Pinch(),//前缀h代表hammer
             hPan = new Hammer.Pan(),
             hTap = new Hammer.Tap({taps: 2});
         mc.add([hPinch, hPan, hTap]);
@@ -79,6 +81,8 @@ class ImageViewer {
         let prevViewer = this.getPrevViewer(),
             currentViewer = this.getCurrentViewer(),
             nextViewer = this.getNextViewer();
+
+        this.opt.beforeSwipe && this.opt.beforeSwipe(currentViewer.index);
 
         prevViewer && prevViewer.removeAnimation();
         currentViewer && currentViewer.removeAnimation();
@@ -110,7 +114,7 @@ class ImageViewer {
             index = nextViewer ? nextViewer.index : undefined;
         }
         this.swipeInByIndex(index);
-        console.log(event)
+        this.opt.afterSwipe && this.opt.afterSwipe(index);
     };
 
     _dealWithScaleActionStart(event) {

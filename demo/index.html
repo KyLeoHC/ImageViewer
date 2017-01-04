@@ -22,7 +22,13 @@
     var images = ['images/1.png', 'images/2.gif', 'images/3.png', 'images/4.jpeg', 'images/3.png', 'images/4.jpeg'];
     var imageViewer = new ImageViewer(images, {
         enableScale: true,
-        startIndex: 0
+        startIndex: 0,
+        beforeSwipe: function (current) {
+            console.info('current-before: ' + current);
+        },
+        afterSwipe: function (current) {
+            console.info('current-after: ' + current);
+        }
     });
     document.getElementById('openViewer').addEventListener('click', function () {
         console.log(imageViewer);
