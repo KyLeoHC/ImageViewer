@@ -1,5 +1,5 @@
 {
-  "name": "image-viewer",
+  "name": "image-viewer-gallery",
   "version": "0.2.8",
   "scripts": {
     "dev": "webpack-dev-server --inline --hot",
