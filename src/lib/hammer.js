@@ -1,8 +1,3 @@
-/*! Hammer.JS - v2.0.8 - 2016-04-23
- * http://hammerjs.github.io/
- *
- * Copyright (c) 2016 Jorik Tangelder;
- * Licensed under the MIT license */
 (function (window, document, exportName, undefined) {
     'use strict';
 
@@ -83,8 +78,8 @@
         return function () {
             var e = new Error('get-stack-trace');
             var stack = e && e.stack ? e.stack.replace(/^[^\(]+?[\n$]/gm, '')
-                .replace(/^\s+at\s+/gm, '')
-                .replace(/^Object.<anonymous>\s*\(/gm, '{anonymous}()@') : 'Unknown Stack Trace';
+                    .replace(/^\s+at\s+/gm, '')
+                    .replace(/^Object.<anonymous>\s*\(/gm, '{anonymous}()@') : 'Unknown Stack Trace';
 
             var log = window.console && (window.console.warn || window.console.log);
             if (log) {
@@ -565,7 +560,7 @@
         input.rotation = firstMultiple ? getRotation(firstMultiple.pointers, pointers) : 0;
 
         input.maxPointers = !session.prevInput ? input.pointers.length : ((input.pointers.length >
-        session.prevInput.maxPointers) ? input.pointers.length : session.prevInput.maxPointers);
+            session.prevInput.maxPointers) ? input.pointers.length : session.prevInput.maxPointers);
 
         computeIntervalInputData(session, input);
 

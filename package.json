@@ -1,6 +1,6 @@
 {
   "name": "ImageViewer",
-  "version": "0.0.1",
+  "version": "0.2.8",
   "scripts": {
     "dev": "webpack-dev-server --inline --hot",
     "dist": "webpack --config webpack.config.dist.js"
