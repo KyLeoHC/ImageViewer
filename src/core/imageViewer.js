@@ -15,8 +15,13 @@ import Viewer from './viewer';
 class ImageViewer {
     constructor(images = [], opt = {}) {
         this.el = null;
+        this.headerEl = null;
+        this.footerEl = null;
+        this.currentNumberEl = null;
+        this.totalNumberEl = null;
         this.images = images; //图片数据
         this.opt = opt;
+        this.container = opt.container || 'body';
         this.enableScale = opt.enableScale === undefined ? true : opt.enableScale;//是否开启图片缩放功能
         this.currentIndex = opt.startIndex || 0; //起始坐标，从0开始
         this.viewers = [];
@@ -37,16 +42,31 @@ class ImageViewer {
         this.destroy();
         let imageViewerTemplate =
             `<div class="image-viewer">
-            ${this._generateViewerDom()}
+                <div class="image-header"></div>
+                <div class="image-body">
+                ${this._generateViewerDom()}
+                </div>
+                <div class="image-footer"></div>
             </div>`;
 
         let divEl = document.createElement('div');
         divEl.innerHTML = imageViewerTemplate;
         this.el = divEl.firstElementChild;
-        query('body')[0].appendChild(this.el);
-        this.itemList = this.el.children;
+        query(this.container)[0].appendChild(this.el);
+        this.headerEl = query('.image-header', this.el)[0];
+        this.itemList = query('.image-body', this.el)[0].children;
+        this.footerEl = query('.image-footer', this.el)[0];
         this.width = this.el.clientWidth;
         this.height = this.el.clientHeight;
+
+        if (this.opt.headerRender) {
+            this.headerEl.innerHTML = this.opt.headerRender();
+        }
+        if (this.opt.footerRender) {
+            this.footerEl.innerHTML = this.opt.footerRender();
+        }
+        this.currentNumberEl = query('.number-current', this.el)[0];//当前滑动所在的图片下标的元素节点
+        this.totalNumberEl = query('.number-total', this.el)[0];//图片总数的元素节点
     };
 
     _init() {
@@ -158,6 +178,13 @@ class ImageViewer {
             prevViewer && prevViewer.swipeToPrev(needAnimation);
             currentViewer && currentViewer.swipeToCurrent(true, needAnimation);
             nextViewer && nextViewer.swipeToNext(needAnimation);
+
+            if (this.currentNumberEl) {
+                this.currentNumberEl.innerText = currentIndex + 1;
+            }
+            if (this.totalNumberEl) {
+                this.totalNumberEl.innerText = this.images.length;
+            }
         } else {
             warn('illegal index!');
         }
@@ -169,8 +196,10 @@ class ImageViewer {
         }
         this.images = images;
         this.currentIndex = startIndex;
-        this.el.innerHTML = this._generateViewerDom();
-        this.itemList = this.el.children;
+
+        let listEl = query('.image-body', this.el);
+        listEl.innerHTML = this._generateViewerDom();
+        this.itemList = listEl.children;
         this._init();
     }
 

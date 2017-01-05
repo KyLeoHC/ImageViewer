@@ -10,6 +10,12 @@
             overflow: hidden;
             margin: 0px;
         }
+
+        .image-footer {
+            text-align: center;
+            font-size: 16px !important;
+            bottom: 20px !important;
+        }
     </style>
 </head>
 <body>
@@ -20,8 +26,15 @@
 <script type="text/javascript">
     var images = ['images/1.png', 'images/2.gif', 'images/3.png', 'images/4.jpeg', 'images/3.png', 'images/4.jpeg'];
     var imageViewer = new ImageViewer(images, {
+        container: 'body',
         enableScale: true,
         startIndex: 0,
+        headerRender: function () {
+            return '<span></span>';
+        },
+        footerRender: function () {
+            return '<span class="number-current"></span>/<span class="number-total"></span>';
+        },
         beforeSwipe: function (current) {
             console.info('current-before: ' + current);
         },
@@ -29,6 +42,8 @@
             console.info('current-after: ' + current);
         }
     });
+
+    //imageViewer.open();
 
     window.onhashchange = function () {
         var flag = location.hash;
