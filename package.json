@@ -6,7 +6,7 @@
     "dist": "webpack --config webpack.config.dist.js"
   },
   "description": "A lib for image display.",
-  "main": "dist/imageViewer",
+  "main": "dist/imageViewer.min",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/KyLeoHC/ImageViewer.git"

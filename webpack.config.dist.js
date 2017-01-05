@@ -1,5 +1,4 @@
 var webpack = require('webpack');
-var ExtractTextPlugin = require("extract-text-webpack-plugin");
 var path = require('path');
 var config = {
     entry: {
@@ -7,7 +6,7 @@ var config = {
     },
     output: {
         path: path.resolve(__dirname, 'dist'),
-        filename: '[name].js'
+        filename: '[name].min.js'
     },
     module: {
         // avoid webpack trying to shim process
@@ -19,7 +18,6 @@ var config = {
                 loader: 'babel'
             },
             {test: /\.css$/, loader: 'style-loader!css-loader'}
-            //{test: /\.css$/, loader: ExtractTextPlugin.extract('style-loader', 'css-loader')}
         ]
     },
     babel: {
@@ -27,7 +25,6 @@ var config = {
         plugins: ['transform-runtime']
     },
     plugins: [
-        //new ExtractTextPlugin('imageViewer.css')
         new webpack.optimize.UglifyJsPlugin({
             compress: {
                 warnings: false
