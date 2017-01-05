@@ -9,7 +9,6 @@ var config = {
         filename: '[name].min.js'
     },
     module: {
-        // avoid webpack trying to shim process
         noParse: /es6-promise\.js$/,
         loaders: [
             {

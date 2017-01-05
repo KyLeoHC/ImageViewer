@@ -1,5 +1,4 @@
 var webpack = require('webpack');
-var ExtractTextPlugin = require("extract-text-webpack-plugin");
 var path = require('path');
 var config = {
     entry: {
@@ -11,7 +10,6 @@ var config = {
         filename: '[name].js'
     },
     module: {
-        // avoid webpack trying to shim process
         noParse: /es6-promise\.js$/,
         loaders: [
             {
@@ -20,7 +18,6 @@ var config = {
                 loader: 'babel'
             },
             {test: /\.css$/, loader: 'style-loader!css-loader'}
-            //{test: /\.css$/, loader: ExtractTextPlugin.extract('style-loader', 'css-loader')}
         ]
     },
     babel: {

@@ -139,7 +139,7 @@ class ImageViewer {
             index = nextViewer ? nextViewer.index : undefined;
         }
         this.swipeInByIndex(index);
-        this.opt.afterSwipe && this.opt.afterSwipe(index || this.getCurrentViewer().index);
+        index !== undefined && this.opt.afterSwipe && this.opt.afterSwipe(index || this.getCurrentViewer().index);
     };
 
     _dealWithScaleActionStart(event) {
