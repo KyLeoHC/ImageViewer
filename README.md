@@ -12,6 +12,10 @@ ImageViewer是这个图片预览组件的核心类，实例化第一个入参是
 - `footerRender`：尾部渲染函数，返回一个html字符串并且会被显示在图片预览界面下方，用于自定义尾部显示（参数可选）；
 - `beforeSwipe`：图片开始滑动时的回调函数，入参为当前显示的图片的下标（参数可选）；
 - `afterSwipe`：图片滑动结束并且是切换图片时的回调函数，入参为当前显示的图片的下标（参数可选）；
+
+headerRender和footerRender返回的html字符串，可以为对应的标签添加上`number-current`和`number-total`样式类，该组件
+会自动寻找拥有这两个样式类的标签，并且在图片滑动时添加一些数据，`number-current`样式类对应的是当前图片所在的数组下标，
+`number-total`样式类对应的是图片总数。
 ```javascript
 var images = ['images/1.png', 'images/2.gif', 'images/3.png', 'images/4.jpeg'];
 var imageViewer = new ImageViewer(images, {
