@@ -43,8 +43,6 @@
         }
     });
 
-    //imageViewer.open();
-
     window.onhashchange = function () {
         var flag = location.hash;
         if (flag === '#open') {
@@ -53,7 +51,6 @@
             imageViewer.close();
         } else if (flag === '#set') {
             imageViewer.setImageOption(['images/1.png']);
-            console.log('set');
         }
     }
 </script>

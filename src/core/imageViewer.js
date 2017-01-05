@@ -197,7 +197,7 @@ class ImageViewer {
         this.images = images;
         this.currentIndex = startIndex;
 
-        let listEl = query('.image-body', this.el);
+        let listEl = query('.image-body', this.el)[0];
         listEl.innerHTML = this._generateViewerDom();
         this.itemList = listEl.children;
         this._init();
