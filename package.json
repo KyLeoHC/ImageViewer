@@ -1,6 +1,6 @@
 {
   "name": "image-viewer-gallery",
-  "version": "0.4.2",
+  "version": "0.4.3",
   "scripts": {
     "dev": "webpack-dev-server --inline --hot",
     "dist": "webpack --config webpack.config.dist.js"
