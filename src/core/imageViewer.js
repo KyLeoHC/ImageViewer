@@ -14,18 +14,22 @@ import Viewer from './viewer';
 
 class ImageViewer {
     constructor(images = [], opt = {}) {
+        this.el = null;
         this.images = images; //图片数据
         this.opt = opt;
         this.enableScale = opt.enableScale === undefined ? true : opt.enableScale;//是否开启图片缩放功能
         this.currentIndex = opt.startIndex || 0; //起始坐标，从0开始
-
-        this._create();
-        this.width = this.el.clientWidth;
-        this.height = this.el.clientHeight;
         this.viewers = [];
         this.scaleStart = 1;
-        this._init();
-        this._bindEvent();
+        this.width = 0;
+        this.height = 0;
+        this.itemList = [];//各个图片容器元素的dom节点
+    }
+
+    _generateViewerDom() {
+        return this.images.map(function () {
+            return `<div class="viewer"><div class="panel"><img></div></div>`
+        }).join();
     }
 
     _create() {
@@ -33,9 +37,7 @@ class ImageViewer {
         this.destroy();
         let imageViewerTemplate =
             `<div class="image-viewer">
-            ${this.images.map(function () {
-                return `<div class="viewer"><div class="panel"><img></div></div>`
-            }).join()}
+            ${this._generateViewerDom()}
             </div>`;
 
         let divEl = document.createElement('div');
@@ -43,10 +45,13 @@ class ImageViewer {
         this.el = divEl.firstElementChild;
         query('body')[0].appendChild(this.el);
         this.itemList = this.el.children;
+        this.width = this.el.clientWidth;
+        this.height = this.el.clientHeight;
     };
 
     _init() {
         let i, length, item;
+        this.viewers = [];
         for (i = 0, length = this.itemList.length; i < length; i++) {
             item = this.itemList[i];
             this.viewers.push(new Viewer(this.images[i], item, i, this.width, this.height, this.currentIndex));
@@ -114,7 +119,7 @@ class ImageViewer {
             index = nextViewer ? nextViewer.index : undefined;
         }
         this.swipeInByIndex(index);
-        this.opt.afterSwipe && this.opt.afterSwipe(index);
+        this.opt.afterSwipe && this.opt.afterSwipe(index || this.getCurrentViewer().index);
     };
 
     _dealWithScaleActionStart(event) {
@@ -158,15 +163,34 @@ class ImageViewer {
         }
     };
 
+    setImageOption(images = [], startIndex = 0) {
+        if (!images.length) {
+            warn('images array can not be empty!')
+        }
+        this.images = images;
+        this.currentIndex = startIndex;
+        this.el.innerHTML = this._generateViewerDom();
+        this.itemList = this.el.children;
+        this._init();
+    }
+
     destroy() {
         this.el && removeElement(this.el);
     };
 
     close() {
-        this.el.style.display = 'none';
+        if (this.el) {
+            this.el.style.display = 'none';
+        }
     };
 
     open() {
+        if (!this.el) {
+            //仅仅实例化，但尚未初始化
+            this._create();
+            this._init();
+            this._bindEvent();
+        }
         this.el.style.display = 'block';
     };
 }

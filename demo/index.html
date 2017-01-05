@@ -15,7 +15,6 @@
 <body>
 <div class="container">
     <h1>Hello, this is an image viewer.</h1>
-    <a id="openViewer" href="javascript:;">open viewer</a>
 </div>
 <script src="build/imageViewer.js"></script>
 <script type="text/javascript">
@@ -30,9 +29,18 @@
             console.info('current-after: ' + current);
         }
     });
-    document.getElementById('openViewer').addEventListener('click', function () {
-        console.log(imageViewer);
-    }, false);
+
+    window.onhashchange = function () {
+        var flag = location.hash;
+        if (flag === '#open') {
+            imageViewer.open();
+        } else if (flag === '#close') {
+            imageViewer.close();
+        } else if (flag === '#set') {
+            imageViewer.setImageOption(['images/1.png']);
+            console.log('set');
+        }
+    }
 </script>
 </body>
 </html>
