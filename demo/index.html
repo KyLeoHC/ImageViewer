@@ -11,6 +11,11 @@
             margin: 0px;
         }
 
+        #close {
+            font-size: 16px;
+            padding: 10px 0 0 10px;
+        }
+
         .image-footer {
             text-align: center;
             font-size: 16px !important;
@@ -21,6 +26,7 @@
 <body>
 <div class="container">
     <h1>Hello, this is an image viewer.</h1>
+    <p id="open">打开</p>
 </div>
 <script src="build/imageViewer.js"></script>
 <script type="text/javascript">
@@ -30,7 +36,12 @@
         enableScale: true,
         startIndex: 0,
         headerRender: function () {
-            return '<span></span>';
+            setTimeout(function () {
+                document.getElementById('close').addEventListener('click', function () {
+                    imageViewer.close();
+                }, false);
+            }, 0);
+            return '<div id="close">关闭</div>';
         },
         footerRender: function () {
             return '<span class="number-current"></span>/<span class="number-total"></span>';
@@ -43,16 +54,9 @@
         }
     });
 
-    window.onhashchange = function () {
-        var flag = location.hash;
-        if (flag === '#open') {
-            imageViewer.open();
-        } else if (flag === '#close') {
-            imageViewer.close();
-        } else if (flag === '#set') {
-            imageViewer.setImageOption(['images/1.png']);
-        }
-    }
+    document.getElementById('open').addEventListener('click', function () {
+        imageViewer.open();
+    }, false);
 </script>
 </body>
 </html>

@@ -76,7 +76,7 @@ class ImageViewer {
             item = this.itemList[i];
             this.viewers.push(new Viewer(this.images[i], item, i, this.width, this.height, this.currentIndex));
         }
-        this.swipeInByIndex(undefined, false);
+        this.swipeInByIndex(undefined, false, false);
         lock.addLock(LOCK_NAME);
     };
 
@@ -138,7 +138,7 @@ class ImageViewer {
         } else {
             index = nextViewer ? nextViewer.index : undefined;
         }
-        this.swipeInByIndex(index);
+        this.swipeInByIndex(index, true, false);
         index !== undefined && this.opt.afterSwipe && this.opt.afterSwipe(index || this.getCurrentViewer().index);
     };
 
@@ -166,11 +166,18 @@ class ImageViewer {
         return this.viewers[this.currentIndex + 1] || null;
     };
 
-    swipeInByIndex(index, needAnimation) {
+    swipeOutAllImage() {
+        this.viewers.forEach((viewer) => {
+            viewer.swipeOut(this.currentIndex);
+        });
+    };
+
+    swipeInByIndex(index, needAnimation, needSwipeOut = true) {
         let currentIndex = isNaN(index) ? this.currentIndex : index;
         let prevViewer, currentViewer, nextViewer;
         if (-1 < currentIndex && currentIndex < this.images.length) {
             this.currentIndex = currentIndex;
+            needSwipeOut && this.swipeOutAllImage();
             prevViewer = this.getPrevViewer();
             currentViewer = this.getCurrentViewer();
             nextViewer = this.getNextViewer();

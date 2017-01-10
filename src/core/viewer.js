@@ -21,7 +21,7 @@ class Viewer {
         this.height = height;
         this.realWidth = 0;
         this.realHeight = 0;
-        this.translateX = this.index < currentIndex ? (-2 * this.width) : (2 * this.width);
+        this.translateX = (this.index < currentIndex ? -2 : 2) * this.width;
         this.translateY = 0;
         this.currentX = 0;         //当前正在移动的X轴距离(临时保存,当事件结束后,会赋值回translateX)
         this.currentY = 0;         //当前正在移动的Y轴距离(临时保存,当事件结束后,会赋值回translateY)
@@ -40,15 +40,17 @@ class Viewer {
         this._bindEvent();
     }
 
-    _init(displayIndex, resetScale, fn) {
+    _init(displayIndex, resetScale, fn, needLoad = true) {
         let _initImage = (displayIndex) => {
             if (resetScale) {
                 this.scale = 1;
                 this.allowDistanceX = this.allowDistanceY = 0;
-                this.imageEl.style.width = this.imageEl.width > this.width ?
-                    '100%' : (this.imageEl.width + 'px');
-                this.imageEl.style.height = this.imageEl.height > this.height ?
-                    '100%' : (this.imageEl.height + 'px');
+                if (this.imageEl) {
+                    this.imageEl.style.width = this.imageEl.width > this.width ?
+                        '100%' : (this.imageEl.width + 'px');
+                    this.imageEl.style.height = this.imageEl.height > this.height ?
+                        '100%' : (this.imageEl.height + 'px');
+                }
             }
             this.translatePanelX = 0;
             this.translatePanelY = 0;
@@ -62,7 +64,7 @@ class Viewer {
             setTranslateStyle(this.el, this.translateX, this.translateY);
             fn && fn.apply(this);
         };
-        if (this.imageEl) {
+        if (this.imageEl || !needLoad) {
             _initImage(displayIndex);
         } else {
             this.imageEl = query('img', this.el)[0];
@@ -200,6 +202,11 @@ class Viewer {
 
     swipeToNext(needAnimation) {
         this.addAnimation(needAnimation)._init(1, true);
+        return this;
+    };
+
+    swipeOut(currentIndex) {
+        this.removeAnimation()._init(this.index < currentIndex ? -2 : 2, true, undefined, false);
         return this;
     };
 }
