@@ -1,5 +1,8 @@
 # ImageViewer
 ImageViewer是一个用于web移动端的图片预览组件。
+## 在线示例
+请使用手机打开链接查看，PC端请打开控制台模拟移动设备
+[demo](http://freeui.org/imageViewer/)
 ## 引入方式
 将本项目dist文件夹中的js文件放到目标项目中即可。
 ## 使用示例
