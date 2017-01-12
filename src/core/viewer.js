@@ -12,11 +12,12 @@ import Hammer from '../lib/hammer';
 
 class Viewer {
     constructor(src, el, index, width, height, currentIndex) {
-        this.el = el;
-        this.panelEl = el.firstElementChild;
+        this.el = el;             //.viewer类
+        this.panelEl = el.firstElementChild;//.panel类
         this.imageEl = null;
         this.src = src;
         this.index = index;
+        this.displayIndex = 2;
         this.width = width;
         this.height = height;
         this.realWidth = 0;
@@ -41,11 +42,12 @@ class Viewer {
     }
 
     _init(displayIndex, resetScale, fn, needLoad = true) {
-        let _initImage = (displayIndex) => {
+        let _initImage = () => {
             if (resetScale) {
                 this.scale = 1;
                 this.allowDistanceX = this.allowDistanceY = 0;
-                if (this.imageEl) {
+                if (this.imageEl && this.imageEl.width && this.imageEl.height) {
+                    this.imageEl.style.display = '';
                     this.imageEl.style.width = this.imageEl.width > this.width ?
                         '100%' : (this.imageEl.width + 'px');
                     this.imageEl.style.height = this.imageEl.height > this.height ?
@@ -58,20 +60,23 @@ class Viewer {
             this.currentPanelY = 0;
             this.realWidth = this.panelEl.clientWidth * this.scale;
             this.realHeight = this.panelEl.clientHeight * this.scale;
-            this.translateX = (displayIndex || 0) * this.width;
+            this.translateX = (this.displayIndex || 0) * this.width;
             this.translateY = -this.el.clientHeight / 2;
             setScaleAndTranslateStyle(this.panelEl, this.scale, this.translatePanelX, this.translatePanelY);
             setTranslateStyle(this.el, this.translateX, this.translateY);
             fn && fn.apply(this);
         };
+        this.displayIndex = displayIndex;
+
         if (this.imageEl || !needLoad) {
-            _initImage(displayIndex);
+            _initImage();
         } else {
             this.imageEl = query('img', this.el)[0];
             this.imageEl.src = this.src;
-            this.imageEl.onload = () => {
-                _initImage(displayIndex);
-            };
+            this.imageEl.style.display = 'none';
+            this.imageEl.addEventListener('load', () => {
+                _initImage();
+            }, false);
         }
         return this;
     };
