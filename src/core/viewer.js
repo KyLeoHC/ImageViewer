@@ -119,8 +119,8 @@ class Viewer {
         this.scale = isNaN(scale) ? this.currentScale : scale;
         this.realWidth = this.panelEl.clientWidth * this.scale;
         this.realHeight = this.panelEl.clientHeight * this.scale;
-        this.allowDistanceX = (this.realWidth - this.width) / 2;
-        this.allowDistanceY = (this.realHeight - this.height) / 2;
+        this.allowDistanceX = (this.realWidth - this.width) / (2 * this.scale);
+        this.allowDistanceY = (this.realHeight - this.height) / (2 * this.scale);
         if (this.realWidth < this.width || this.realHeight < this.height) {
             this._init();
         }
