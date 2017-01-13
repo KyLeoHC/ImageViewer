@@ -74,7 +74,7 @@ class ImageViewer {
         this.viewers = [];
         for (i = 0, length = this.itemList.length; i < length; i++) {
             item = this.itemList[i];
-            this.viewers.push(new Viewer(this.images[i], item, i, this.width, this.height, this.currentIndex));
+            this.viewers.push(new Viewer(this, this.images[i], item, i, this.width, this.height, this.currentIndex));
         }
         this.swipeInByIndex(undefined, false, false);
         lock.addLock(LOCK_NAME);
@@ -131,7 +131,7 @@ class ImageViewer {
         let prevViewer = this.getPrevViewer(),
             nextViewer = this.getNextViewer();
 
-        if (Math.abs(distanceX) < this.width / 5) {
+        if (this._checkDistance(distanceX)) {
             index = undefined;
         } else if (distanceX > 0) {
             index = prevViewer ? prevViewer.index : undefined;
@@ -153,6 +153,10 @@ class ImageViewer {
     _dealWithScaleActionEnd() {
         this.getCurrentViewer()._pinchEnd();
     };
+
+    _checkDistance(distance = 0) {
+        return Math.abs(distance) < this.width / 5;
+    }
 
     getPrevViewer() {
         return this.viewers[this.currentIndex - 1] || null;

@@ -11,7 +11,8 @@ import lock from '../common/lock';
 import Hammer from '../lib/hammer';
 
 class Viewer {
-    constructor(src, el, index, width, height, currentIndex) {
+    constructor(imageViewer, src, el, index, width, height, currentIndex) {
+        this.imageViewer = imageViewer;
         this.el = el;             //.viewer类
         this.panelEl = el.firstElementChild;//.panel类
         this.imageEl = null;
