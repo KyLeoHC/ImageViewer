@@ -74,7 +74,7 @@ class ImageViewer {
         this.viewers = [];
         for (i = 0, length = this.itemList.length; i < length; i++) {
             item = this.itemList[i];
-            this.viewers.push(new Viewer(this.images[i], item, i, this.width, this.height, this.currentIndex));
+            this.viewers.push(new Viewer(this, this.images[i], item, i, this.width, this.height, this.currentIndex));
         }
         this.swipeInByIndex(undefined, false, false);
         lock.addLock(LOCK_NAME);
@@ -114,8 +114,8 @@ class ImageViewer {
         nextViewer && nextViewer.removeAnimation();
     };
 
-    _dealWithMoveAction(event) {
-        if (lock.getLockState(LOCK_NAME))return;
+    _dealWithMoveAction(event, force) {
+        if (lock.getLockState(LOCK_NAME) && !force)return;
         let prevViewer = this.getPrevViewer(),
             currentViewer = this.getCurrentViewer(),
             nextViewer = this.getNextViewer();
@@ -125,8 +125,8 @@ class ImageViewer {
         nextViewer && nextViewer._translate(event.deltaX);
     };
 
-    _dealWithMoveActionEnd(event) {
-        if (lock.getLockState(LOCK_NAME))return;
+    _dealWithMoveActionEnd(event, force) {
+        if (lock.getLockState(LOCK_NAME) && !force)return;
         let distanceX = event.deltaX, index;
         let prevViewer = this.getPrevViewer(),
             nextViewer = this.getNextViewer();
@@ -138,8 +138,9 @@ class ImageViewer {
         } else {
             index = nextViewer ? nextViewer.index : undefined;
         }
-        this.swipeInByIndex(index, true, false);
+        this.swipeInByIndex(index, true, false, force);
         index !== undefined && this.opt.afterSwipe && this.opt.afterSwipe(index || this.getCurrentViewer().index);
+        return index;
     };
 
     _dealWithScaleActionStart(event) {
@@ -172,7 +173,7 @@ class ImageViewer {
         });
     };
 
-    swipeInByIndex(index, needAnimation, needSwipeOut = true) {
+    swipeInByIndex(index, needAnimation, needSwipeOut = true, force) {
         let currentIndex = isNaN(index) ? this.currentIndex : index;
         let prevViewer, currentViewer, nextViewer;
         if (-1 < currentIndex && currentIndex < this.images.length) {
@@ -183,7 +184,9 @@ class ImageViewer {
             nextViewer = this.getNextViewer();
 
             prevViewer && prevViewer.swipeToPrev(needAnimation);
-            currentViewer && currentViewer.swipeToCurrent(true, needAnimation);
+            if ((force && index) || !force) {
+                currentViewer && currentViewer.swipeToCurrent(true, needAnimation);
+            }
             nextViewer && nextViewer.swipeToNext(needAnimation);
 
             if (this.currentNumberEl) {
