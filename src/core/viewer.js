@@ -108,6 +108,7 @@ class Viewer {
 
         this.el.addEventListener('webkitTransitionEnd', () => {
             this.removeAnimation();
+            this.panelEl.classList.remove(ITEM_ANIMATION_CLASS);
         }, false);
     };
 
@@ -124,8 +125,8 @@ class Viewer {
         this.scale = isNaN(scale) ? this.currentScale : scale;
         this.realWidth = this.panelEl.clientWidth * this.scale;
         this.realHeight = this.panelEl.clientHeight * this.scale;
-        this.allowDistanceX = (this.realWidth - this.width) / 2 / this.scale;
-        this.allowDistanceY = (this.realHeight - this.height) / 2 / this.scale;
+        this.allowDistanceX = (this.realWidth - this.width) / 2 / this.scale + 6;
+        this.allowDistanceY = (this.realHeight - this.height) / 2 / this.scale + 6;
         if (this.realWidth < this.width || this.realHeight < this.height) {
             this._init();
         }
@@ -143,7 +144,6 @@ class Viewer {
 
     _translatePanel(translatePanelX, translatePanelY) {
         if (this.realWidth <= this.width && this.realHeight <= this.height)return this;
-
         if (this.allowDistanceX > 0) {
             this.currentPanelX = translatePanelX / this.scale + this.translatePanelX;
             this.needResetX = !(-this.allowDistanceX < this.currentPanelX && this.currentPanelX < this.allowDistanceX);
@@ -154,9 +154,21 @@ class Viewer {
             this.needResetY = !(-this.allowDistanceY < this.currentPanelY && this.currentPanelY < this.allowDistanceY);
         }
 
-        if (this.needResetX) {
+        if (this.needResetX
+            && ((this.index === 0 && this.currentPanelX < 0)
+            || (this.index !== 0 && this.index !== this.imageViewer.imagesLength - 1)
+            || (this.index === this.imageViewer.imagesLength - 1 && this.currentPanelX > 0))) {
             this.imageViewer._dealWithMoveAction({deltaX: this.calculate(this.currentPanelX, this.allowDistanceX)}, true);
+            setScaleAndTranslateStyle(this.panelEl, this.scale, this.currentPanelX > 0 ? this.allowDistanceX : -this.allowDistanceX, this.currentPanelY);
         } else {
+            if (this.imageViewer.imagesLength > 1) {
+                if (this.index === 0 && this.currentPanelX >= 0) {
+                    this.imageViewer.viewers[1].removeAnimation();
+                } else if (this.index === this.imageViewer.imagesLength - 1 && this.currentPanelX <= 0) {
+                    this.imageViewer.viewers[this.imageViewer.imagesLength - 2].removeAnimation();
+                }
+            }
+            this.imageViewer._dealWithMoveAction({deltaX: 0}, true);
             setScaleAndTranslateStyle(this.panelEl, this.scale, this.currentPanelX, this.currentPanelY);
         }
         return this;
@@ -181,6 +193,7 @@ class Viewer {
                 this.translatePanelY = this.currentPanelY;
             }
             if (this.needResetX || this.needResetY) {
+                this.panelEl.classList.add(ITEM_ANIMATION_CLASS);
                 this.addAnimation();
                 setScaleAndTranslateStyle(this.panelEl, this.scale, this.translatePanelX, this.translatePanelY);
             }

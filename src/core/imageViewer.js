@@ -20,6 +20,7 @@ class ImageViewer {
         this.currentNumberEl = null;
         this.totalNumberEl = null;
         this.images = images; //图片数据
+        this.imagesLength = images.length; //图片数据
         this.opt = opt;
         this.container = opt.container || 'body';
         this.enableScale = opt.enableScale === undefined ? true : opt.enableScale;//是否开启图片缩放功能
@@ -193,7 +194,7 @@ class ImageViewer {
                 this.currentNumberEl.innerText = currentIndex + 1;
             }
             if (this.totalNumberEl) {
-                this.totalNumberEl.innerText = this.images.length;
+                this.totalNumberEl.innerText = this.imagesLength;
             }
         } else {
             warn('illegal index!');
@@ -205,6 +206,7 @@ class ImageViewer {
             warn('images array can not be empty!')
         }
         this.images = images;
+        this.imagesLength = images.length;
         this.currentIndex = startIndex;
 
         let listEl = query('.image-body', this.el)[0];
