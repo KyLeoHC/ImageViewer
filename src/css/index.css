@@ -58,12 +58,14 @@
     width: 100%;
     color: #fff;
     font-size: 12px;
+    z-index: 11;
 }
 
 .image-viewer .image-body {
     width: 100%;
     height: 100%;
     font-size: 0;
+    z-index: 10;
 }
 
 .image-viewer .image-footer {
@@ -73,6 +75,7 @@
     width: 100%;
     color: #fff;
     font-size: 12px;
+    z-index: 11;
 }
 
 .image-viewer .panel {

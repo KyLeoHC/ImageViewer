@@ -184,7 +184,7 @@ class ImageViewer {
             nextViewer = this.getNextViewer();
 
             prevViewer && prevViewer.swipeToPrev(needAnimation);
-            if ((force && index) || !force) {
+            if ((force && !isNaN(index)) || !force) {
                 currentViewer && currentViewer.swipeToCurrent(true, needAnimation);
             }
             nextViewer && nextViewer.swipeToNext(needAnimation);

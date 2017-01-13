@@ -105,6 +105,10 @@ class Viewer {
                 this._translatePanelEnd();
             }
         });
+
+        this.el.addEventListener('webkitTransitionEnd', () => {
+            this.removeAnimation();
+        }, false);
     };
 
     _pinch(scale) {
@@ -176,8 +180,10 @@ class Viewer {
             } else {
                 this.translatePanelY = this.currentPanelY;
             }
-            (this.needResetX || this.needResetY) &&
-            setScaleAndTranslateStyle(this.panelEl, this.scale, this.translatePanelX, this.translatePanelY);
+            if (this.needResetX || this.needResetY) {
+                this.addAnimation();
+                setScaleAndTranslateStyle(this.panelEl, this.scale, this.translatePanelX, this.translatePanelY);
+            }
         }
 
         this.needResetX = this.needResetY = false;
