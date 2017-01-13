@@ -233,11 +233,13 @@ class Viewer {
 
     swipeToCurrent(needReset, needAnimation) {
         this.addAnimation(needAnimation)._init(0, needReset, () => {
-            if (this.isScale()) {
-                lock.getLock(LOCK_NAME);
-            } else {
-                lock.releaseLock(LOCK_NAME);
-            }
+            setTimeout(() => {
+                if (this.isScale()) {
+                    lock.getLock(LOCK_NAME);
+                } else {
+                    lock.releaseLock(LOCK_NAME);
+                }
+            }, 0);
         });
         return this;
     };
