@@ -1,3 +1,18 @@
+let transitionEndEvent = (function () {
+    let body = document.body || document.documentElement,
+        style = body.style;
+    let transEndEventNames = {
+        WebkitTransition: 'webkitTransitionEnd',
+        MozTransition: 'transitionend',
+        OTransition: 'oTransitionEnd otransitionend',
+        transition: 'transitionend'
+    };
+    for (let name in transEndEventNames) {
+        if (typeof style[name] === "string") {
+            return transEndEventNames[name];
+        }
+    }
+})();
 let transformProp = (function getTransformProperty() {
     let props = ['transform', 'webkitTransform', 'MozTransform', 'oTransform', 'msTransform'];
     let style = document.createElement('div').style, availProp = '';
@@ -33,5 +48,6 @@ export {
     query,
     removeElement,
     setTranslateStyle,
-    setScaleAndTranslateStyle
+    setScaleAndTranslateStyle,
+    transitionEndEvent
 };

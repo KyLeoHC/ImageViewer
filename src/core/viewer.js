@@ -1,5 +1,6 @@
 import {
     query,
+    transitionEndEvent,
     setTranslateStyle,
     setScaleAndTranslateStyle
 } from '../common/dom';
@@ -106,7 +107,7 @@ class Viewer {
             }
         });
 
-        this.el.addEventListener('webkitTransitionEnd', () => {
+        this.el.addEventListener(transitionEndEvent, () => {
             this.removeAnimation();
             this.panelEl.classList.remove(ITEM_ANIMATION_CLASS);
         }, false);
