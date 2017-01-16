@@ -125,8 +125,8 @@ class Viewer {
         this.scale = isNaN(scale) ? this.currentScale : scale;
         this.realWidth = this.panelEl.clientWidth * this.scale;
         this.realHeight = this.panelEl.clientHeight * this.scale;
-        this.allowDistanceX = (this.realWidth - this.width) / 2 / this.scale + 6;
-        this.allowDistanceY = (this.realHeight - this.height) / 2 / this.scale + 6;
+        this.allowDistanceX = (this.realWidth - this.width) / 2 / this.scale + 2;
+        this.allowDistanceY = (this.realHeight - this.height) / 2 / this.scale + 2;
         if (this.realWidth < this.width || this.realHeight < this.height) {
             this._init();
         }
@@ -144,12 +144,12 @@ class Viewer {
 
     _translatePanel(translatePanelX, translatePanelY) {
         if (this.realWidth <= this.width && this.realHeight <= this.height)return this;
-        if (this.allowDistanceX > 0) {
+        if (this.allowDistanceX > 0 && translatePanelX) {
             this.currentPanelX = translatePanelX / this.scale + this.translatePanelX;
             this.needResetX = !(-this.allowDistanceX < this.currentPanelX && this.currentPanelX < this.allowDistanceX);
         }
 
-        if (this.allowDistanceY > 0) {
+        if (this.allowDistanceY > 0 && translatePanelY) {
             this.currentPanelY = translatePanelY / this.scale + this.translatePanelY;
             this.needResetY = !(-this.allowDistanceY < this.currentPanelY && this.currentPanelY < this.allowDistanceY);
         }
@@ -158,6 +158,10 @@ class Viewer {
             && ((this.index === 0 && this.currentPanelX < 0)
             || (this.index !== 0 && this.index !== this.imageViewer.imagesLength - 1)
             || (this.index === this.imageViewer.imagesLength - 1 && this.currentPanelX > 0))) {
+            //满足以下三个条件才允许外部容器移动(前提条件是当前图片在面板容器内滑动到了X轴允许的最大边界)
+            //1.当前图片是第一张并且是往左滑动切换到下一张时
+            //2.图片数量超过2张，并且当前图片既不是第一张也不是最后一张
+            //3.当前图片是最后一张并且是往右滑动切换到上一张时
             this.imageViewer._dealWithMoveAction({deltaX: this.calculate(this.currentPanelX, this.allowDistanceX)}, true);
             setScaleAndTranslateStyle(this.panelEl, this.scale, this.currentPanelX > 0 ? this.allowDistanceX : -this.allowDistanceX, this.currentPanelY);
         } else {
