@@ -20,6 +20,7 @@ class ImageViewer {
         this.currentNumberEl = null;
         this.totalNumberEl = null;
         this.images = images; //图片数据
+        this.imagesLength = images.length; //图片数据
         this.opt = opt;
         this.container = opt.container || 'body';
         this.enableScale = opt.enableScale === undefined ? true : opt.enableScale;//是否开启图片缩放功能
@@ -114,8 +115,8 @@ class ImageViewer {
         nextViewer && nextViewer.removeAnimation();
     };
 
-    _dealWithMoveAction(event) {
-        if (lock.getLockState(LOCK_NAME))return;
+    _dealWithMoveAction(event, force) {
+        if (lock.getLockState(LOCK_NAME) && !force)return;
         let prevViewer = this.getPrevViewer(),
             currentViewer = this.getCurrentViewer(),
             nextViewer = this.getNextViewer();
@@ -125,8 +126,8 @@ class ImageViewer {
         nextViewer && nextViewer._translate(event.deltaX);
     };
 
-    _dealWithMoveActionEnd(event) {
-        if (lock.getLockState(LOCK_NAME))return;
+    _dealWithMoveActionEnd(event, force) {
+        if (lock.getLockState(LOCK_NAME) && !force)return;
         let distanceX = event.deltaX, index;
         let prevViewer = this.getPrevViewer(),
             nextViewer = this.getNextViewer();
@@ -138,8 +139,9 @@ class ImageViewer {
         } else {
             index = nextViewer ? nextViewer.index : undefined;
         }
-        this.swipeInByIndex(index, true, false);
+        this.swipeInByIndex(index, true, false, force);
         index !== undefined && this.opt.afterSwipe && this.opt.afterSwipe(index || this.getCurrentViewer().index);
+        return index;
     };
 
     _dealWithScaleActionStart(event) {
@@ -176,7 +178,7 @@ class ImageViewer {
         });
     };
 
-    swipeInByIndex(index, needAnimation, needSwipeOut = true) {
+    swipeInByIndex(index, needAnimation, needSwipeOut = true, force) {
         let currentIndex = isNaN(index) ? this.currentIndex : index;
         let prevViewer, currentViewer, nextViewer;
         if (-1 < currentIndex && currentIndex < this.images.length) {
@@ -187,14 +189,16 @@ class ImageViewer {
             nextViewer = this.getNextViewer();
 
             prevViewer && prevViewer.swipeToPrev(needAnimation);
-            currentViewer && currentViewer.swipeToCurrent(true, needAnimation);
+            if ((force && !isNaN(index)) || !force) {
+                currentViewer && currentViewer.swipeToCurrent(true, needAnimation);
+            }
             nextViewer && nextViewer.swipeToNext(needAnimation);
 
             if (this.currentNumberEl) {
                 this.currentNumberEl.innerText = currentIndex + 1;
             }
             if (this.totalNumberEl) {
-                this.totalNumberEl.innerText = this.images.length;
+                this.totalNumberEl.innerText = this.imagesLength;
             }
         } else {
             warn('illegal index!');
@@ -206,6 +210,7 @@ class ImageViewer {
             warn('images array can not be empty!')
         }
         this.images = images;
+        this.imagesLength = images.length;
         this.currentIndex = startIndex;
 
         let listEl = query('.image-body', this.el)[0];

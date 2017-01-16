@@ -105,6 +105,11 @@ class Viewer {
                 this._translatePanelEnd();
             }
         });
+
+        this.el.addEventListener('webkitTransitionEnd', () => {
+            this.removeAnimation();
+            this.panelEl.classList.remove(ITEM_ANIMATION_CLASS);
+        }, false);
     };
 
     _pinch(scale) {
@@ -120,8 +125,8 @@ class Viewer {
         this.scale = isNaN(scale) ? this.currentScale : scale;
         this.realWidth = this.panelEl.clientWidth * this.scale;
         this.realHeight = this.panelEl.clientHeight * this.scale;
-        this.allowDistanceX = (this.realWidth - this.width) / (2 * this.scale);
-        this.allowDistanceY = (this.realHeight - this.height) / (2 * this.scale);
+        this.allowDistanceX = (this.realWidth - this.width) / 2 / this.scale + 2;
+        this.allowDistanceY = (this.realHeight - this.height) / 2 / this.scale + 2;
         if (this.realWidth < this.width || this.realHeight < this.height) {
             this._init();
         }
@@ -133,36 +138,71 @@ class Viewer {
         return this;
     };
 
+    calculate(a, b) {
+        return a > 0 ? (a - b) : (a + b);
+    }
+
     _translatePanel(translatePanelX, translatePanelY) {
         if (this.realWidth <= this.width && this.realHeight <= this.height)return this;
-
-        if (this.allowDistanceX > 0) {
+        if (this.allowDistanceX > 0 && translatePanelX) {
             this.currentPanelX = translatePanelX / this.scale + this.translatePanelX;
             this.needResetX = !(-this.allowDistanceX < this.currentPanelX && this.currentPanelX < this.allowDistanceX);
         }
 
-        if (this.allowDistanceY > 0) {
+        if (this.allowDistanceY > 0 && translatePanelY) {
             this.currentPanelY = translatePanelY / this.scale + this.translatePanelY;
             this.needResetY = !(-this.allowDistanceY < this.currentPanelY && this.currentPanelY < this.allowDistanceY);
         }
 
-        setScaleAndTranslateStyle(this.panelEl, this.scale, this.currentPanelX, this.currentPanelY);
+        if (this.needResetX
+            && ((this.index === 0 && this.currentPanelX < 0)
+            || (this.index !== 0 && this.index !== this.imageViewer.imagesLength - 1)
+            || (this.index === this.imageViewer.imagesLength - 1 && this.currentPanelX > 0))) {
+            //满足以下三个条件才允许外部容器移动(前提条件是当前图片在面板容器内滑动到了X轴允许的最大边界)
+            //1.当前图片是第一张并且是往左滑动切换到下一张时
+            //2.图片数量超过2张，并且当前图片既不是第一张也不是最后一张
+            //3.当前图片是最后一张并且是往右滑动切换到上一张时
+            this.imageViewer._dealWithMoveAction({deltaX: this.calculate(this.currentPanelX, this.allowDistanceX)}, true);
+            setScaleAndTranslateStyle(this.panelEl, this.scale, this.currentPanelX > 0 ? this.allowDistanceX : -this.allowDistanceX, this.currentPanelY);
+        } else {
+            if (this.imageViewer.imagesLength > 1) {
+                if (this.index === 0 && this.currentPanelX >= 0) {
+                    this.imageViewer.viewers[1].removeAnimation();
+                } else if (this.index === this.imageViewer.imagesLength - 1 && this.currentPanelX <= 0) {
+                    this.imageViewer.viewers[this.imageViewer.imagesLength - 2].removeAnimation();
+                }
+            }
+            this.imageViewer._dealWithMoveAction({deltaX: 0}, true);
+            setScaleAndTranslateStyle(this.panelEl, this.scale, this.currentPanelX, this.currentPanelY);
+        }
         return this;
     };
 
     _translatePanelEnd() {
         if (this.realWidth <= this.width && this.realHeight <= this.height)return this;
+        let index;
         if (this.needResetX) {
-            this.translatePanelX = this.currentPanelX > 0 ? this.allowDistanceX : -this.allowDistanceX;
-        } else {
-            this.translatePanelX = this.currentPanelX;
+            index = this.imageViewer._dealWithMoveActionEnd({deltaX: this.calculate(this.currentPanelX, this.allowDistanceX)}, true);
         }
-        if (this.needResetY) {
-            this.translatePanelY = this.currentPanelY > 0 ? this.allowDistanceY : -this.allowDistanceY;
-        } else {
-            this.translatePanelY = this.currentPanelY;
+        if (index === undefined) {
+            this._translate(0);
+            if (this.needResetX) {
+                this.translatePanelX = this.currentPanelX > 0 ? this.allowDistanceX : -this.allowDistanceX;
+            } else {
+                this.translatePanelX = this.currentPanelX;
+            }
+            if (this.needResetY) {
+                this.translatePanelY = this.currentPanelY > 0 ? this.allowDistanceY : -this.allowDistanceY;
+            } else {
+                this.translatePanelY = this.currentPanelY;
+            }
+            if (this.needResetX || this.needResetY) {
+                this.panelEl.classList.add(ITEM_ANIMATION_CLASS);
+                this.addAnimation();
+                setScaleAndTranslateStyle(this.panelEl, this.scale, this.translatePanelX, this.translatePanelY);
+            }
         }
-        (this.needResetX || this.needResetY) && setScaleAndTranslateStyle(this.panelEl, this.scale, this.translatePanelX, this.translatePanelY);
+
         this.needResetX = this.needResetY = false;
         return this;
     };
@@ -197,11 +237,13 @@ class Viewer {
 
     swipeToCurrent(needReset, needAnimation) {
         this.addAnimation(needAnimation)._init(0, needReset, () => {
-            if (this.isScale()) {
-                lock.getLock(LOCK_NAME);
-            } else {
-                lock.releaseLock(LOCK_NAME);
-            }
+            setTimeout(() => {
+                if (this.isScale()) {
+                    lock.getLock(LOCK_NAME);
+                } else {
+                    lock.releaseLock(LOCK_NAME);
+                }
+            }, 0);
         });
         return this;
     };
