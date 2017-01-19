@@ -50,10 +50,6 @@ class Viewer {
                 this.allowDistanceX = this.allowDistanceY = 0;
                 if (this.imageEl && this.imageEl.width && this.imageEl.height) {
                     this.imageEl.style.display = '';
-                    this.imageEl.style.width = this.imageEl.width > this.width ?
-                        '100%' : (this.imageEl.width + 'px');
-                    this.imageEl.style.height = this.imageEl.height > this.height ?
-                        '100%' : (this.imageEl.height + 'px');
                 }
             }
             this.translatePanelX = 0;
@@ -115,7 +111,7 @@ class Viewer {
 
     _pinch(scale) {
         let currentScale = scale + this.scale;
-        if (currentScale > 0.5 && currentScale < 2) {
+        if (currentScale > 0.5) {
             this.currentScale = currentScale;
             setScaleAndTranslateStyle(this.panelEl, this.currentScale, this.translatePanelX, this.translatePanelY);
         }
