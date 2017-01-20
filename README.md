@@ -1,10 +1,13 @@
 # ImageViewer
 ImageViewer是一个用于web移动端的图片预览组件。
+
 ## 在线示例
 请使用手机打开链接查看，PC端请打开控制台模拟移动设备
 [demo](http://freeui.org/imageViewer/)
+
 ## 引入方式
 将本项目dist文件夹中的js文件放到目标项目中即可。
+
 ## 使用示例
 ImageViewer是这个图片预览组件的核心类，实例化第一个入参是图片数组（必传），第二个为一些可选的选项参数对象。
 选项参数包括：
@@ -40,6 +43,7 @@ var imageViewer = new ImageViewer(images, {
 });
 imageViewer.open();
 ```
+
 ## 内置API
 ImageViewer类的实例拥有以下可用的API函数：
 - `open`：初始化图片预览组件并且显示；
