@@ -2,9 +2,9 @@ let transitionEndEvent = (function () {
     let body = document.body || document.documentElement,
         style = body.style;
     let transEndEventNames = {
-        WebkitTransition: 'webkitTransitionEnd',
-        MozTransition: 'transitionend',
-        OTransition: 'oTransitionEnd otransitionend',
+        webkitTransition: 'webkitTransitionEnd',
+        mozTransition: 'transitionend',
+        oTransition: 'oTransitionEnd',
         transition: 'transitionend'
     };
     for (let name in transEndEventNames) {
