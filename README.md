@@ -19,7 +19,7 @@ ImageViewer是这个图片预览组件的核心类，实例化第一个入参是
 - `beforeSwipe`：图片开始滑动时的回调函数，入参为当前显示的图片的下标（参数可选）；
 - `afterSwipe`：图片滑动结束并且是切换图片时的回调函数，入参为当前显示的图片的下标（参数可选）；
 - `swipeFirstRight`：当前图片是第一张并且向右滑动结束时的回调函数，第一个入参为当前ImageViewer实例，第二个入参是滑动的X轴距离（参数可选）；
-- `swipeLastLeft`：//当前图片是最后一张并且向左滑动结束时的回调函数，第一个入参为当前ImageViewer实例，第二个入参是滑动的X轴距离（参数可选）；
+- `swipeLastLeft`：当前图片是最后一张并且向左滑动结束时的回调函数，第一个入参为当前ImageViewer实例，第二个入参是滑动的X轴距离（参数可选）；
 
 headerRender和footerRender返回的html字符串，可以为对应的标签添加上`number-current`和`number-total`样式类，该组件
 会自动寻找拥有这两个样式类的标签，并且在图片滑动时添加一些数据，`number-current`样式类对应的是当前图片所在的数组下标，
