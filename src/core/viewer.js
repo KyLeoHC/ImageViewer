@@ -38,6 +38,8 @@ class Viewer {
         this.allowDistanceY = 0;   //图片放大后，允许拖动的最大Y轴距离
         this.needResetX = false;   //拖动图片超出边界时，需要重置一下x轴的坐标
         this.needResetY = false;   //拖动图片超出边界时，需要重置一下y轴的坐标
+        this.deltaX = 0;
+        this.deltaY = 0;
 
         setTranslateStyle(this.el, this.translateX, this.translateY);
         this._bindEvent();
@@ -84,6 +86,8 @@ class Viewer {
         mc.add(new Hammer.Pan());
         mc.on('panstart', (event) => {
             if (lock.getLockState(LOCK_NAME)) {
+                this.deltaX = event.deltaX;
+                this.deltaY = event.deltaY;
                 event.preventDefault();
                 event.srcEvent.stopPropagation();
             }
@@ -92,7 +96,7 @@ class Viewer {
             if (lock.getLockState(LOCK_NAME)) {
                 event.preventDefault();
                 event.srcEvent.stopPropagation();
-                this._translatePanel(event.deltaX, event.deltaY);
+                this._translatePanel(event.deltaX - this.deltaX, event.deltaY - this.deltaY);
             }
         });
         mc.on('panend', (event) => {

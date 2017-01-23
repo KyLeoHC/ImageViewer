@@ -31,6 +31,7 @@ class ImageViewer {
         this.height = 0;
         this.itemList = [];//各个图片容器元素的dom节点
         this.hammer = null;
+        this.deltaX = 0;
     }
 
     _generateViewerDom() {
@@ -85,7 +86,7 @@ class ImageViewer {
     _bindEvent() {
         let mc = new Hammer.Manager(this.el);
         let hPinch = new Hammer.Pinch(),//前缀h代表hammer
-            hPan = new Hammer.Pan({threshold: 5}),
+            hPan = new Hammer.Pan({direction: Hammer.DIRECTION_HORIZONTAL}),
             hTap = new Hammer.Tap({taps: 2});
         mc.add([hPinch, hPan, hTap]);
         mc.on('panstart', this._dealWithMoveActionStart.bind(this));
@@ -104,13 +105,14 @@ class ImageViewer {
         this.getCurrentViewer().swipeToCurrent(true);
     };
 
-    _dealWithMoveActionStart() {
+    _dealWithMoveActionStart(event) {
         if (lock.getLockState(LOCK_NAME))return;
         let prevViewer = this.getPrevViewer(),
             currentViewer = this.getCurrentViewer(),
             nextViewer = this.getNextViewer();
 
         this.opt.beforeSwipe && this.opt.beforeSwipe(currentViewer.index);
+        this.deltaX = event.deltaX;
 
         prevViewer && prevViewer.removeAnimation();
         currentViewer && currentViewer.removeAnimation();
@@ -122,6 +124,7 @@ class ImageViewer {
         let prevViewer = this.getPrevViewer(),
             currentViewer = this.getCurrentViewer(),
             nextViewer = this.getNextViewer();
+        event.deltaX = event.deltaX - this.deltaX;
 
         prevViewer && prevViewer._translate(event.deltaX);
         currentViewer && currentViewer._translate(event.deltaX);
@@ -130,7 +133,7 @@ class ImageViewer {
 
     _dealWithMoveActionEnd(event, force) {
         if (lock.getLockState(LOCK_NAME) && !force)return;
-        let distanceX = event.deltaX, index, needBreak = false;
+        let distanceX = event.deltaX - this.deltaX, index, needBreak = false;
         let prevViewer = this.getPrevViewer(),
             nextViewer = this.getNextViewer();
 
@@ -152,6 +155,7 @@ class ImageViewer {
             this.swipeInByIndex(index, true, false, force);
             index !== undefined && this.opt.afterSwipe && this.opt.afterSwipe(index || this.getCurrentViewer().index);
         }
+        this.deltaX = 0;
         return index;
     };
 
