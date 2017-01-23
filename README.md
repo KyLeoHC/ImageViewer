@@ -18,6 +18,8 @@ ImageViewer是这个图片预览组件的核心类，实例化第一个入参是
 - `footerRender`：尾部渲染函数，返回一个html字符串并且会被显示在图片预览界面下方，用于自定义尾部显示（参数可选）；
 - `beforeSwipe`：图片开始滑动时的回调函数，入参为当前显示的图片的下标（参数可选）；
 - `afterSwipe`：图片滑动结束并且是切换图片时的回调函数，入参为当前显示的图片的下标（参数可选）；
+- `swipeFirstRight`：当前图片是第一张并且向右滑动结束时的回调函数，第一个入参为当前ImageViewer实例，第二个入参是滑动的X轴距离（参数可选）；
+- `swipeLastLeft`：//当前图片是最后一张并且向左滑动结束时的回调函数，第一个入参为当前ImageViewer实例，第二个入参是滑动的X轴距离（参数可选）；
 
 headerRender和footerRender返回的html字符串，可以为对应的标签添加上`number-current`和`number-total`样式类，该组件
 会自动寻找拥有这两个样式类的标签，并且在图片滑动时添加一些数据，`number-current`样式类对应的是当前图片所在的数组下标，
@@ -39,6 +41,20 @@ var imageViewer = new ImageViewer(images, {
     },
     afterSwipe: function (current) {
         console.info('current-after: ' + current);
+    },
+    swipeLastLeft: function (imageViewer, distance) {
+        console.log('swipeLastLeft', distance);
+        if (distance > 50) {
+            imageViewer.setImageOption(['images/4.jpg']);
+            return true;
+        }
+    },
+    swipeFirstRight: function (imageViewer, distance) {         
+        console.log('swipeFirstRight', distance);
+        if (distance > 30) {
+            imageViewer.setImageOption(['images/5.jpg', 'images/6.jpg', 'images/7.jpg']);
+            return true;
+        }
     }
 });
 imageViewer.open();
