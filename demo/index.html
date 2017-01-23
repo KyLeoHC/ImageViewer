@@ -52,6 +52,20 @@
         },
         afterSwipe: function (current) {
             console.info('current-after: ' + current);
+        },
+        swipeLastLeft: function (imageViewer, distance) {
+            console.log('swipeLastLeft', distance);
+            if (distance > 50) {
+                imageViewer.setImageOption(['images/4.jpg']);
+                return true;
+            }
+        },
+        swipeFirstRight: function (imageViewer, distance) {
+            console.log('swipeFirstRight', distance);
+            if (distance > 30) {
+                imageViewer.setImageOption(['images/5.jpg', 'images/6.jpg', 'images/7.jpg']);
+                return true;
+            }
         }
     });
 

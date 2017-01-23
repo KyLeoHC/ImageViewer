@@ -14,6 +14,7 @@ import Viewer from './viewer';
 
 class ImageViewer {
     constructor(images = [], opt = {}) {
+        this.opt = opt;
         this.el = null;
         this.headerEl = null;
         this.footerEl = null;
@@ -21,7 +22,6 @@ class ImageViewer {
         this.totalNumberEl = null;
         this.images = images; //图片数据
         this.imagesLength = images.length; //图片数据
-        this.opt = opt;
         this.container = opt.container || 'body';
         this.enableScale = opt.enableScale === undefined ? true : opt.enableScale;//是否开启图片缩放功能
         this.currentIndex = opt.startIndex || 0; //起始坐标，从0开始
@@ -30,6 +30,7 @@ class ImageViewer {
         this.width = 0;
         this.height = 0;
         this.itemList = [];//各个图片容器元素的dom节点
+        this.hammer = null;
     }
 
     _generateViewerDom() {
@@ -84,7 +85,7 @@ class ImageViewer {
     _bindEvent() {
         let mc = new Hammer.Manager(this.el);
         let hPinch = new Hammer.Pinch(),//前缀h代表hammer
-            hPan = new Hammer.Pan(),
+            hPan = new Hammer.Pan({threshold: 5}),
             hTap = new Hammer.Tap({taps: 2});
         mc.add([hPinch, hPan, hTap]);
         mc.on('panstart', this._dealWithMoveActionStart.bind(this));
@@ -96,6 +97,7 @@ class ImageViewer {
             mc.on('pinch', this._dealWithScaleAction.bind(this));
             mc.on('pinchend', this._dealWithScaleActionEnd.bind(this));
         }
+        this.hammer = mc;
     };
 
     _reset() {
@@ -128,19 +130,28 @@ class ImageViewer {
 
     _dealWithMoveActionEnd(event, force) {
         if (lock.getLockState(LOCK_NAME) && !force)return;
-        let distanceX = event.deltaX, index;
+        let distanceX = event.deltaX, index, needBreak = false;
         let prevViewer = this.getPrevViewer(),
             nextViewer = this.getNextViewer();
 
-        if (this._checkDistance(distanceX)) {
-            index = undefined;
-        } else if (distanceX > 0) {
-            index = prevViewer ? prevViewer.index : undefined;
-        } else {
-            index = nextViewer ? nextViewer.index : undefined;
+        if (this.currentIndex === 0 && distanceX > 0 && this.opt.swipeFirstRight) {
+            //当前图片是第一张，并且向右滑动
+            needBreak = this.opt.swipeFirstRight(this, Math.abs(distanceX));
+        } else if (this.currentIndex === (this.imagesLength - 1) && distanceX < 0 && this.opt.swipeLastLeft) {
+            //当前图片是最后一张，并且向左滑动
+            needBreak = this.opt.swipeLastLeft(this, Math.abs(distanceX));
         }
-        this.swipeInByIndex(index, true, false, force);
-        index !== undefined && this.opt.afterSwipe && this.opt.afterSwipe(index || this.getCurrentViewer().index);
+        if (!needBreak) {
+            if (this._checkDistance(distanceX)) {
+                index = undefined;
+            } else if (distanceX > 0) {
+                index = prevViewer ? prevViewer.index : undefined;
+            } else {
+                index = nextViewer ? nextViewer.index : undefined;
+            }
+            this.swipeInByIndex(index, true, false, force);
+            index !== undefined && this.opt.afterSwipe && this.opt.afterSwipe(index || this.getCurrentViewer().index);
+        }
         return index;
     };
 
