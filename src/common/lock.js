@@ -3,7 +3,7 @@ class Lock {
         this._locks = {};
     }
 
-    addLock(name) {
+    createLock(name) {
         this._locks[name] = false;
     }
 

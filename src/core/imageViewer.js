@@ -3,10 +3,13 @@ import {
 } from '../common/debug';
 import {
     query,
-    removeElement
+    removeElement,
+    setTranslateStyle,
+    transitionEndEvent
 } from '../common/dom';
 import {
-    LOCK_NAME
+    LOCK_NAME,
+    ITEM_ANIMATION_CLASS
 } from '../common/profile';
 import lock from '../common/lock';
 import Hammer from '../lib/hammer';
@@ -17,6 +20,7 @@ class ImageViewer {
         this.opt = opt;
         this.el = null;
         this.headerEl = null;
+        this.bodyEl = null;
         this.footerEl = null;
         this.currentNumberEl = null;
         this.totalNumberEl = null;
@@ -32,10 +36,11 @@ class ImageViewer {
         this.itemList = [];//各个图片容器元素的dom节点
         this.hammer = null;
         this.deltaX = 0;
+        this.translateX = 0;
     }
 
     _generateViewerDom() {
-        return this.images.map(function () {
+        return Array.prototype.slice.call(this.images, 0, 3).map(function () {
             return `<div class="viewer"><div class="panel"><img></div></div>`
         }).join();
     }
@@ -47,7 +52,7 @@ class ImageViewer {
             `<div class="image-viewer">
                 <div class="image-header"></div>
                 <div class="image-body">
-                ${this._generateViewerDom()}
+                    ${this._generateViewerDom()}
                 </div>
                 <div class="image-footer"></div>
             </div>`;
@@ -57,8 +62,9 @@ class ImageViewer {
         this.el = divEl.firstElementChild;
         query(this.container)[0].appendChild(this.el);
         this.headerEl = query('.image-header', this.el)[0];
-        this.itemList = query('.image-body', this.el)[0].children;
+        this.bodyEl = query('.image-body', this.el)[0];
         this.footerEl = query('.image-footer', this.el)[0];
+        this.itemList = query('.image-body', this.el)[0].children;
         this.width = this.el.clientWidth;
         this.height = this.el.clientHeight;
 
@@ -70,18 +76,27 @@ class ImageViewer {
         }
         this.currentNumberEl = query('.number-current', this.el)[0];//当前滑动所在的图片下标的元素节点
         this.totalNumberEl = query('.number-total', this.el)[0];//图片总数的元素节点
-    };
+    }
 
     _init() {
-        let i, length, item;
         this.viewers = [];
-        for (i = 0, length = this.itemList.length; i < length; i++) {
+        for (let i = 0, length = this.itemList.length, item; i < length; i++) {
             item = this.itemList[i];
-            this.viewers.push(new Viewer(this, this.images[i], item, i, this.width, this.height, this.currentIndex));
+            this.viewers.push(new Viewer(this, item, this.width, this.height));
         }
-        this.swipeInByIndex(undefined, false, false);
-        lock.addLock(LOCK_NAME);
-    };
+        this.translateX = 0;
+        this.swipeInByIndex(this.currentIndex);
+        lock.createLock(LOCK_NAME);
+    }
+
+    _updateCountElement() {
+        if (this.currentNumberEl) {
+            this.currentNumberEl.innerText = this.currentIndex + 1;
+        }
+        if (this.totalNumberEl) {
+            this.totalNumberEl.innerText = this.imagesLength;
+        }
+    }
 
     _bindEvent() {
         let mc = new Hammer.Manager(this.el);
@@ -93,132 +108,184 @@ class ImageViewer {
         mc.on('panmove', this._dealWithMoveAction.bind(this));
         mc.on('panend', this._dealWithMoveActionEnd.bind(this));
         if (this.enableScale) {
-            mc.on('tap', this._reset.bind(this));
+            mc.on('tap', this.reset.bind(this));
             mc.on('pinchstart', this._dealWithScaleActionStart.bind(this));
             mc.on('pinch', this._dealWithScaleAction.bind(this));
             mc.on('pinchend', this._dealWithScaleActionEnd.bind(this));
         }
         this.hammer = mc;
-    };
 
-    _reset() {
-        this.getCurrentViewer().swipeToCurrent(true);
-    };
+        this.bodyEl.addEventListener(transitionEndEvent, () => {
+            this.bodyEl.classList.remove(ITEM_ANIMATION_CLASS);
+        }, false);
+    }
 
     _dealWithMoveActionStart(event) {
         if (lock.getLockState(LOCK_NAME))return;
-        let prevViewer = this.getPrevViewer(),
-            currentViewer = this.getCurrentViewer(),
-            nextViewer = this.getNextViewer();
 
-        this.opt.beforeSwipe && this.opt.beforeSwipe(currentViewer.index);
+        this.opt.beforeSwipe && this.opt.beforeSwipe(this.currentIndex);
         this.deltaX = event.deltaX;
-
-        prevViewer && prevViewer.removeAnimation();
-        currentViewer && currentViewer.removeAnimation();
-        nextViewer && nextViewer.removeAnimation();
-    };
+    }
 
     _dealWithMoveAction(event, force) {
         if (lock.getLockState(LOCK_NAME) && !force)return;
-        let prevViewer = this.getPrevViewer(),
-            currentViewer = this.getCurrentViewer(),
-            nextViewer = this.getNextViewer();
-        event.deltaX = event.deltaX - this.deltaX;
-
-        prevViewer && prevViewer._translate(event.deltaX);
-        currentViewer && currentViewer._translate(event.deltaX);
-        nextViewer && nextViewer._translate(event.deltaX);
-    };
+        let distance = event.deltaX - this.deltaX;
+        setTranslateStyle(this.bodyEl, this.translateX + distance, 0);
+    }
 
     _dealWithMoveActionEnd(event, force) {
         if (lock.getLockState(LOCK_NAME) && !force)return;
-        let distanceX = event.deltaX - this.deltaX, index, needBreak = false;
-        let prevViewer = this.getPrevViewer(),
-            nextViewer = this.getNextViewer();
+        let distance = event.deltaX - this.deltaX, needSwipe = false, needBreak = false;
 
-        if (this.currentIndex === 0 && distanceX > 0 && this.opt.swipeFirstRight) {
+        if (this.currentIndex === 0 && distance > 0 && this.opt.swipeFirstRight) {
             //当前图片是第一张，并且向右滑动
-            needBreak = this.opt.swipeFirstRight(this, Math.abs(distanceX));
-        } else if (this.currentIndex === (this.imagesLength - 1) && distanceX < 0 && this.opt.swipeLastLeft) {
+            needBreak = this.opt.swipeFirstRight(this, Math.abs(distance));
+        } else if (this.currentIndex === (this.imagesLength - 1) && distance < 0 && this.opt.swipeLastLeft) {
             //当前图片是最后一张，并且向左滑动
-            needBreak = this.opt.swipeLastLeft(this, Math.abs(distanceX));
+            needBreak = this.opt.swipeLastLeft(this, Math.abs(distance));
         }
+
         if (!needBreak) {
-            if (this._checkDistance(distanceX)) {
-                index = undefined;
-            } else if (distanceX > 0) {
-                index = prevViewer ? prevViewer.index : undefined;
+            distance !== 0 && this.bodyEl.classList.add(ITEM_ANIMATION_CLASS);
+            if (distance !== 0 && this._checkDistance(distance)) {
+                this.viewers.forEach((viewer) => {
+                    viewer.removeAnimation();
+                });
+                needSwipe = distance > 0 ? this.swipeToPrev() : this.swipeToNext();
+                this._updateCountElement();
             } else {
-                index = nextViewer ? nextViewer.index : undefined;
+                setTranslateStyle(this.bodyEl, this.translateX, 0);
             }
-            this.swipeInByIndex(index, true, false, force);
-            index !== undefined && this.opt.afterSwipe && this.opt.afterSwipe(index || this.getCurrentViewer().index);
+            this.opt.afterSwipe && this.opt.afterSwipe(this.currentIndex);
         }
         this.deltaX = 0;
-        return index;
-    };
+        return needSwipe;
+    }
 
     _dealWithScaleActionStart(event) {
         this.scaleStart = event.scale;
-    };
-
-    _dealWithScaleAction(event) {
-        this.getCurrentViewer()._pinch(event.scale - this.scaleStart);
-    };
-
-    _dealWithScaleActionEnd() {
-        this.getCurrentViewer()._pinchEnd();
-    };
-
-    _checkDistance(distance = 0) {
-        return Math.abs(distance) < this.width / 5;
     }
 
-    getPrevViewer() {
-        return this.viewers[this.currentIndex - 1] || null;
-    };
+    _dealWithScaleAction(event) {
+        this.viewers[1]._pinch(event.scale - this.scaleStart);
+    }
 
-    getCurrentViewer() {
-        return this.viewers[this.currentIndex];
-    };
+    _dealWithScaleActionEnd() {
+        this.viewers[1]._pinchEnd();
+    }
 
-    getNextViewer() {
-        return this.viewers[this.currentIndex + 1] || null;
-    };
+    _checkDistance(distance = 0) {
+        return Math.abs(distance) > this.width / 5;
+    }
 
-    swipeOutAllImage() {
-        this.viewers.forEach((viewer) => {
-            viewer.swipeOut(this.currentIndex);
-        });
-    };
+    _getPrevImage() {
+        let minuend = this.currentIndex;
+        if (this.opt.loop && this.imagesLength > 2) {
+            minuend = this.currentIndex === 0 ? this.imagesLength : this.currentIndex;
+        }
+        return this.images[minuend - 1] || '';
+    }
 
-    swipeInByIndex(index, needAnimation, needSwipeOut = true, force) {
-        let currentIndex = isNaN(index) ? this.currentIndex : index;
-        let prevViewer, currentViewer, nextViewer;
-        if (-1 < currentIndex && currentIndex < this.images.length) {
-            this.currentIndex = currentIndex;
-            needSwipeOut && this.swipeOutAllImage();
-            prevViewer = this.getPrevViewer();
-            currentViewer = this.getCurrentViewer();
-            nextViewer = this.getNextViewer();
+    _getCurrentImage() {
+        return this.images[this.currentIndex] || '';
+    }
 
-            prevViewer && prevViewer.swipeToPrev(needAnimation);
-            if ((force && !isNaN(index)) || !force) {
-                currentViewer && currentViewer.swipeToCurrent(true, needAnimation);
+    _getNextImage() {
+        let addend = this.currentIndex;
+        if (this.opt.loop && this.imagesLength > 2) {
+            addend = this.currentIndex === this.imagesLength - 1 ? -1 : this.currentIndex;
+        }
+        return this.images[addend + 1] || '';
+    }
+
+    _getSpecificImage(index) {
+        return this.images[index] || '';
+    }
+
+    reset() {
+        this.viewers[1].init(this.displayIndex, true, null, false);
+        setTimeout(() => {
+            lock.releaseLock(LOCK_NAME);
+        }, 0);
+    }
+
+    /**
+     * 移动循环队列
+     * @param direction 方向，0：队首移动到队尾，1：队尾移动到队首
+     * @returns {*}
+     */
+    loopViewers(direction) {
+        let viewer = null;
+        if (direction === 0) {
+            viewer = this.viewers.shift();
+            this.viewers.push(viewer);
+        } else if (direction === 1) {
+            viewer = this.viewers.pop();
+            this.viewers = [viewer].concat(this.viewers);
+        }
+        return viewer;
+    }
+
+    /**
+     * 滑动到上一张
+     * @returns {boolean}
+     */
+    swipeToPrev() {
+        let prevImage = this._getPrevImage();
+        if (prevImage) {
+            this.currentIndex--;
+            this.translateX += this.width;
+            setTranslateStyle(this.bodyEl, this.translateX, 0);
+
+            let image = this._getSpecificImage(this.currentIndex - 1);
+            if (image || this.currentIndex === 0) {
+                let viewer = this.loopViewers(1);
+                viewer.init(viewer.displayIndex - 3, true, null, true, image);
             }
-            nextViewer && nextViewer.swipeToNext(needAnimation);
+            return true;
+        } else {
+            setTranslateStyle(this.bodyEl, this.translateX, 0);
+            return false;
+        }
+    }
 
-            if (this.currentNumberEl) {
-                this.currentNumberEl.innerText = currentIndex + 1;
+    /**
+     * 滑动到下一张
+     * @returns {boolean}
+     */
+    swipeToNext() {
+        let nextImage = this._getNextImage();
+        if (nextImage) {
+            this.currentIndex++;
+            this.translateX -= this.width;
+            setTranslateStyle(this.bodyEl, this.translateX, 0);
+
+            let image = this._getSpecificImage(this.currentIndex + 1);
+            if (image || this.currentIndex === this.imagesLength - 1) {
+                let viewer = this.loopViewers(0);
+                viewer.init(viewer.displayIndex + 3, true, null, true, image);
             }
-            if (this.totalNumberEl) {
-                this.totalNumberEl.innerText = this.imagesLength;
-            }
+            return true;
+        } else {
+            setTranslateStyle(this.bodyEl, this.translateX, 0);
+            return false;
+        }
+    }
+
+    swipeInByIndex(index) {
+        if (!isNaN(index) && -1 < index && index < this.imagesLength) {
+            this.currentIndex = index;
+            setTranslateStyle(this.bodyEl, this.translateX, 0);
+
+            this.viewers[0].init(-1, true, null, true, this._getPrevImage());
+            this.viewers[1].init(0, true, null, true, this._getCurrentImage());
+            this.viewers[2].init(1, true, null, true, this._getNextImage());
+
+            this._updateCountElement();
         } else {
             warn('illegal index!');
         }
-    };
+    }
 
     setImageOption(images = [], startIndex = 0) {
         if (!images.length) {
@@ -236,13 +303,13 @@ class ImageViewer {
 
     destroy() {
         this.el && removeElement(this.el);
-    };
+    }
 
     close() {
         if (this.el) {
             this.el.style.display = 'none';
         }
-    };
+    }
 
     open() {
         if (!this.el) {
@@ -252,7 +319,7 @@ class ImageViewer {
             this._bindEvent();
         }
         this.el.style.display = 'block';
-    };
+    }
 }
 
 export default ImageViewer;

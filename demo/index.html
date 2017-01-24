@@ -36,6 +36,7 @@
         container: 'body',
         enableScale: true,
         startIndex: 0,
+        loop: false,
         headerRender: function () {
             setTimeout(function () {
                 document.getElementById('close').addEventListener('click', function () {
@@ -56,15 +57,15 @@
         swipeLastLeft: function (imageViewer, distance) {
             console.log('swipeLastLeft', distance);
             if (distance > 50) {
-                imageViewer.setImageOption(['images/4.jpg']);
-                return true;
+                //imageViewer.setImageOption(['images/4.jpg']);
+                //return true;
             }
         },
         swipeFirstRight: function (imageViewer, distance) {
             console.log('swipeFirstRight', distance);
             if (distance > 30) {
-                imageViewer.setImageOption(['images/5.jpg', 'images/6.jpg', 'images/7.jpg']);
-                return true;
+                //imageViewer.setImageOption(['images/5.jpg', 'images/6.jpg', 'images/7.jpg']);
+                //return true;
             }
         }
     });

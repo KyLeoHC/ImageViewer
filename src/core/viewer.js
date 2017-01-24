@@ -9,22 +9,23 @@ import {
     LOCK_NAME
 } from '../common/profile';
 import lock from '../common/lock';
+import Event from '../common/event';
 import Hammer from '../lib/hammer';
 
 class Viewer {
-    constructor(imageViewer, src, el, index, width, height, currentIndex) {
+    constructor(imageViewer, el, width, height) {
+        this.event = new Event(false);
         this.imageViewer = imageViewer;
         this.el = el;             //.viewer类
         this.panelEl = el.firstElementChild;//.panel类
-        this.imageEl = null;
-        this.src = src;
-        this.index = index;
-        this.displayIndex = 2;
+        this.imageEl = query('img', this.el)[0];
+        this.src = '';
+        this.displayIndex = 0;
         this.width = width;
         this.height = height;
         this.realWidth = 0;
         this.realHeight = 0;
-        this.translateX = (this.index < currentIndex ? -2 : 2) * this.width;
+        this.translateX = 0;
         this.translateY = 0;
         this.currentX = 0;         //当前正在移动的X轴距离(临时保存,当事件结束后,会赋值回translateX)
         this.currentY = 0;         //当前正在移动的Y轴距离(临时保存,当事件结束后,会赋值回translateY)
@@ -40,17 +41,16 @@ class Viewer {
         this.needResetY = false;   //拖动图片超出边界时，需要重置一下y轴的坐标
         this.deltaX = 0;
         this.deltaY = 0;
-
-        setTranslateStyle(this.el, this.translateX, this.translateY);
+        this.EVENT_NAME = 'IMG_LOAD_COMPLETE';
         this._bindEvent();
     }
 
-    _init(displayIndex, resetScale, fn, needLoad = true) {
-        let _initImage = () => {
+    init(displayIndex = 0, resetScale, fn, needLoad = true, src) {
+        const _initImage = () => {
             if (resetScale) {
                 this.scale = 1;
                 this.allowDistanceX = this.allowDistanceY = 0;
-                if (this.imageEl && this.imageEl.width && this.imageEl.height) {
+                if (this.imageEl.width && this.imageEl.height) {
                     this.imageEl.style.display = '';
                 }
             }
@@ -60,7 +60,7 @@ class Viewer {
             this.currentPanelY = 0;
             this.realWidth = this.panelEl.clientWidth * this.scale;
             this.realHeight = this.panelEl.clientHeight * this.scale;
-            this.translateX = (this.displayIndex || 0) * this.width;
+            this.translateX = this.displayIndex * this.width;
             this.translateY = -this.el.clientHeight / 2;
             setScaleAndTranslateStyle(this.panelEl, this.scale, this.translatePanelX, this.translatePanelY);
             setTranslateStyle(this.el, this.translateX, this.translateY);
@@ -68,15 +68,16 @@ class Viewer {
         };
         this.displayIndex = displayIndex;
 
-        if (this.imageEl || !needLoad) {
-            _initImage();
-        } else {
-            this.imageEl = query('img', this.el)[0];
+        if (needLoad) {
+            this.src = src;
             this.imageEl.src = this.src;
             this.imageEl.style.display = 'none';
-            this.imageEl.addEventListener('load', () => {
+            this.event.on(this.EVENT_NAME, () => {
                 _initImage();
-            }, false);
+            });
+            setTranslateStyle(this.el, this.displayIndex * this.width, this.translateY);
+        } else {
+            _initImage();
         }
         return this;
     };
@@ -109,7 +110,10 @@ class Viewer {
 
         this.el.addEventListener(transitionEndEvent, () => {
             this.removeAnimation();
-            this.panelEl.classList.remove(ITEM_ANIMATION_CLASS);
+        }, false);
+
+        this.imageEl.addEventListener('load', () => {
+            this.event.emit(this.EVENT_NAME);
         }, false);
     };
 
@@ -129,7 +133,7 @@ class Viewer {
         this.allowDistanceX = (this.realWidth - this.width) / 2 / this.scale + 2;
         this.allowDistanceY = (this.realHeight - this.height) / 2 / this.scale + 2;
         if (this.realWidth < this.width || this.realHeight < this.height) {
-            this._init();
+            this.init(this.displayIndex, false, null, false);
         }
         if (this.isScale()) {
             lock.getLock(LOCK_NAME);
@@ -155,38 +159,29 @@ class Viewer {
             this.needResetY = !(-this.allowDistanceY < this.currentPanelY && this.currentPanelY < this.allowDistanceY);
         }
 
-        if (this.needResetX
-            && ((this.index === 0 && this.currentPanelX < 0)
-            || (this.index !== 0 && this.index !== this.imageViewer.imagesLength - 1)
-            || (this.index === this.imageViewer.imagesLength - 1 && this.currentPanelX > 0))) {
-            //满足以下三个条件才允许外部容器移动(前提条件是当前图片在面板容器内滑动到了X轴允许的最大边界)
-            //1.当前图片是第一张并且是往左滑动切换到下一张时
-            //2.图片数量超过2张，并且当前图片既不是第一张也不是最后一张
-            //3.当前图片是最后一张并且是往右滑动切换到上一张时
+        if (this.needResetX) {
             this.imageViewer._dealWithMoveAction({deltaX: this.calculate(this.currentPanelX, this.allowDistanceX)}, true);
             setScaleAndTranslateStyle(this.panelEl, this.scale, this.currentPanelX > 0 ? this.allowDistanceX : -this.allowDistanceX, this.currentPanelY);
         } else {
-            if (this.imageViewer.imagesLength > 1) {
-                if (this.index === 0 && this.currentPanelX >= 0) {
-                    this.imageViewer.viewers[1].removeAnimation();
-                } else if (this.index === this.imageViewer.imagesLength - 1 && this.currentPanelX <= 0) {
-                    this.imageViewer.viewers[this.imageViewer.imagesLength - 2].removeAnimation();
-                }
-            }
             this.imageViewer._dealWithMoveAction({deltaX: 0}, true);
             setScaleAndTranslateStyle(this.panelEl, this.scale, this.currentPanelX, this.currentPanelY);
         }
+
         return this;
     };
 
     _translatePanelEnd() {
         if (this.realWidth <= this.width && this.realHeight <= this.height)return this;
-        let index;
+        let needSwipe = false;
         if (this.needResetX) {
-            index = this.imageViewer._dealWithMoveActionEnd({deltaX: this.calculate(this.currentPanelX, this.allowDistanceX)}, true);
+            needSwipe = this.imageViewer._dealWithMoveActionEnd({deltaX: this.calculate(this.currentPanelX, this.allowDistanceX)}, true);
         }
-        if (index === undefined) {
-            this._translate(0);
+        if (needSwipe) {
+            this.init(this.displayIndex, true, null, false);
+            setTimeout(() => {
+                lock.releaseLock(LOCK_NAME);
+            }, 0);
+        } else {
             if (this.needResetX) {
                 this.translatePanelX = this.currentPanelX > 0 ? this.allowDistanceX : -this.allowDistanceX;
             } else {
@@ -198,20 +193,11 @@ class Viewer {
                 this.translatePanelY = this.currentPanelY;
             }
             if (this.needResetX || this.needResetY) {
-                this.panelEl.classList.add(ITEM_ANIMATION_CLASS);
                 this.addAnimation();
                 setScaleAndTranslateStyle(this.panelEl, this.scale, this.translatePanelX, this.translatePanelY);
             }
         }
-
         this.needResetX = this.needResetY = false;
-        return this;
-    };
-
-    _translate(translateX) {
-        this.currentX = isNaN(translateX) ? this.translateX : (translateX + this.translateX);
-        this.currentY = this.translateY;
-        setTranslateStyle(this.el, this.currentX, this.currentY);
         return this;
     };
 
@@ -228,34 +214,6 @@ class Viewer {
 
     removeAnimation() {
         this.el.classList.remove(ITEM_ANIMATION_CLASS);
-        return this;
-    };
-
-    swipeToPrev(needAnimation) {
-        this.addAnimation(needAnimation)._init(-1, true);
-        return this;
-    };
-
-    swipeToCurrent(needReset, needAnimation) {
-        this.addAnimation(needAnimation)._init(0, needReset, () => {
-            setTimeout(() => {
-                if (this.isScale()) {
-                    lock.getLock(LOCK_NAME);
-                } else {
-                    lock.releaseLock(LOCK_NAME);
-                }
-            }, 0);
-        });
-        return this;
-    };
-
-    swipeToNext(needAnimation) {
-        this.addAnimation(needAnimation)._init(1, true);
-        return this;
-    };
-
-    swipeOut(currentIndex) {
-        this.removeAnimation()._init(this.index < currentIndex ? -2 : 2, true, undefined, false);
         return this;
     };
 }
