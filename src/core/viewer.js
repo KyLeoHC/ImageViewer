@@ -118,6 +118,10 @@ class Viewer {
         }, false);
     }
 
+    _pinchStart() {
+        this.panelEl.style.willChange = 'transform';
+    }
+
     _pinch(scale) {
         let currentScale = scale + this.scale;
         if (currentScale > 0.5) {
@@ -141,6 +145,7 @@ class Viewer {
         } else {
             lock.releaseLock(LOCK_NAME);
         }
+        this.panelEl.style.willChange = 'auto';
         return this;
     }
 

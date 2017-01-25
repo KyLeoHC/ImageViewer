@@ -120,6 +120,7 @@ class ImageViewer {
 
         this.opt.beforeSwipe && this.opt.beforeSwipe(this.currentIndex);
         this.deltaX = event.deltaX;
+        this.bodyEl.style.willChange = 'transform';
     }
 
     _dealWithMoveAction(event, force) {
@@ -154,11 +155,13 @@ class ImageViewer {
             this.opt.afterSwipe && this.opt.afterSwipe(this.currentIndex);
         }
         this.deltaX = 0;
+        this.bodyEl.style.willChange = 'auto';
         return needSwipe;
     }
 
     _dealWithScaleActionStart(event) {
         this.scaleStart = event.scale;
+        this.viewers[1]._pinchStart();
     }
 
     _dealWithScaleAction(event) {
