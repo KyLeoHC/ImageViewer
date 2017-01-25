@@ -28,8 +28,6 @@ class Viewer {
         this.realHeight = 0;
         this.translateX = 0;
         this.translateY = 0;
-        this.currentX = 0;         //当前正在移动的X轴距离(临时保存,当事件结束后,会赋值回translateX)
-        this.currentY = 0;         //当前正在移动的Y轴距离(临时保存,当事件结束后,会赋值回translateY)
         this.scale = 1;            //缩放比例
         this.currentScale = 1;     //当前正在缩放的倍数(临时保存,当事件结束后,会赋值回scale)
         this.translatePanelX = 0;  //最终图片面板所在的X轴坐标
@@ -40,8 +38,8 @@ class Viewer {
         this.allowDistanceY = 0;   //图片放大后，允许拖动的最大Y轴距离
         this.needResetX = false;   //拖动图片超出边界时，需要重置一下x轴的坐标
         this.needResetY = false;   //拖动图片超出边界时，需要重置一下y轴的坐标
-        this.deltaX = 0;
-        this.deltaY = 0;
+        this.deltaX = 0;           //存储起始的X轴偏移量
+        this.deltaY = 0;           //存储起始的Y轴偏移量
         this.EVENT_NAME = 'IMG_LOAD_COMPLETE';
         this._bindEvent();
     }
@@ -105,7 +103,7 @@ class Viewer {
             if (lock.getLockState(LOCK_NAME)) {
                 event.preventDefault();
                 event.srcEvent.stopPropagation();
-                this._translatePanelEnd();
+                this._translatePanelEnd(event.deltaX - this.deltaX);
             }
         });
 
@@ -123,8 +121,8 @@ class Viewer {
     }
 
     _pinch(scale) {
-        let currentScale = scale + this.scale;
-        if (currentScale > 0.5) {
+        let currentScale = scale * this.scale + this.scale;
+        if (currentScale > 0.5 && currentScale < 8) {
             this.currentScale = currentScale;
             setScaleAndTranslateStyle(this.panelEl, this.currentScale, this.translatePanelX, this.translatePanelY);
         }
@@ -154,56 +152,67 @@ class Viewer {
     }
 
     _translatePanel(translatePanelX, translatePanelY) {
-        if (this.realWidth <= this.width && this.realHeight <= this.height)return this;
-        if (this.allowDistanceX > 0 && translatePanelX) {
-            this.currentPanelX = translatePanelX / this.scale + this.translatePanelX;
-            this.needResetX = !(-this.allowDistanceX < this.currentPanelX && this.currentPanelX < this.allowDistanceX);
-        }
-
-        if (this.allowDistanceY > 0 && translatePanelY) {
-            this.currentPanelY = translatePanelY / this.scale + this.translatePanelY;
-            this.needResetY = !(-this.allowDistanceY < this.currentPanelY && this.currentPanelY < this.allowDistanceY);
-        }
-
-        if (this.needResetX) {
-            this.imageViewer._dealWithMoveAction({deltaX: this._calculate(this.currentPanelX, this.allowDistanceX)}, true);
-            setScaleAndTranslateStyle(this.panelEl, this.scale, this.currentPanelX > 0 ? this.allowDistanceX : -this.allowDistanceX, this.currentPanelY);
+        if (this.realWidth <= this.width && this.realHeight <= this.height) {
+            this.imageViewer._dealWithMoveAction({deltaX: translatePanelX / this.scale}, true);
         } else {
-            this.imageViewer._dealWithMoveAction({deltaX: 0}, true);
-            setScaleAndTranslateStyle(this.panelEl, this.scale, this.currentPanelX, this.currentPanelY);
-        }
+            if (this.allowDistanceX > 0 && translatePanelX) {
+                this.currentPanelX = translatePanelX / this.scale + this.translatePanelX;
+                this.needResetX = !(-this.allowDistanceX < this.currentPanelX && this.currentPanelX < this.allowDistanceX);
+            }
 
+            if (this.allowDistanceY > 0 && translatePanelY) {
+                this.currentPanelY = translatePanelY / this.scale + this.translatePanelY;
+                this.needResetY = !(-this.allowDistanceY < this.currentPanelY && this.currentPanelY < this.allowDistanceY);
+            }
+
+            if (this.needResetX) {
+                this.imageViewer._dealWithMoveAction({deltaX: this._calculate(this.currentPanelX, this.allowDistanceX)}, true);
+                setScaleAndTranslateStyle(this.panelEl, this.scale, this.currentPanelX > 0 ? this.allowDistanceX : -this.allowDistanceX, this.currentPanelY);
+            } else {
+                this.imageViewer._dealWithMoveAction({deltaX: 0}, true);
+                setScaleAndTranslateStyle(this.panelEl, this.scale, this.currentPanelX, this.currentPanelY);
+            }
+        }
         return this;
     }
 
-    _translatePanelEnd() {
-        if (this.realWidth <= this.width && this.realHeight <= this.height)return this;
+    _translatePanelEnd(translatePanelX) {
         let needSwipe = false;
-        if (this.needResetX) {
-            needSwipe = this.imageViewer._dealWithMoveActionEnd({deltaX: this._calculate(this.currentPanelX, this.allowDistanceX)}, true);
-        }
-        if (needSwipe) {
-            this.init(this.displayIndex, true, null, false);
-            setTimeout(() => {
-                lock.releaseLock(LOCK_NAME);
-            }, 0);
+        if (this.realWidth <= this.width && this.realHeight <= this.height) {
+            needSwipe = this.imageViewer._dealWithMoveActionEnd({deltaX: translatePanelX / this.scale}, true);
+            if (needSwipe) {
+                this.init(this.displayIndex, true, null, false);
+                setTimeout(() => {
+                    lock.releaseLock(LOCK_NAME);
+                }, 0);
+            }
         } else {
             if (this.needResetX) {
-                this.translatePanelX = this.currentPanelX > 0 ? this.allowDistanceX : -this.allowDistanceX;
+                needSwipe = this.imageViewer._dealWithMoveActionEnd({deltaX: this._calculate(this.currentPanelX, this.allowDistanceX)}, true);
+            }
+            if (needSwipe) {
+                this.init(this.displayIndex, true, null, false);
+                setTimeout(() => {
+                    lock.releaseLock(LOCK_NAME);
+                }, 0);
             } else {
-                this.translatePanelX = this.currentPanelX;
+                if (this.needResetX) {
+                    this.translatePanelX = this.currentPanelX > 0 ? this.allowDistanceX : -this.allowDistanceX;
+                } else {
+                    this.translatePanelX = this.currentPanelX;
+                }
+                if (this.needResetY) {
+                    this.translatePanelY = this.currentPanelY > 0 ? this.allowDistanceY : -this.allowDistanceY;
+                } else {
+                    this.translatePanelY = this.currentPanelY;
+                }
+                if (this.needResetX || this.needResetY) {
+                    this.addAnimation();
+                    setScaleAndTranslateStyle(this.panelEl, this.scale, this.translatePanelX, this.translatePanelY);
+                }
             }
-            if (this.needResetY) {
-                this.translatePanelY = this.currentPanelY > 0 ? this.allowDistanceY : -this.allowDistanceY;
-            } else {
-                this.translatePanelY = this.currentPanelY;
-            }
-            if (this.needResetX || this.needResetY) {
-                this.addAnimation();
-                setScaleAndTranslateStyle(this.panelEl, this.scale, this.translatePanelX, this.translatePanelY);
-            }
+            this.needResetX = this.needResetY = false;
         }
-        this.needResetX = this.needResetY = false;
         return this;
     }
 
