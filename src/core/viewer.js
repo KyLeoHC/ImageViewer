@@ -144,7 +144,7 @@ class Viewer {
         return this;
     }
 
-    calculate(a, b) {
+    _calculate(a, b) {
         return a > 0 ? (a - b) : (a + b);
     }
 
@@ -161,7 +161,7 @@ class Viewer {
         }
 
         if (this.needResetX) {
-            this.imageViewer._dealWithMoveAction({deltaX: this.calculate(this.currentPanelX, this.allowDistanceX)}, true);
+            this.imageViewer._dealWithMoveAction({deltaX: this._calculate(this.currentPanelX, this.allowDistanceX)}, true);
             setScaleAndTranslateStyle(this.panelEl, this.scale, this.currentPanelX > 0 ? this.allowDistanceX : -this.allowDistanceX, this.currentPanelY);
         } else {
             this.imageViewer._dealWithMoveAction({deltaX: 0}, true);
@@ -175,7 +175,7 @@ class Viewer {
         if (this.realWidth <= this.width && this.realHeight <= this.height)return this;
         let needSwipe = false;
         if (this.needResetX) {
-            needSwipe = this.imageViewer._dealWithMoveActionEnd({deltaX: this.calculate(this.currentPanelX, this.allowDistanceX)}, true);
+            needSwipe = this.imageViewer._dealWithMoveActionEnd({deltaX: this._calculate(this.currentPanelX, this.allowDistanceX)}, true);
         }
         if (needSwipe) {
             this.init(this.displayIndex, true, null, false);
