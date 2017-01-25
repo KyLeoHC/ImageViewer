@@ -80,7 +80,6 @@ class ImageViewer {
             item = this.itemList[i];
             this.viewers.push(new Viewer(this, item, this.width, this.height, i));
         }
-        this.translateX = 0;
         this.swipeInByIndex(this.currentIndex);
         lock.createLock(LOCK_NAME);
     }
@@ -202,7 +201,8 @@ class ImageViewer {
      * 重置当前图片的缩放
      */
     reset() {
-        this.viewers[1].init(this.displayIndex, true, null, false);
+        let viewer = this.viewers[1];
+        viewer.init(viewer.displayIndex, true, null, false);
         setTimeout(() => {
             lock.releaseLock(LOCK_NAME);
         }, 0);
@@ -278,6 +278,7 @@ class ImageViewer {
     swipeInByIndex(index) {
         if (!isNaN(index) && -1 < index && index < this.imagesLength) {
             this.currentIndex = index;
+            this.translateX = 0;
             setTranslateStyle(this.bodyEl, 0, 0);
 
             this.viewers = this.viewers.sort(function (a, b) {
@@ -313,12 +314,15 @@ class ImageViewer {
         }
     }
 
-    open() {
+    open(index) {
+        this.currentIndex = index === undefined ? this.currentIndex : index;
         if (!this.el) {
             //仅仅实例化，但尚未初始化
             this._create();
             this._init();
             this._bindEvent();
+        } else {
+            this.swipeInByIndex(this.currentIndex);
         }
         this.el.style.display = 'block';
     }

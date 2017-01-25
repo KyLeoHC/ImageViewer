@@ -7,8 +7,21 @@
     <style>
         html, body, .container {
             height: 100%;
+            margin: 0;
+            overflow-y: scroll;
+        }
+
+        .img-list {
+            padding: 10px;
+        }
+
+        .img-list p {
             overflow: hidden;
-            margin: 0px;
+        }
+
+        .img-list p img {
+            max-width: 100%;
+            max-height: 100%;
         }
 
         #close {
@@ -26,20 +39,23 @@
 </head>
 <body>
 <div class="container">
-    <h1>Hello, this is an image viewer.</h1>
-    <p id="open">打开</p>
+    <div class="img-list">
+        <p><img src="images/2.jpg" data-index="0"></p>
+        <p><img src="images/3.jpg" data-index="1"></p>
+        <p><img src="images/4.jpg" data-index="2"></p>
+        <p><img src="images/5.jpg" data-index="3"></p>
+        <p><img src="images/6.jpg" data-index="4"></p>
+        <p><img src="images/7.jpg" data-index="5"></p>
+        <p><img src="images/8.jpg" data-index="6"></p>
+    </div>
 </div>
 <script src="build/imageViewer.js"></script>
 <script type="text/javascript">
-    var images1 = ['images/2.jpg'];
-    var images2 = ['images/2.jpg', 'images/3.jpg'];
-    var images3 = ['images/2.jpg', 'images/3.jpg', 'images/4.jpg'];
     var images = ['images/2.jpg', 'images/3.jpg', 'images/4.jpg', 'images/5.jpg', 'images/6.jpg', 'images/7.jpg', 'images/8.jpg'];
-    var imageViewer = new ImageViewer(images3, {
+    var imageViewer = new ImageViewer(images, {
         container: 'body',
         enableScale: true,
         startIndex: 0,
-        loop: false,
         headerRender: function () {
             setTimeout(function () {
                 document.getElementById('close').addEventListener('click', function () {
@@ -73,8 +89,8 @@
         }
     });
 
-    document.getElementById('open').addEventListener('click', function () {
-        imageViewer.open();
+    document.getElementsByClassName('img-list')[0].addEventListener('click', function (event) {
+        imageViewer.open(parseInt(event.target.getAttribute('data-index')));
     }, false);
 </script>
 </body>
