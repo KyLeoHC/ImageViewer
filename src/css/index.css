@@ -1,7 +1,4 @@
 .viewer-animation {
-    -webkit-transition: transform .4s; /* Safari 和 Chrome */
-    -moz-transition: transform .4s; /* Firefox 4 */
-    -o-transition: transform .4s; /* Opera */
     transition: transform .4s;
 }
 
@@ -14,9 +11,8 @@
     background-color: black;
     z-index: 10000;
     font-size: 0;
-    -webkit-transform: translate3d(0, 0, 0);
-    -moz-transform: translate3d(0, 0, 0);
     transform: translate3d(0, 0, 0);
+    backface-visibility: hidden;
     overflow: hidden;
 }
 
@@ -26,9 +22,8 @@
     top: 50%;
     width: 100%;
     text-align: center;
-    -webkit-transform: translate3d(0, -50%, 0);
-    -moz-transform: translate3d(0, -50%, 0);
     transform: translate3d(0, -50%, 0);
+    backface-visibility: hidden;
 }
 
 .image-viewer .image-header {

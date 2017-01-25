@@ -39,12 +39,6 @@ class ImageViewer {
         this.translateX = 0;
     }
 
-    _generateViewerDom() {
-        return Array.prototype.slice.call(this.images, 0, 3).map(function () {
-            return `<div class="viewer"><div class="panel"><img></div></div>`
-        }).join();
-    }
-
     _create() {
         this.el = query('.image-viewer')[0];
         this.destroy();
@@ -52,7 +46,9 @@ class ImageViewer {
             `<div class="image-viewer">
                 <div class="image-header"></div>
                 <div class="image-body">
-                    ${this._generateViewerDom()}
+                    <div class="viewer"><div class="panel"><img></div></div>
+                    <div class="viewer"><div class="panel"><img></div></div>
+                    <div class="viewer"><div class="panel"><img></div></div>
                 </div>
                 <div class="image-footer"></div>
             </div>`;
@@ -82,7 +78,7 @@ class ImageViewer {
         this.viewers = [];
         for (let i = 0, length = this.itemList.length, item; i < length; i++) {
             item = this.itemList[i];
-            this.viewers.push(new Viewer(this, item, this.width, this.height));
+            this.viewers.push(new Viewer(this, item, this.width, this.height, i));
         }
         this.translateX = 0;
         this.swipeInByIndex(this.currentIndex);
@@ -202,6 +198,9 @@ class ImageViewer {
         return this.images[index] || '';
     }
 
+    /**
+     * 重置当前图片的缩放
+     */
     reset() {
         this.viewers[1].init(this.displayIndex, true, null, false);
         setTimeout(() => {
@@ -272,11 +271,18 @@ class ImageViewer {
         }
     }
 
+    /**
+     * 根据给定的下标移动到指定图片处
+     * @param index 数组下标，从0开始
+     */
     swipeInByIndex(index) {
         if (!isNaN(index) && -1 < index && index < this.imagesLength) {
             this.currentIndex = index;
-            setTranslateStyle(this.bodyEl, this.translateX, 0);
+            setTranslateStyle(this.bodyEl, 0, 0);
 
+            this.viewers = this.viewers.sort(function (a, b) {
+                return a.index < b.index;
+            });
             this.viewers[0].init(-1, true, null, true, this._getPrevImage());
             this.viewers[1].init(0, true, null, true, this._getCurrentImage());
             this.viewers[2].init(1, true, null, true, this._getNextImage());
@@ -294,10 +300,6 @@ class ImageViewer {
         this.images = images;
         this.imagesLength = images.length;
         this.currentIndex = startIndex;
-
-        let listEl = query('.image-body', this.el)[0];
-        listEl.innerHTML = this._generateViewerDom();
-        this.itemList = listEl.children;
         this._init();
     }
 

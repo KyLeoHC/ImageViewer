@@ -1,13 +1,6 @@
-var webpack = require('webpack');
-var path = require('path');
 var config = {
     entry: {
         imageViewer: './src/index'
-    },
-    output: {
-        path: path.resolve(__dirname, 'build'),
-        publicPath: '/build/',
-        filename: '[name].js'
     },
     module: {
         noParse: /es6-promise\.js$/,
@@ -17,7 +10,7 @@ var config = {
                 exclude: /node_modules/,
                 loader: 'babel'
             },
-            {test: /\.css$/, loader: 'style-loader!css-loader'}
+            {test: /\.css$/, loader: 'style-loader!css-loader!postcss-loader'}
         ]
     },
     babel: {
@@ -25,10 +18,10 @@ var config = {
         plugins: ['transform-runtime']
     },
     plugins: [],
-    devServer: {
-        contentBase: './demo',
-        host: '0.0.0.0',
-        port: '8084'
+    postcss: () => {
+        return [
+            require('autoprefixer')
+        ];
     }
 };
 

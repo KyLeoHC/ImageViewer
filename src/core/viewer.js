@@ -13,13 +13,14 @@ import Event from '../common/event';
 import Hammer from '../lib/hammer';
 
 class Viewer {
-    constructor(imageViewer, el, width, height) {
+    constructor(imageViewer, el, width, height, index) {
         this.event = new Event(false);
         this.imageViewer = imageViewer;
         this.el = el;             //.viewer类
         this.panelEl = el.firstElementChild;//.panel类
         this.imageEl = query('img', this.el)[0];
         this.src = '';
+        this.index = index;        //viewer排序用，记录原始的数组位置
         this.displayIndex = 0;
         this.width = width;
         this.height = height;
@@ -80,7 +81,7 @@ class Viewer {
             _initImage();
         }
         return this;
-    };
+    }
 
     _bindEvent() {
         let mc = new Hammer.Manager(this.panelEl);
@@ -115,7 +116,7 @@ class Viewer {
         this.imageEl.addEventListener('load', () => {
             this.event.emit(this.EVENT_NAME);
         }, false);
-    };
+    }
 
     _pinch(scale) {
         let currentScale = scale + this.scale;
@@ -124,7 +125,7 @@ class Viewer {
             setScaleAndTranslateStyle(this.panelEl, this.currentScale, this.translatePanelX, this.translatePanelY);
         }
         return this;
-    };
+    }
 
     _pinchEnd(scale) {
         this.scale = isNaN(scale) ? this.currentScale : scale;
@@ -141,7 +142,7 @@ class Viewer {
             lock.releaseLock(LOCK_NAME);
         }
         return this;
-    };
+    }
 
     calculate(a, b) {
         return a > 0 ? (a - b) : (a + b);
@@ -168,7 +169,7 @@ class Viewer {
         }
 
         return this;
-    };
+    }
 
     _translatePanelEnd() {
         if (this.realWidth <= this.width && this.realHeight <= this.height)return this;
@@ -199,23 +200,21 @@ class Viewer {
         }
         this.needResetX = this.needResetY = false;
         return this;
-    };
+    }
 
     isScale() {
         return Math.abs(this.scale - 1) > 0.01;
-    };
+    }
 
-    addAnimation(needAnimation) {
-        if (needAnimation || needAnimation === undefined) {
-            this.el.classList.add(ITEM_ANIMATION_CLASS);
-        }
-        return this;
-    };
+    addAnimation() {
+        this.panelEl.classList.add(ITEM_ANIMATION_CLASS);
+        this.el.classList.add(ITEM_ANIMATION_CLASS);
+    }
 
     removeAnimation() {
+        this.panelEl.classList.remove(ITEM_ANIMATION_CLASS);
         this.el.classList.remove(ITEM_ANIMATION_CLASS);
-        return this;
-    };
+    }
 }
 
 export default Viewer;
