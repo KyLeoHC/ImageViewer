@@ -152,7 +152,7 @@ class Viewer {
     }
 
     _translatePanel(translatePanelX, translatePanelY) {
-        if (this.realWidth <= this.width && this.realHeight <= this.height) {
+        if (this.realWidth <= this.width && translatePanelX) {
             this.imageViewer._dealWithMoveAction({deltaX: translatePanelX / this.scale}, true);
         } else {
             if (this.allowDistanceX > 0 && translatePanelX) {
@@ -178,7 +178,7 @@ class Viewer {
 
     _translatePanelEnd(translatePanelX) {
         let needSwipe = false;
-        if (this.realWidth <= this.width && this.realHeight <= this.height) {
+        if (this.realWidth <= this.width && translatePanelX) {
             needSwipe = this.imageViewer._dealWithMoveActionEnd({deltaX: translatePanelX / this.scale}, true);
             if (needSwipe) {
                 this.init(this.displayIndex, true, null, false);
