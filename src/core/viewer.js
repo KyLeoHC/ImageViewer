@@ -49,9 +49,9 @@ class Viewer {
             if (resetScale) {
                 this.scale = 1;
                 this.allowDistanceX = this.allowDistanceY = 0;
-                if (this.imageEl.width && this.imageEl.height) {
-                    this.imageEl.style.display = '';
-                }
+            }
+            if (needLoad) {
+                this.imageEl.style.display = '';
             }
             this.translatePanelX = 0;
             this.translatePanelY = 0;
