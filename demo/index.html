@@ -55,6 +55,7 @@
 <!--<script src="//www.freeui.org/imageViewer/build/debuggap.js"></script>-->
 <script src="build/imageViewer.js"></script>
 <script type="text/javascript">
+    //    var testImages = ['images/1_1.png', 'images/1_2.png', 'images/1_3.png'];
     var images = ['images/2.jpg', 'images/3.jpg', 'images/4.jpg', 'images/5.jpg', 'images/6.jpg', 'images/7.jpg', 'images/8.jpg'];
     var imageViewer = new ImageViewer(images, {
         container: 'body',
@@ -96,7 +97,8 @@
     document.getElementsByClassName('img-list')[0].addEventListener('click', function (event) {
         var index = event.target.getAttribute('data-index');
         if (index !== undefined && index !== null) {
-            imageViewer.open(parseInt(index));
+            //imageViewer.open(parseInt(index));
+            imageViewer.open(0);
         }
     }, false);
 </script>
