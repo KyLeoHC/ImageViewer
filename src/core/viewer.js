@@ -1,6 +1,5 @@
 import {
     query,
-    transitionEndEvent,
     setTranslateStyle,
     setScaleAndTranslateStyle
 } from '../common/dom';
@@ -86,32 +85,23 @@ class Viewer {
         let mc = new Hammer.Manager(this.panelEl);
         mc.add(new Hammer.Pan());
         mc.on('panstart', (event) => {
+            this.removeAnimation();
             if (lock.getLockState(LOCK_NAME)) {
                 this.deltaX = event.deltaX;
                 this.deltaY = event.deltaY;
-                event.preventDefault();
-                event.srcEvent.stopPropagation();
             }
         });
         mc.on('panmove', (event) => {
             if (lock.getLockState(LOCK_NAME)) {
                 event.preventDefault();
-                event.srcEvent.stopPropagation();
                 this._translatePanel(event.deltaX - this.deltaX, event.deltaY - this.deltaY);
             }
         });
         mc.on('panend', (event) => {
             if (lock.getLockState(LOCK_NAME)) {
-                event.preventDefault();
-                event.srcEvent.stopPropagation();
                 this._translatePanelEnd(event.deltaX - this.deltaX);
             }
         });
-
-        this.el.addEventListener(transitionEndEvent, (event) => {
-            this.removeAnimation();
-            event.stopPropagation();
-        }, false);
 
         this.imageEl.addEventListener('load', () => {
             this.event.emit(this.EVENT_NAME);
@@ -119,6 +109,7 @@ class Viewer {
     }
 
     _pinchStart() {
+        this.removeAnimation();
         this.panelEl.style.willChange = 'transform';
     }
 

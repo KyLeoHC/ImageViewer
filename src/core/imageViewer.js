@@ -4,8 +4,7 @@ import {
 import {
     query,
     removeElement,
-    setTranslateStyle,
-    transitionEndEvent
+    setTranslateStyle
 } from '../common/dom';
 import {
     LOCK_NAME,
@@ -109,15 +108,11 @@ class ImageViewer {
             mc.on('pinchend', this._dealWithScaleActionEnd.bind(this));
         }
         this.hammer = mc;
-
-        this.bodyEl.addEventListener(transitionEndEvent, () => {
-            this.bodyEl.classList.remove(ITEM_ANIMATION_CLASS);
-        }, false);
     }
 
     _dealWithMoveActionStart(event) {
         if (lock.getLockState(LOCK_NAME))return;
-
+        this.bodyEl.classList.remove(ITEM_ANIMATION_CLASS);
         this.opt.beforeSwipe && this.opt.beforeSwipe(this.currentIndex);
         this.deltaX = event.deltaX;
         this.bodyEl.style.willChange = 'transform';
@@ -125,6 +120,7 @@ class ImageViewer {
 
     _dealWithMoveAction(event, force) {
         if (lock.getLockState(LOCK_NAME) && !force)return;
+        force && this.bodyEl.classList.remove(ITEM_ANIMATION_CLASS);
         let distance = event.deltaX - this.deltaX;
         setTranslateStyle(this.bodyEl, this.translateX + distance, 0);
     }
