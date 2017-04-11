@@ -1,6 +1,6 @@
-var webpack = require('webpack');
-var path = require('path');
-var baseConfig = require('./webpack.config.base');
+let webpack = require('webpack');
+let path = require('path');
+let baseConfig = require('./webpack.config.base');
 
 baseConfig.output = {
     path: path.resolve(__dirname, 'dist'),

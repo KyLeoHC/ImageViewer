@@ -1,28 +1,51 @@
-var config = {
+const webpack = require('webpack');
+let config = {
     entry: {
         imageViewer: './src/index'
     },
     module: {
         noParse: /es6-promise\.js$/,
-        loaders: [
+        rules: [
             {
                 test: /\.js$/,
                 exclude: /node_modules/,
-                loader: 'babel'
+                use: [
+                    {
+                        loader: 'babel-loader'
+                    }
+                ]
             },
-            {test: /\.css$/, loader: 'style-loader!css-loader!postcss-loader'}
+            {
+                test: /\.css$/,
+                use: [
+                    {
+                        loader: 'style-loader'
+                    },
+                    {
+                        loader: 'css-loader'
+                    },
+                    {
+                        loader: 'postcss-loader'
+                    }
+                ]
+            }
         ]
     },
-    babel: {
-        presets: ['es2015'],
-        plugins: ['transform-runtime']
-    },
-    plugins: [],
-    postcss: () => {
-        return [
-            require('autoprefixer')
-        ];
-    }
+    plugins: [
+        new webpack.LoaderOptionsPlugin({
+            options: {
+                postcss: () => {
+                    return [
+                        require('autoprefixer')
+                    ];
+                },
+                babel: {
+                    presets: ['es2015'],
+                    plugins: ['transform-runtime']
+                }
+            }
+        })
+    ]
 };
 
 module.exports = config;
