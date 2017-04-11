@@ -49,7 +49,6 @@ class ImageViewer {
                     <div class="viewer"><div class="panel"><img></div></div>
                     <div class="viewer"><div class="panel"><img></div></div>
                 </div>
-                <div class="image-fade-out"></div>
                 <div class="image-footer"></div>
             </div>`;
 
