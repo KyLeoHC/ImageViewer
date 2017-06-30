@@ -1,7 +1,7 @@
-let warn = (msg) => {
-    console.warn('[ImageViewer]:' + msg);
+let debug = (msg) => {
+    window.console.log('[ImageViewer]:' + msg);
 };
 
 export {
-    warn
+    debug
 };

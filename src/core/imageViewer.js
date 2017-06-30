@@ -1,5 +1,5 @@
 import {
-    warn
+    debug
 } from '../common/debug';
 import {
     query,
@@ -289,13 +289,13 @@ class ImageViewer {
 
             this._updateCountElement();
         } else {
-            warn('illegal index!');
+            debug('illegal index!');
         }
     }
 
     setImageOption(images = [], startIndex = 0) {
         if (!images.length) {
-            warn('images array can not be empty!')
+            debug('images array can not be empty!')
         }
         this.images = images;
         this.imagesLength = images.length;

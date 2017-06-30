@@ -3,6 +3,9 @@ let config = {
     entry: {
         imageViewer: './src/index'
     },
+    resolve: {
+        extensions: ['.js']
+    },
     module: {
         noParse: /es6-promise\.js$/,
         rules: [
