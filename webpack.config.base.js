@@ -12,11 +12,9 @@ let config = {
             {
                 test: /\.js$/,
                 exclude: /node_modules/,
-                use: [
-                    {
-                        loader: 'babel-loader'
-                    }
-                ]
+                use: {
+                    loader: 'babel-loader'
+                }
             },
             {
                 test: /\.css$/,
@@ -28,27 +26,18 @@ let config = {
                         loader: 'css-loader'
                     },
                     {
-                        loader: 'postcss-loader'
+                        loader: 'postcss-loader',
+                        options: {
+                            plugins: () => [
+                                require('autoprefixer')()
+                            ]
+                        }
                     }
                 ]
             }
         ]
     },
-    plugins: [
-        new webpack.LoaderOptionsPlugin({
-            options: {
-                postcss: () => {
-                    return [
-                        require('autoprefixer')
-                    ];
-                },
-                babel: {
-                    presets: ['es2015'],
-                    plugins: ['transform-runtime']
-                }
-            }
-        })
-    ]
+    plugins: []
 };
 
 module.exports = config;
