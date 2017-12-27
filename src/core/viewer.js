@@ -15,11 +15,11 @@ class Viewer {
     constructor(imageViewer, el, width, height, index) {
         this.event = new Event(false);
         this.imageViewer = imageViewer;
-        this.el = el;             //.viewer类
-        this.panelEl = el.firstElementChild;//.panel类
+        this.el = el;              // .viewer类
+        this.panelEl = el.firstElementChild; // .panel类
         this.imageEl = query('img', this.el)[0];
         this.src = '';
-        this.index = index;        //viewer排序用，记录原始的数组位置
+        this.index = index;        // viewer排序用，记录原始的数组位置
         this.displayIndex = 0;
         this.width = width;
         this.height = height;
@@ -27,18 +27,18 @@ class Viewer {
         this.realHeight = 0;
         this.translateX = 0;
         this.translateY = 0;
-        this.scale = 1;            //缩放比例
-        this.currentScale = 1;     //当前正在缩放的倍数(临时保存,当事件结束后,会赋值回scale)
-        this.translatePanelX = 0;  //最终图片面板所在的X轴坐标
-        this.translatePanelY = 0;  //最终图片面板所在的Y轴坐标
-        this.currentPanelX = 0;    //当前图片面板所在的X轴坐标（手指尚未离开屏幕）
-        this.currentPanelY = 0;    //当前图片面板所在的Y轴坐标（手指尚未离开屏幕）
-        this.allowDistanceX = 0;   //图片放大后，允许拖动的最大X轴距离
-        this.allowDistanceY = 0;   //图片放大后，允许拖动的最大Y轴距离
-        this.needResetX = false;   //拖动图片超出边界时，需要重置一下x轴的坐标
-        this.needResetY = false;   //拖动图片超出边界时，需要重置一下y轴的坐标
-        this.deltaX = 0;           //存储起始的X轴偏移量
-        this.deltaY = 0;           //存储起始的Y轴偏移量
+        this.scale = 1;            // 缩放比例
+        this.currentScale = 1;     // 当前正在缩放的倍数(临时保存,当事件结束后,会赋值回scale)
+        this.translatePanelX = 0;  // 最终图片面板所在的X轴坐标
+        this.translatePanelY = 0;  // 最终图片面板所在的Y轴坐标
+        this.currentPanelX = 0;    // 当前图片面板所在的X轴坐标（手指尚未离开屏幕）
+        this.currentPanelY = 0;    // 当前图片面板所在的Y轴坐标（手指尚未离开屏幕）
+        this.allowDistanceX = 0;   // 图片放大后，允许拖动的最大X轴距离
+        this.allowDistanceY = 0;   // 图片放大后，允许拖动的最大Y轴距离
+        this.needResetX = false;   // 拖动图片超出边界时，需要重置一下x轴的坐标
+        this.needResetY = false;   // 拖动图片超出边界时，需要重置一下y轴的坐标
+        this.deltaX = 0;           // 存储起始的X轴偏移量
+        this.deltaY = 0;           // 存储起始的Y轴偏移量
         this.EVENT_NAME = 'IMG_LOAD_COMPLETE';
         this._bindEvent();
     }
@@ -178,7 +178,7 @@ class Viewer {
             needSwipe = this.imageViewer._dealWithMoveActionEnd({deltaX: this._calculate(this.currentPanelX, this.allowDistanceX)}, true);
         }
         if (needSwipe) {
-            //滑动到下一张，重置当前图片的尺寸
+            // 滑动到下一张，重置当前图片的尺寸
             this.init(this.displayIndex, true, null, false);
             setTimeout(() => {
                 lock.releaseLock(LOCK_NAME);

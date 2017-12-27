@@ -1,4 +1,4 @@
-let transformProp = (function getTransformProperty() {
+const transformProp = (function getTransformProperty() {
     let props = ['transform', 'webkitTransform', 'MozTransform', 'oTransform', 'msTransform'];
     let style = document.createElement('div').style, availProp = '';
     props.forEach(function (prop) {

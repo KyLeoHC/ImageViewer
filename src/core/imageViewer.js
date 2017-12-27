@@ -23,16 +23,16 @@ class ImageViewer {
         this.footerEl = null;
         this.currentNumberEl = null;
         this.totalNumberEl = null;
-        this.images = images; //图片数据
-        this.imagesLength = images.length; //图片数据
+        this.images = images; // 图片数据
+        this.imagesLength = images.length; // 图片数据
         this.container = opt.container || 'body';
-        this.enableScale = opt.enableScale === undefined ? true : opt.enableScale;//是否开启图片缩放功能
-        this.currentIndex = opt.startIndex || 0; //起始坐标，从0开始
+        this.enableScale = opt.enableScale === undefined ? true : opt.enableScale; // 是否开启图片缩放功能
+        this.currentIndex = opt.startIndex || 0; // 起始坐标，从0开始
         this.viewers = [];
         this.scaleStart = 1;
         this.width = 0;
         this.height = 0;
-        this.itemList = [];//各个图片容器元素的dom节点
+        this.itemList = []; // 各个图片容器元素的dom节点
         this.hammer = null;
         this.deltaX = 0;
         this.translateX = 0;
@@ -69,8 +69,8 @@ class ImageViewer {
         if (this.opt.footerRender) {
             this.footerEl.innerHTML = this.opt.footerRender();
         }
-        this.currentNumberEl = query('.number-current', this.el)[0];//当前滑动所在的图片下标的元素节点
-        this.totalNumberEl = query('.number-total', this.el)[0];//图片总数的元素节点
+        this.currentNumberEl = query('.number-current', this.el)[0]; // 当前滑动所在的图片下标的元素节点
+        this.totalNumberEl = query('.number-total', this.el)[0]; // 图片总数的元素节点
     }
 
     _init() {
@@ -94,7 +94,7 @@ class ImageViewer {
 
     _bindEvent() {
         let mc = new Hammer.Manager(this.el);
-        let hPinch = new Hammer.Pinch(),//前缀h代表hammer
+        let hPinch = new Hammer.Pinch(), // 前缀h代表hammer
             hPan = new Hammer.Pan({direction: Hammer.DIRECTION_HORIZONTAL}),
             hTap = new Hammer.Tap({taps: 2});
         mc.add([hPinch, hPan, hTap]);
@@ -111,7 +111,7 @@ class ImageViewer {
     }
 
     _dealWithMoveActionStart(event) {
-        if (lock.getLockState(LOCK_NAME))return;
+        if (lock.getLockState(LOCK_NAME)) return;
         this.bodyEl.classList.remove(ITEM_ANIMATION_CLASS);
         this.opt.beforeSwipe && this.opt.beforeSwipe(this.currentIndex);
         this.deltaX = event.deltaX;
@@ -119,21 +119,21 @@ class ImageViewer {
     }
 
     _dealWithMoveAction(event, force) {
-        if (lock.getLockState(LOCK_NAME) && !force)return;
+        if (lock.getLockState(LOCK_NAME) && !force) return;
         force && this.bodyEl.classList.remove(ITEM_ANIMATION_CLASS);
         let distance = event.deltaX - this.deltaX;
         setTranslateStyle(this.bodyEl, this.translateX + distance, 0);
     }
 
     _dealWithMoveActionEnd(event, force) {
-        if (lock.getLockState(LOCK_NAME) && !force)return;
+        if (lock.getLockState(LOCK_NAME) && !force) return;
         let distance = event.deltaX - this.deltaX, needSwipe = false, needBreak = false;
 
         if (this.currentIndex === 0 && distance > 0 && this.opt.swipeFirstRight) {
-            //当前图片是第一张，并且向右滑动
+            // 当前图片是第一张，并且向右滑动
             needBreak = this.opt.swipeFirstRight(this, Math.abs(distance));
         } else if (this.currentIndex === (this.imagesLength - 1) && distance < 0 && this.opt.swipeLastLeft) {
-            //当前图片是最后一张，并且向左滑动
+            // 当前图片是最后一张，并且向左滑动
             needBreak = this.opt.swipeLastLeft(this, Math.abs(distance));
         }
 
@@ -194,6 +194,10 @@ class ImageViewer {
 
     _getSpecificImage(index) {
         return this.images[index] || '';
+    }
+
+    _getPositionAndSize(index) {
+        // TODO: 默认的获取元素相对viewport坐标和尺寸函数
     }
 
     /**
@@ -316,7 +320,7 @@ class ImageViewer {
     open(index) {
         this.currentIndex = index === undefined ? this.currentIndex : index;
         if (!this.el) {
-            //仅仅实例化，但尚未初始化
+            // 仅仅实例化，但尚未初始化
             this._create();
             this._init();
             this._bindEvent();
