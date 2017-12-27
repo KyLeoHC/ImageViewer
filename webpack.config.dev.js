@@ -9,8 +9,9 @@ baseConfig.output = {
 };
 baseConfig.devServer = {
     contentBase: './demo',
-    host: '0.0.0.0',
+    // host: '0.0.0.0',
     port: '8084'
 };
+baseConfig.devtool = 'source-map';
 
 module.exports = baseConfig;

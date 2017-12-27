@@ -17,20 +17,33 @@ let config = {
                 }
             },
             {
-                test: /\.css$/,
+                test: /\.styl/,
                 use: [
                     {
-                        loader: 'style-loader'
+                        loader: 'style-loader',
+                        options: {
+                            sourceMap: true
+                        }
                     },
                     {
-                        loader: 'css-loader'
+                        loader: 'css-loader',
+                        options: {
+                            sourceMap: true
+                        }
                     },
                     {
                         loader: 'postcss-loader',
                         options: {
+                            sourceMap: true,
                             plugins: () => [
                                 require('autoprefixer')()
                             ]
+                        }
+                    },
+                    {
+                        loader: 'stylus-loader',
+                        options: {
+                            sourceMap: true
                         }
                     }
                 ]
