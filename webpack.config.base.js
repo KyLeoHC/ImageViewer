@@ -1,4 +1,5 @@
 const webpack = require('webpack');
+
 let config = {
     entry: {
         imageViewer: './src/index'

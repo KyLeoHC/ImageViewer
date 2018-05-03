@@ -12,6 +12,7 @@ import {
 } from '../common/profile';
 import lock from '../common/lock';
 import Hammer from '../lib/hammer';
+import Touch from './touch';
 import Viewer from './viewer';
 
 class ImageViewer {
@@ -33,9 +34,8 @@ class ImageViewer {
         this.width = 0;
         this.height = 0;
         this.itemList = []; // 各个图片容器元素的dom节点
-        this.hammer = null;
-        this.deltaX = 0;
         this.translateX = 0;
+        this.hammer = null;
     }
 
     _create() {
@@ -52,7 +52,7 @@ class ImageViewer {
                 <div class="image-footer"></div>
             </div>`;
 
-        let divEl = document.createElement('div');
+        const divEl = document.createElement('div');
         divEl.innerHTML = imageViewerTemplate;
         this.el = divEl.firstElementChild;
         query(this.container)[0].appendChild(this.el);
@@ -93,41 +93,44 @@ class ImageViewer {
     }
 
     _bindEvent() {
+        const touch = new Touch(this.el, {enableScale: this.enableScale});
         let mc = new Hammer.Manager(this.el);
         let hPinch = new Hammer.Pinch(), // 前缀h代表hammer
             hPan = new Hammer.Pan({direction: Hammer.DIRECTION_HORIZONTAL}),
             hTap = new Hammer.Tap({taps: 2});
         mc.add([hPinch, hPan, hTap]);
-        mc.on('panstart', this._dealWithMoveActionStart.bind(this));
-        mc.on('panmove', this._dealWithMoveAction.bind(this));
-        mc.on('panend', this._dealWithMoveActionEnd.bind(this));
+        touch.on('panstart', this._dealWithMoveActionStart.bind(this));
+        touch.on('panmove', this._dealWithMoveAction.bind(this));
+        touch.on('panend', this._dealWithMoveActionEnd.bind(this));
         if (this.enableScale) {
             mc.on('tap', this.reset.bind(this));
-            mc.on('pinchstart', this._dealWithScaleActionStart.bind(this));
-            mc.on('pinch', this._dealWithScaleAction.bind(this));
-            mc.on('pinchend', this._dealWithScaleActionEnd.bind(this));
+            touch.on('pinchstart', this._dealWithScaleActionStart.bind(this));
+            touch.on('pinch', this._dealWithScaleAction.bind(this));
+            touch.on('pinchend', this._dealWithScaleActionEnd.bind(this));
         }
-        this.hammer = mc;
+        this.hammer = touch;
     }
 
     _dealWithMoveActionStart(event) {
+        console.log(event, '_dealWithMoveActionStart');
         if (lock.getLockState(LOCK_NAME)) return;
         this.bodyEl.classList.remove(ITEM_ANIMATION_CLASS);
         this.opt.beforeSwipe && this.opt.beforeSwipe(this.currentIndex);
-        this.deltaX = event.deltaX;
         this.bodyEl.style.willChange = 'transform';
     }
 
     _dealWithMoveAction(event, force) {
+        // console.log(event, '_dealWithMoveAction');
         if (lock.getLockState(LOCK_NAME) && !force) return;
         force && this.bodyEl.classList.remove(ITEM_ANIMATION_CLASS);
-        let distance = event.deltaX - this.deltaX;
-        setTranslateStyle(this.bodyEl, this.translateX + distance, 0);
+        setTranslateStyle(this.bodyEl, this.translateX + event.deltaX, 0);
     }
 
     _dealWithMoveActionEnd(event, force) {
         if (lock.getLockState(LOCK_NAME) && !force) return;
-        let distance = event.deltaX - this.deltaX, needSwipe = false, needBreak = false;
+        const distance = event.deltaX;
+        let needSwipe = false;
+        let needBreak = false;
 
         if (this.currentIndex === 0 && distance > 0 && this.opt.swipeFirstRight) {
             // 当前图片是第一张，并且向右滑动
@@ -150,12 +153,12 @@ class ImageViewer {
             }
             this.opt.afterSwipe && this.opt.afterSwipe(this.currentIndex);
         }
-        this.deltaX = 0;
         this.bodyEl.style.willChange = 'auto';
         return needSwipe;
     }
 
     _dealWithScaleActionStart(event) {
+        console.log(event, '_dealWithScaleActionStart');
         this.scaleStart = event.scale;
         this.viewers[1]._pinchStart();
     }
@@ -204,7 +207,7 @@ class ImageViewer {
      * 重置当前图片的缩放
      */
     reset() {
-        let viewer = this.viewers[1];
+        const viewer = this.viewers[1];
         viewer.init(viewer.displayIndex, true, null, false);
         setTimeout(() => {
             lock.releaseLock(LOCK_NAME);

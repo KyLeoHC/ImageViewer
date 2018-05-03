@@ -37,8 +37,6 @@ class Viewer {
         this.allowDistanceY = 0;   // 图片放大后，允许拖动的最大Y轴距离
         this.needResetX = false;   // 拖动图片超出边界时，需要重置一下x轴的坐标
         this.needResetY = false;   // 拖动图片超出边界时，需要重置一下y轴的坐标
-        this.deltaX = 0;           // 存储起始的X轴偏移量
-        this.deltaY = 0;           // 存储起始的Y轴偏移量
         this.EVENT_NAME = 'IMG_LOAD_COMPLETE';
         this._bindEvent();
     }
@@ -86,20 +84,16 @@ class Viewer {
         mc.add(new Hammer.Pan());
         mc.on('panstart', (event) => {
             this.removeAnimation();
-            if (lock.getLockState(LOCK_NAME)) {
-                this.deltaX = event.deltaX;
-                this.deltaY = event.deltaY;
-            }
         });
         mc.on('panmove', (event) => {
             if (lock.getLockState(LOCK_NAME)) {
                 event.preventDefault();
-                this._translatePanel(event.deltaX - this.deltaX, event.deltaY - this.deltaY);
+                this._translatePanel(event.deltaX, event.deltaY);
             }
         });
         mc.on('panend', (event) => {
             if (lock.getLockState(LOCK_NAME)) {
-                this._translatePanelEnd(event.deltaX - this.deltaX);
+                this._translatePanelEnd(event.deltaX);
             }
         });
 

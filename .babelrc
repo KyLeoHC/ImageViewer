@@ -1,15 +1,5 @@
 {
   "presets": [
-    "es2015"
-  ],
-  "plugins": [
-    [
-      "transform-runtime",
-      {
-        "helpers": false,
-        "polyfill": false,
-        "regenerator": false
-      }
-    ]
+    "env"
   ]
 }

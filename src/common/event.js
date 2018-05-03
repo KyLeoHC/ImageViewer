@@ -55,7 +55,7 @@ class Event {
         }]);
         if (length) {
             // 仅当存在处理函数时才执行
-            handlers.forEach((handler) => {
+            handlers.forEach(handler => {
                 !event.stop && handler.apply(this, args);
             });
         }
