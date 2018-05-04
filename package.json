@@ -1,6 +1,6 @@
 {
   "name": "image-viewer-gallery",
-  "version": "1.0.6",
+  "version": "2.0.0",
   "scripts": {
     "dev": "webpack-dev-server --config webpack.config.dev.js --inline --hot --open",
     "dist": "cross-env NODE_ENV=production webpack --display-optimization-bailout --config webpack.config.dist.js"

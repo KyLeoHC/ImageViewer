@@ -97,8 +97,8 @@
     document.getElementsByClassName('img-list')[0].addEventListener('click', function (event) {
         var index = event.target.getAttribute('data-index');
         if (index !== undefined && index !== null) {
-            //imageViewer.open(parseInt(index));
-            imageViewer.open(0);
+            imageViewer.open(parseInt(index));
+            // imageViewer.open(0);
         }
     }, false);
 </script>

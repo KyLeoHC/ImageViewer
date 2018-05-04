@@ -23,19 +23,20 @@ let config = {
                     {
                         loader: 'style-loader',
                         options: {
-                            sourceMap: true
+                            sourceMap: false
                         }
                     },
                     {
                         loader: 'css-loader',
                         options: {
-                            sourceMap: true
+                            sourceMap: false,
+                            minimize: true
                         }
                     },
                     {
                         loader: 'postcss-loader',
                         options: {
-                            sourceMap: true,
+                            sourceMap: false,
                             plugins: () => [
                                 require('autoprefixer')()
                             ]
@@ -44,7 +45,7 @@ let config = {
                     {
                         loader: 'stylus-loader',
                         options: {
-                            sourceMap: true
+                            sourceMap: false
                         }
                     }
                 ]

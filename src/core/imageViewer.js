@@ -11,7 +11,6 @@ import {
     ITEM_ANIMATION_CLASS
 } from '../common/profile';
 import lock from '../common/lock';
-import Hammer from '../lib/hammer';
 import Touch from './touch';
 import Viewer from './viewer';
 
@@ -31,11 +30,12 @@ class ImageViewer {
         this.currentIndex = opt.startIndex || 0; // 起始坐标，从0开始
         this.viewers = [];
         this.scaleStart = 1;
+        this.isScale = false;
         this.width = 0;
         this.height = 0;
         this.itemList = []; // 各个图片容器元素的dom节点
         this.translateX = 0;
-        this.hammer = null;
+        this.touch = null;
     }
 
     _create() {
@@ -94,81 +94,105 @@ class ImageViewer {
 
     _bindEvent() {
         const touch = new Touch(this.el, {enableScale: this.enableScale});
-        let mc = new Hammer.Manager(this.el);
-        let hPinch = new Hammer.Pinch(), // 前缀h代表hammer
-            hPan = new Hammer.Pan({direction: Hammer.DIRECTION_HORIZONTAL}),
-            hTap = new Hammer.Tap({taps: 2});
-        mc.add([hPinch, hPan, hTap]);
-        touch.on('panstart', this._dealWithMoveActionStart.bind(this));
-        touch.on('panmove', this._dealWithMoveAction.bind(this));
-        touch.on('panend', this._dealWithMoveActionEnd.bind(this));
+        touch.on('panstart', event => this._dealAction(event, 'panstart'));
+        touch.on('panmove', event => this._dealAction(event, 'panmove'));
+        touch.on('panend', event => this._dealAction(event, 'panend'));
         if (this.enableScale) {
-            mc.on('tap', this.reset.bind(this));
-            touch.on('pinchstart', this._dealWithScaleActionStart.bind(this));
-            touch.on('pinch', this._dealWithScaleAction.bind(this));
-            touch.on('pinchend', this._dealWithScaleActionEnd.bind(this));
+            // mc.on('tap', this.reset.bind(this));
+            touch.on('pinchstart', event => this._dealWithScaleActionStart(event));
+            touch.on('pinch', event => this._dealWithScaleAction(event));
+            touch.on('pinchend', event => this._dealWithScaleActionEnd(event));
         }
-        this.hammer = touch;
+        this.touch = touch;
+    }
+
+    _dealAction(event, type) {
+        if (this.isScale) return;
+        switch (type) {
+            case 'panstart':
+                this._dealWithMoveActionStart(event);
+                break;
+            case 'panmove':
+                this._dealWithMoveAction(event);
+                break;
+            case 'panend':
+                this._dealWithMoveActionEnd(event);
+                break;
+        }
     }
 
     _dealWithMoveActionStart(event) {
-        console.log(event, '_dealWithMoveActionStart');
-        if (lock.getLockState(LOCK_NAME)) return;
-        this.bodyEl.classList.remove(ITEM_ANIMATION_CLASS);
-        this.opt.beforeSwipe && this.opt.beforeSwipe(this.currentIndex);
-        this.bodyEl.style.willChange = 'transform';
+        if (lock.getLockState(LOCK_NAME)) {
+            this._getCurrentViewer()._translateStart(event);
+        } else {
+            this.bodyEl.classList.remove(ITEM_ANIMATION_CLASS);
+            this.opt.beforeSwipe && this.opt.beforeSwipe(this.currentIndex);
+            this.bodyEl.style.willChange = 'transform';
+        }
     }
 
     _dealWithMoveAction(event, force) {
-        // console.log(event, '_dealWithMoveAction');
-        if (lock.getLockState(LOCK_NAME) && !force) return;
-        force && this.bodyEl.classList.remove(ITEM_ANIMATION_CLASS);
-        setTranslateStyle(this.bodyEl, this.translateX + event.deltaX, 0);
+        if (lock.getLockState(LOCK_NAME) && !force) {
+            this._getCurrentViewer()._translatePanel(event);
+        } else {
+            force && this.bodyEl.classList.remove(ITEM_ANIMATION_CLASS);
+            setTranslateStyle(this.bodyEl, this.translateX + event.deltaX, 0);
+        }
     }
 
     _dealWithMoveActionEnd(event, force) {
-        if (lock.getLockState(LOCK_NAME) && !force) return;
-        const distance = event.deltaX;
-        let needSwipe = false;
-        let needBreak = false;
+        if (lock.getLockState(LOCK_NAME) && !force) {
+            this._getCurrentViewer()._translatePanelEnd(event);
+        } else {
+            const distance = event.deltaX;
+            let needSwipe = false;
+            let needBreak = false;
 
-        if (this.currentIndex === 0 && distance > 0 && this.opt.swipeFirstRight) {
-            // 当前图片是第一张，并且向右滑动
-            needBreak = this.opt.swipeFirstRight(this, Math.abs(distance));
-        } else if (this.currentIndex === (this.imagesLength - 1) && distance < 0 && this.opt.swipeLastLeft) {
-            // 当前图片是最后一张，并且向左滑动
-            needBreak = this.opt.swipeLastLeft(this, Math.abs(distance));
-        }
-
-        if (!needBreak) {
-            distance !== 0 && this.bodyEl.classList.add(ITEM_ANIMATION_CLASS);
-            if (distance !== 0 && this._checkDistance(distance)) {
-                this.viewers.forEach((viewer) => {
-                    viewer.removeAnimation();
-                });
-                needSwipe = distance > 0 ? this.swipeToPrev() : this.swipeToNext();
-                this._updateCountElement();
-            } else {
-                setTranslateStyle(this.bodyEl, this.translateX, 0);
+            if (this.currentIndex === 0 && distance > 0 && this.opt.swipeFirstRight) {
+                // 当前图片是第一张，并且向右滑动
+                needBreak = this.opt.swipeFirstRight(this, Math.abs(distance));
+            } else if (this.currentIndex === (this.imagesLength - 1) && distance < 0 && this.opt.swipeLastLeft) {
+                // 当前图片是最后一张，并且向左滑动
+                needBreak = this.opt.swipeLastLeft(this, Math.abs(distance));
             }
-            this.opt.afterSwipe && this.opt.afterSwipe(this.currentIndex);
+
+            if (!needBreak) {
+                distance !== 0 && this.bodyEl.classList.add(ITEM_ANIMATION_CLASS);
+                if (distance !== 0 && this._checkDistance(distance)) {
+                    this.viewers.forEach((viewer) => {
+                        viewer.removeAnimation();
+                    });
+                    needSwipe = distance > 0 ? this.swipeToPrev() : this.swipeToNext();
+                    this._updateCountElement();
+                } else {
+                    setTranslateStyle(this.bodyEl, this.translateX, 0);
+                }
+                this.opt.afterSwipe && this.opt.afterSwipe(this.currentIndex);
+            }
+            this.bodyEl.style.willChange = 'auto';
+            return needSwipe;
         }
-        this.bodyEl.style.willChange = 'auto';
-        return needSwipe;
     }
 
     _dealWithScaleActionStart(event) {
-        console.log(event, '_dealWithScaleActionStart');
+        this.isScale = true;
         this.scaleStart = event.scale;
-        this.viewers[1]._pinchStart();
+        this._getCurrentViewer()._pinchStart();
     }
 
     _dealWithScaleAction(event) {
-        this.viewers[1]._pinch(event.scale - this.scaleStart);
+        this._getCurrentViewer()._pinch(event.scale - this.scaleStart);
     }
 
     _dealWithScaleActionEnd() {
-        this.viewers[1]._pinchEnd();
+        this._getCurrentViewer()._pinchEnd();
+        setTimeout(() => {
+            this.isScale = false;
+        }, 0);
+    }
+
+    _getCurrentViewer() {
+        return this.viewers[1];
     }
 
     _checkDistance(distance = 0) {

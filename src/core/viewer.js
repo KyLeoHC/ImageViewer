@@ -9,7 +9,6 @@ import {
 } from '../common/profile';
 import lock from '../common/lock';
 import Event from '../common/event';
-import Hammer from '../lib/hammer';
 
 class Viewer {
     constructor(imageViewer, el, width, height, index) {
@@ -80,23 +79,6 @@ class Viewer {
     }
 
     _bindEvent() {
-        let mc = new Hammer.Manager(this.panelEl);
-        mc.add(new Hammer.Pan());
-        mc.on('panstart', (event) => {
-            this.removeAnimation();
-        });
-        mc.on('panmove', (event) => {
-            if (lock.getLockState(LOCK_NAME)) {
-                event.preventDefault();
-                this._translatePanel(event.deltaX, event.deltaY);
-            }
-        });
-        mc.on('panend', (event) => {
-            if (lock.getLockState(LOCK_NAME)) {
-                this._translatePanelEnd(event.deltaX);
-            }
-        });
-
         this.imageEl.addEventListener('load', () => {
             this.event.emit(this.EVENT_NAME);
         }, false);
@@ -138,8 +120,14 @@ class Viewer {
         return a > 0 ? (a - b) : (a + b);
     }
 
-    _translatePanel(translatePanelX, translatePanelY) {
+    _translateStart() {
+        this.removeAnimation();
+    }
+
+    _translatePanel(event) {
         let tempX = 0;
+        const translatePanelX = event.deltaX;
+        const translatePanelY = event.deltaY;
         if (this.realWidth <= this.width && translatePanelX) {
             this.imageViewer._dealWithMoveAction({deltaX: translatePanelX}, true);
         } else {
@@ -164,8 +152,9 @@ class Viewer {
         return this;
     }
 
-    _translatePanelEnd(translatePanelX) {
+    _translatePanelEnd(event) {
         let needSwipe = false;
+        const translatePanelX = event.deltaX;
         if (this.realWidth <= this.width && translatePanelX) {
             needSwipe = this.imageViewer._dealWithMoveActionEnd({deltaX: translatePanelX}, true);
         } else if (this.needResetX) {
