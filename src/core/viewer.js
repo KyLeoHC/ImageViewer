@@ -42,7 +42,16 @@ class Viewer {
         this._bindEvent();
     }
 
-    init(displayIndex = 0, resetScale, fn, needLoad = true, src) {
+    /**
+     * 初始化图片以及容器
+     * @param displayIndex 显示的位置，-1代表左边，0代表当前(即中间位置，目前显示的那张)，1代表右边
+     * @param resetScale 是否重置缩放倍数
+     * @param fn 初始化完成的回调函数
+     * @param needLoad 是否需要加载图片
+     * @param src 小图的url
+     * @param largeSrc 大图的url，如果传递该参数，则会先展示小图再加载大图
+     */
+    init(displayIndex = 0, resetScale, fn, needLoad = true, src, largeSrc) {
         const _initImage = () => {
             if (resetScale) {
                 this.scale = 1;
@@ -70,15 +79,21 @@ class Viewer {
             this.src = src;
             this.imageEl.src = this.src;
             this.imageEl.style.display = 'none';
+            if (src) {
+                this.tipsEl.style.display = 'inline-block';
+                this.tipsEl.innerText = '图片加载中';
+            }
             this.event.on(this.SUCCESS_EVENT, () => {
-                _initImage();
-                this.tipsEl.style.display = 'none';
+                // 如果图片尚未加载完就切换下一张图片，那么图片的url是不一样的
+                if (src && src === this.src) {
+                    _initImage();
+                    this.tipsEl.style.display = 'none';
+                }
             });
             this.event.on(this.FAIL_EVENT, () => {
-                // _initImage();
-                this.imageEl.style.display = 'none';
-                if (src) {
-                    this.tipsEl.style.display = 'inline-block';
+                if (src && src === this.src) {
+                    this.imageEl.style.display = 'none';
+                    this.tipsEl.innerText = '图片加载失败';
                 }
             });
             setTranslateStyle(this.el, this.displayIndex * this.width, this.translateY);
@@ -213,6 +228,10 @@ class Viewer {
     removeAnimation() {
         this.panelEl.classList.remove(ITEM_ANIMATION_CLASS);
         this.el.classList.remove(ITEM_ANIMATION_CLASS);
+    }
+
+    clearImg() {
+        this.src = this.imageEl.src = '';
     }
 }
 

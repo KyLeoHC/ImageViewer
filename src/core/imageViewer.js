@@ -17,6 +17,8 @@ import lock from '../common/lock';
 import Touch from './touch';
 import Viewer from './viewer';
 
+const defaultImgOption = {small: '', url: ''};
+
 class ImageViewer {
     constructor(images = [], opt = {}) {
         this.opt = opt;
@@ -52,9 +54,9 @@ class ImageViewer {
                 <div class="image-header"></div>
                 <div class="image-body">
                     <div class="viewer-wrapper">
-                        <div class="viewer"><div class="panel"><img><span>图片加载失败</span></div></div>
-                        <div class="viewer"><div class="panel"><img><span>图片加载失败</span></div></div>
-                        <div class="viewer"><div class="panel"><img><span>图片加载失败</span></div></div>     
+                        <div class="viewer"><div class="panel"><img><span></span></div></div>
+                        <div class="viewer"><div class="panel"><img><span></span></div></div>
+                        <div class="viewer"><div class="panel"><img><span></span></div></div>     
                     </div>
                 </div>
                 <div class="image-footer"></div>
@@ -199,7 +201,6 @@ class ImageViewer {
     }
 
     _dealWithScaleActionStart(event) {
-        console.log('scale start');
         this.isScale = true;
         this.scaleStart = event.scale;
         this._getCurrentViewer()._pinchStart();
@@ -210,7 +211,6 @@ class ImageViewer {
     }
 
     _dealWithScaleActionEnd() {
-        console.log('scale end');
         this._getCurrentViewer()._pinchEnd();
         window.requestAnimationFrame(() => {
             this.isScale = false;
@@ -230,11 +230,11 @@ class ImageViewer {
         if (this.opt.loop && this.imagesLength > 2) {
             minuend = this.currentIndex === 0 ? this.imagesLength : this.currentIndex;
         }
-        return this.images[minuend - 1] || {url: ''};
+        return this.images[minuend - 1] || defaultImgOption;
     }
 
     _getCurrentImage() {
-        return this.images[this.currentIndex] || {url: ''};
+        return this.images[this.currentIndex] || defaultImgOption;
     }
 
     _getNextImage() {
@@ -242,11 +242,11 @@ class ImageViewer {
         if (this.opt.loop && this.imagesLength > 2) {
             addend = this.currentIndex === this.imagesLength - 1 ? -1 : this.currentIndex;
         }
-        return this.images[addend + 1] || {url: ''};
+        return this.images[addend + 1] || defaultImgOption;
     }
 
     _getSpecificImage(index) {
-        return this.images[index] || {url: ''};
+        return this.images[index] || defaultImgOption;
     }
 
     _getPositionAndSize(el) {
@@ -312,15 +312,11 @@ class ImageViewer {
                 window.requestAnimationFrame(() => {
                     this.el.style.opacity = 1;
                     this.bodyEl.style.visibility = 'visible';
-                    // style.visibility = 'hidden';
-                    // style.willChange = 'auto';
                     this.animationEl.classList.add('hide');
                 });
             }
         };
-        this.animationEl.children[0].src = image.small || image.url;
-        // style.display = 'block';
-        // style.willChange = 'transform';
+        this.animationEl.children[0].src = image.small;
         this.animationEl.classList.remove('hide');
         animationFn();
     }
@@ -382,14 +378,12 @@ class ImageViewer {
             } else {
                 window.requestAnimationFrame(() => {
                     this.el.style.display = 'none';
-                    // style.willChange = 'auto';
+                    this._getCurrentViewer().clearImg();
                     this.animationEl.classList.add('hide');
                 });
             }
         };
         this.animationEl.children[0].src = image.url;
-        // style.visibility = 'visible';
-        // style.willChange = 'transform';
         this.animationEl.classList.remove('hide');
         animationFn();
     }
@@ -480,12 +474,12 @@ class ImageViewer {
             this.translateX = 0;
             setTranslateStyle(this.viewerWrapperEl, 0, 0);
 
-            this.viewers = this.viewers.sort(function (a, b) {
+            this.viewers = this.viewers.sort((a, b) => {
                 return a.index < b.index;
             });
-            this.viewers[0].init(LEFT_IMG, true, null, true, this._getPrevImage().url);
-            this.viewers[1].init(CENTER_IMG, true, callback, true, this._getCurrentImage().url);
-            this.viewers[2].init(RIGHT_IMG, true, null, true, this._getNextImage().url);
+            this.viewers[0].init(LEFT_IMG, true, null, true, this._getPrevImage().small);
+            this.viewers[1].init(CENTER_IMG, true, callback, true, this._getCurrentImage().small, this._getCurrentImage().url);
+            this.viewers[2].init(RIGHT_IMG, true, null, true, this._getNextImage().small);
 
             this._updateCountElement();
         } else {
@@ -512,9 +506,10 @@ class ImageViewer {
             const currentImage = this._getCurrentImage();
             if (this.opt.fadeOut && currentImage.el) {
                 this.bodyEl.style.visibility = 'hidden';
-                currentImage.el && this._fadeOut(currentImage);
+                this._fadeOut(currentImage);
             } else {
                 this.el.style.display = 'none';
+                this._getCurrentViewer().clearImg();
             }
         }
     }
