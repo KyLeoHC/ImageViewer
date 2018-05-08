@@ -5,24 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
     <title>image viewer</title>
     <style>
-        html, body, .container {
-            height: 100%;
-            margin: 0;
-            overflow-y: scroll;
-            transform: translateZ(0);
-            -webkit-transform: translateZ(0);
-            -webkit-overflow-scrolling: touch;
-        }
-
         .img-list {
             padding: 10px;
         }
 
-        .img-list p {
+        .img-list > div {
             overflow: hidden;
         }
 
-        .img-list p img {
+        .img-list > div img {
             max-width: 100%;
             max-height: 100%;
         }
@@ -43,63 +34,76 @@
 <body>
 <div class="container">
     <div class="img-list">
-        <p><img src="images/2.jpg" data-index="0"></p>
-        <p><img src="images/3.jpg" data-index="1"></p>
-        <p><img src="images/4.jpg" data-index="2"></p>
-        <p><img src="images/5.jpg" data-index="3"></p>
-        <p><img src="images/6.jpg" data-index="4"></p>
-        <p><img src="images/7.jpg" data-index="5"></p>
-        <p><img src="images/8.jpg" data-index="5"></p>
+        <div><img id="img1" src="images/2.jpg" data-index="0"></div>
+        <div><img id="img2" src="images/3.jpg" data-index="1"></div>
+        <div><img id="img3" src="images/4.jpg" data-index="2"></div>
+        <div><img id="img4" src="images/5.jpg" data-index="3"></div>
+        <div><img id="img5" src="images/6.jpg" data-index="4"></div>
+        <div><img id="img6" src="images/7.jpg" data-index="5"></div>
+        <div><img id="img7" src="images/8.jpg" data-index="6"></div>
     </div>
 </div>
-<!--<script src="//www.freeui.org/imageViewer/build/debuggap.js"></script>-->
+<script src="lib/fastclick.js"></script>
 <script src="build/imageViewer.js"></script>
 <script type="text/javascript">
-    //    var testImages = ['images/1_1.png', 'images/1_2.png', 'images/1_3.png'];
-    var images = ['images/2.jpg', 'images/3.jpg', 'images/4.jpg', 'images/5.jpg', 'images/6.jpg', 'images/7.jpg', 'images/8.jpg'];
-    var imageViewer = new ImageViewer(images, {
-        container: 'body',
-        enableScale: true,
-        startIndex: 0,
-        headerRender: function () {
-            setTimeout(function () {
-                document.getElementById('close').addEventListener('click', function () {
-                    imageViewer.close();
-                }, false);
-            }, 0);
-            return '<div id="close">关闭</div>';
-        },
-        footerRender: function () {
-            return '<span class="number-current"></span>/<span class="number-total"></span>';
-        },
-        beforeSwipe: function (current) {
-            console.info('current-before: ' + current);
-        },
-        afterSwipe: function (current) {
-            console.info('current-after: ' + current);
-        },
-        swipeLastLeft: function (imageViewer, distance) {
-            console.log('swipeLastLeft', distance);
-//            if (distance > 50) {
-//                imageViewer.setImageOption(['images/4.jpg']);
-//                return true;
-//            }
-        },
-        swipeFirstRight: function (imageViewer, distance) {
-            console.log('swipeFirstRight', distance);
-//            if (distance > 30) {
-//                imageViewer.setImageOption(['images/5.jpg', 'images/6.jpg', 'images/7.jpg']);
-//                return true;
-//            }
-        }
-    });
+    document.addEventListener('DOMContentLoaded', function () {
+        FastClick.attach(document.body);
 
-    document.getElementsByClassName('img-list')[0].addEventListener('click', function (event) {
-        var index = event.target.getAttribute('data-index');
-        if (index !== undefined && index !== null) {
-            imageViewer.open(parseInt(index));
-            // imageViewer.open(0);
-        }
+        var images = [
+            {small: 'images/2.jpg', url: 'images/2.jpg', el: document.getElementById('img1')},
+            {small: 'images/3.jpg', url: 'images/3.jpg', el: document.getElementById('img2')},
+            {small: 'images/4.jpg', url: 'images/4.jpg', el: document.getElementById('img3')},
+            {small: 'images/5.jpg', url: 'images/5.jpg', el: document.getElementById('img4')},
+            {small: 'images/6.jpg', url: 'images/6.jpg', el: document.getElementById('img5')},
+            {small: 'images/7.jpg', url: 'images/7.jpg', el: document.getElementById('img6')},
+            {small: 'images/8.jpg', url: 'images/8.jpg', el: document.getElementById('img7')}
+        ];
+        var imageViewer = new ImageViewer(images, {
+            container: 'body',
+            enableScale: true,
+            fadeIn: true,
+            fadeOut: true,
+            startIndex: 0,
+            headerRender: function () {
+                setTimeout(function () {
+                    document.getElementById('close').addEventListener('click', function () {
+                        imageViewer.close();
+                    }, false);
+                }, 0);
+                return '<div id="close">关闭</div>';
+            },
+            footerRender: function () {
+                return '<span class="number-current"></span>/<span class="number-total"></span>';
+            },
+            beforeSwipe: function (current) {
+                console.info('current-before: ' + current);
+            },
+            afterSwipe: function (current) {
+                console.info('current-after: ' + current);
+            },
+            swipeLastLeft: function (imageViewer, distance) {
+                console.log('swipeLastLeft', distance);
+                // if (distance > 50) {
+                //     imageViewer.setImageOption(['images/4.jpg']);
+                //     return true;
+                // }
+            },
+            swipeFirstRight: function (imageViewer, distance) {
+                console.log('swipeFirstRight', distance);
+                // if (distance > 30) {
+                //     imageViewer.setImageOption(['images/5.jpg', 'images/6.jpg', 'images/7.jpg']);
+                //     return true;
+                // }
+            }
+        });
+
+        document.getElementsByClassName('img-list')[0].addEventListener('click', function (event) {
+            var index = event.target.getAttribute('data-index');
+            if (index) {
+                imageViewer.open(parseInt(index));
+                // imageViewer.open(0);
+            }
+        }, false);
     }, false);
 </script>
 </body>

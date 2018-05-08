@@ -1,7 +1,3 @@
-/* AlloyFinger v0.1.10
- * By dntzhang
- * Github: https://github.com/AlloyTeam/AlloyFinger
- */
 ;(function () {
     function getLen(v) {
         return Math.sqrt(v.x * v.x + v.y * v.y);

@@ -17,6 +17,7 @@ class Viewer {
         this.el = el;              // .viewer类
         this.panelEl = el.firstElementChild; // .panel类
         this.imageEl = query('img', this.el)[0];
+        this.tipsEl = query('span', this.el)[0];
         this.src = '';
         this.index = index;        // viewer排序用，记录原始的数组位置
         this.displayIndex = 0;
@@ -36,7 +37,8 @@ class Viewer {
         this.allowDistanceY = 0;   // 图片放大后，允许拖动的最大Y轴距离
         this.needResetX = false;   // 拖动图片超出边界时，需要重置一下x轴的坐标
         this.needResetY = false;   // 拖动图片超出边界时，需要重置一下y轴的坐标
-        this.EVENT_NAME = 'IMG_LOAD_COMPLETE';
+        this.SUCCESS_EVENT = 'LOAD_COMPLETE';
+        this.FAIL_EVENT = 'LOAD_FAIL';
         this._bindEvent();
     }
 
@@ -68,19 +70,29 @@ class Viewer {
             this.src = src;
             this.imageEl.src = this.src;
             this.imageEl.style.display = 'none';
-            this.event.on(this.EVENT_NAME, () => {
+            this.event.on(this.SUCCESS_EVENT, () => {
                 _initImage();
+                this.tipsEl.style.display = 'none';
+            });
+            this.event.on(this.FAIL_EVENT, () => {
+                // _initImage();
+                this.imageEl.style.display = 'none';
+                if (src) {
+                    this.tipsEl.style.display = 'inline-block';
+                }
             });
             setTranslateStyle(this.el, this.displayIndex * this.width, this.translateY);
         } else {
             _initImage();
         }
-        return this;
     }
 
     _bindEvent() {
         this.imageEl.addEventListener('load', () => {
-            this.event.emit(this.EVENT_NAME);
+            this.event.emit(this.SUCCESS_EVENT);
+        }, false);
+        this.imageEl.addEventListener('error', () => {
+            this.event.emit(this.FAIL_EVENT);
         }, false);
     }
 
@@ -95,7 +107,6 @@ class Viewer {
             this.currentScale = currentScale;
             setScaleAndTranslateStyle(this.panelEl, this.currentScale, this.translatePanelX, this.translatePanelY);
         }
-        return this;
     }
 
     _pinchEnd(scale) {
@@ -105,22 +116,24 @@ class Viewer {
         this.allowDistanceX = (this.realWidth - this.width) / 2 / this.scale + 2;
         this.allowDistanceY = (this.realHeight - this.height) / 2 / this.scale + 2;
         if (this.realWidth < this.width || this.realHeight < this.height) {
+            this.addAnimation();
             this.init(this.displayIndex, false, null, false);
         }
-        if (this.isScale()) {
-            lock.getLock(LOCK_NAME);
-        } else {
-            lock.releaseLock(LOCK_NAME);
-        }
-        this.panelEl.style.willChange = 'auto';
-        return this;
+        window.requestAnimationFrame(() => {
+            if (this.isScale()) {
+                lock.getLock(LOCK_NAME);
+            } else {
+                lock.releaseLock(LOCK_NAME);
+            }
+            this.panelEl.style.willChange = 'auto';
+        });
     }
 
     _calculate(a, b) {
         return a > 0 ? (a - b) : (a + b);
     }
 
-    _translateStart() {
+    _translatePanelStart() {
         this.removeAnimation();
     }
 
@@ -149,7 +162,6 @@ class Viewer {
             this.needResetY = !(-this.allowDistanceY < this.currentPanelY && this.currentPanelY < this.allowDistanceY);
         }
         setScaleAndTranslateStyle(this.panelEl, this.scale, tempX, this.currentPanelY);
-        return this;
     }
 
     _translatePanelEnd(event) {
@@ -163,27 +175,30 @@ class Viewer {
         if (needSwipe) {
             // 滑动到下一张，重置当前图片的尺寸
             this.init(this.displayIndex, true, null, false);
-            setTimeout(() => {
+            window.requestAnimationFrame(() => {
                 lock.releaseLock(LOCK_NAME);
-            }, 0);
+            });
         } else {
             if (this.needResetX) {
-                this.translatePanelX = this.currentPanelX > 0 ? this.allowDistanceX : -this.allowDistanceX;
+                this.translatePanelX = this.currentPanelX > 0 ?
+                    this.allowDistanceX : -this.allowDistanceX;
             } else {
                 this.translatePanelX = this.currentPanelX;
             }
             if (this.needResetY) {
-                this.translatePanelY = this.currentPanelY > 0 ? this.allowDistanceY : -this.allowDistanceY;
+                this.translatePanelY = this.currentPanelY > 0 ?
+                    this.allowDistanceY : -this.allowDistanceY;
             } else {
                 this.translatePanelY = this.currentPanelY;
             }
             if (this.needResetX || this.needResetY) {
-                this.addAnimation();
-                setScaleAndTranslateStyle(this.panelEl, this.scale, this.translatePanelX, this.translatePanelY);
+                window.requestAnimationFrame(() => {
+                    this.addAnimation();
+                    setScaleAndTranslateStyle(this.panelEl, this.scale, this.translatePanelX, this.translatePanelY);
+                });
             }
             this.needResetX = this.needResetY = false;
         }
-        return this;
     }
 
     isScale() {

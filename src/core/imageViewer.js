@@ -8,7 +8,10 @@ import {
 } from '../common/dom';
 import {
     LOCK_NAME,
-    ITEM_ANIMATION_CLASS
+    ITEM_ANIMATION_CLASS,
+    LEFT_IMG,
+    CENTER_IMG,
+    RIGHT_IMG
 } from '../common/profile';
 import lock from '../common/lock';
 import Touch from './touch';
@@ -17,10 +20,13 @@ import Viewer from './viewer';
 class ImageViewer {
     constructor(images = [], opt = {}) {
         this.opt = opt;
+        this.duration = this.opt.duration || 10;
         this.el = null;
         this.headerEl = null;
         this.bodyEl = null;
         this.footerEl = null;
+        this.viewerWrapperEl = null;
+        this.animationEl = null;
         this.currentNumberEl = null;
         this.totalNumberEl = null;
         this.images = images; // 图片数据
@@ -45,11 +51,14 @@ class ImageViewer {
             `<div class="image-viewer">
                 <div class="image-header"></div>
                 <div class="image-body">
-                    <div class="viewer"><div class="panel"><img></div></div>
-                    <div class="viewer"><div class="panel"><img></div></div>
-                    <div class="viewer"><div class="panel"><img></div></div>
+                    <div class="viewer-wrapper">
+                        <div class="viewer"><div class="panel"><img><span>图片加载失败</span></div></div>
+                        <div class="viewer"><div class="panel"><img><span>图片加载失败</span></div></div>
+                        <div class="viewer"><div class="panel"><img><span>图片加载失败</span></div></div>     
+                    </div>
                 </div>
                 <div class="image-footer"></div>
+                <div class="image-animation hide"><img></div> 
             </div>`;
 
         const divEl = document.createElement('div');
@@ -59,7 +68,9 @@ class ImageViewer {
         this.headerEl = query('.image-header', this.el)[0];
         this.bodyEl = query('.image-body', this.el)[0];
         this.footerEl = query('.image-footer', this.el)[0];
-        this.itemList = query('.image-body', this.el)[0].children;
+        this.viewerWrapperEl = query('.image-body .viewer-wrapper', this.el)[0];
+        this.animationEl = query('.image-animation', this.el)[0];
+        this.itemList = this.viewerWrapperEl.children;
         this.width = this.el.clientWidth;
         this.height = this.el.clientHeight;
 
@@ -79,7 +90,6 @@ class ImageViewer {
             item = this.itemList[i];
             this.viewers.push(new Viewer(this, item, this.width, this.height, i));
         }
-        this.swipeInByIndex(this.currentIndex);
         lock.createLock(LOCK_NAME);
     }
 
@@ -93,20 +103,20 @@ class ImageViewer {
     }
 
     _bindEvent() {
-        const touch = new Touch(this.el, {enableScale: this.enableScale});
-        touch.on('panstart', event => this._dealAction(event, 'panstart'));
-        touch.on('panmove', event => this._dealAction(event, 'panmove'));
-        touch.on('panend', event => this._dealAction(event, 'panend'));
+        const touch = new Touch(this.bodyEl, {enableScale: this.enableScale});
+        touch.on('panstart', event => this._dealPanAction(event, 'panstart'));
+        touch.on('panmove', event => this._dealPanAction(event, 'panmove'));
+        touch.on('panend', event => this._dealPanAction(event, 'panend'));
         if (this.enableScale) {
-            // mc.on('tap', this.reset.bind(this));
-            touch.on('pinchstart', event => this._dealWithScaleActionStart(event));
-            touch.on('pinch', event => this._dealWithScaleAction(event));
-            touch.on('pinchend', event => this._dealWithScaleActionEnd(event));
+            touch.on('doubleTap', this.reset.bind(this));
+            touch.on('pinchstart', event => this._dealScaleAction(event, 'pinchstart'));
+            touch.on('pinch', event => this._dealScaleAction(event, 'pinch'));
+            touch.on('pinchend', event => this._dealScaleAction(event, 'pinchend'));
         }
         this.touch = touch;
     }
 
-    _dealAction(event, type) {
+    _dealPanAction(event, type) {
         if (this.isScale) return;
         switch (type) {
             case 'panstart':
@@ -121,13 +131,27 @@ class ImageViewer {
         }
     }
 
+    _dealScaleAction(event, type) {
+        switch (type) {
+            case 'pinchstart':
+                this._dealWithScaleActionStart(event);
+                break;
+            case 'pinch':
+                this._dealWithScaleAction(event);
+                break;
+            case 'pinchend':
+                this._dealWithScaleActionEnd(event);
+                break;
+        }
+    }
+
     _dealWithMoveActionStart(event) {
         if (lock.getLockState(LOCK_NAME)) {
-            this._getCurrentViewer()._translateStart(event);
+            this._getCurrentViewer()._translatePanelStart(event);
         } else {
-            this.bodyEl.classList.remove(ITEM_ANIMATION_CLASS);
+            this.viewerWrapperEl.classList.remove(ITEM_ANIMATION_CLASS);
             this.opt.beforeSwipe && this.opt.beforeSwipe(this.currentIndex);
-            this.bodyEl.style.willChange = 'transform';
+            this.viewerWrapperEl.style.willChange = 'transform';
         }
     }
 
@@ -135,8 +159,8 @@ class ImageViewer {
         if (lock.getLockState(LOCK_NAME) && !force) {
             this._getCurrentViewer()._translatePanel(event);
         } else {
-            force && this.bodyEl.classList.remove(ITEM_ANIMATION_CLASS);
-            setTranslateStyle(this.bodyEl, this.translateX + event.deltaX, 0);
+            force && this.viewerWrapperEl.classList.remove(ITEM_ANIMATION_CLASS);
+            setTranslateStyle(this.viewerWrapperEl, this.translateX + event.deltaX, 0);
         }
     }
 
@@ -157,7 +181,7 @@ class ImageViewer {
             }
 
             if (!needBreak) {
-                distance !== 0 && this.bodyEl.classList.add(ITEM_ANIMATION_CLASS);
+                distance !== 0 && this.viewerWrapperEl.classList.add(ITEM_ANIMATION_CLASS);
                 if (distance !== 0 && this._checkDistance(distance)) {
                     this.viewers.forEach((viewer) => {
                         viewer.removeAnimation();
@@ -165,16 +189,17 @@ class ImageViewer {
                     needSwipe = distance > 0 ? this.swipeToPrev() : this.swipeToNext();
                     this._updateCountElement();
                 } else {
-                    setTranslateStyle(this.bodyEl, this.translateX, 0);
+                    setTranslateStyle(this.viewerWrapperEl, this.translateX, 0);
                 }
                 this.opt.afterSwipe && this.opt.afterSwipe(this.currentIndex);
             }
-            this.bodyEl.style.willChange = 'auto';
+            this.viewerWrapperEl.style.willChange = 'auto';
             return needSwipe;
         }
     }
 
     _dealWithScaleActionStart(event) {
+        console.log('scale start');
         this.isScale = true;
         this.scaleStart = event.scale;
         this._getCurrentViewer()._pinchStart();
@@ -185,10 +210,11 @@ class ImageViewer {
     }
 
     _dealWithScaleActionEnd() {
+        console.log('scale end');
         this._getCurrentViewer()._pinchEnd();
-        setTimeout(() => {
+        window.requestAnimationFrame(() => {
             this.isScale = false;
-        }, 0);
+        });
     }
 
     _getCurrentViewer() {
@@ -204,11 +230,11 @@ class ImageViewer {
         if (this.opt.loop && this.imagesLength > 2) {
             minuend = this.currentIndex === 0 ? this.imagesLength : this.currentIndex;
         }
-        return this.images[minuend - 1] || '';
+        return this.images[minuend - 1] || {url: ''};
     }
 
     _getCurrentImage() {
-        return this.images[this.currentIndex] || '';
+        return this.images[this.currentIndex] || {url: ''};
     }
 
     _getNextImage() {
@@ -216,15 +242,156 @@ class ImageViewer {
         if (this.opt.loop && this.imagesLength > 2) {
             addend = this.currentIndex === this.imagesLength - 1 ? -1 : this.currentIndex;
         }
-        return this.images[addend + 1] || '';
+        return this.images[addend + 1] || {url: ''};
     }
 
     _getSpecificImage(index) {
-        return this.images[index] || '';
+        return this.images[index] || {url: ''};
     }
 
-    _getPositionAndSize(index) {
-        // TODO: 默认的获取元素相对viewport坐标和尺寸函数
+    _getPositionAndSize(el) {
+        const rect = el.getBoundingClientRect();
+        return {
+            top: rect.top,
+            left: rect.left,
+            width: rect.width,
+            height: rect.height
+        };
+    }
+
+    _fadeIn(image) {
+        const duration = this.duration;
+        const data = this._getPositionAndSize(image.el);
+        const style = this.animationEl.style;
+        style.top = data.top + 'px';
+        style.left = data.left + 'px';
+        style.width = data.width + 'px';
+        style.height = data.height + 'px';
+
+        const currentViewer = this._getCurrentViewer();
+        const rect = this._getPositionAndSize(currentViewer.el);
+        let stepTop = (rect.top - data.top) / duration;
+        let stepLeft = (rect.left - data.left) / duration;
+        let stepWidth = (rect.width - data.width) / duration;
+        let stepHeight = (rect.height - data.height) / duration;
+        let stepOpacity = 1 / duration;
+        let currentOpacity = 0;
+        let offsetTop = 0;
+        let offsetLeft = 0;
+        let nextAnimation = true;
+
+        const animationFn = () => {
+            if (nextAnimation) {
+                nextAnimation = false;
+                if (Math.abs(rect.top - data.top - offsetTop) >= 0.5) {
+                    offsetTop += stepTop;
+                    nextAnimation = true;
+                }
+                if (Math.abs(rect.left - data.left - offsetLeft) >= 0.5) {
+                    offsetLeft += stepLeft;
+                    nextAnimation = true;
+                }
+                if (Math.abs(rect.width - data.width) >= 0.5) {
+                    data.width += stepWidth;
+                    nextAnimation = true;
+                    style.width = data.width + 'px';
+                }
+                if (Math.abs(rect.height - data.height) >= 0.5) {
+                    data.height += stepHeight;
+                    nextAnimation = true;
+                    style.height = data.height + 'px';
+                }
+                if (currentOpacity < 1) {
+                    currentOpacity += stepOpacity;
+                    nextAnimation = true;
+                    this.el.style.opacity = currentOpacity;
+                }
+                setTranslateStyle(this.animationEl, offsetLeft, offsetTop);
+                window.requestAnimationFrame(animationFn);
+            } else {
+                window.requestAnimationFrame(() => {
+                    this.el.style.opacity = 1;
+                    this.bodyEl.style.visibility = 'visible';
+                    // style.visibility = 'hidden';
+                    // style.willChange = 'auto';
+                    this.animationEl.classList.add('hide');
+                });
+            }
+        };
+        this.animationEl.children[0].src = image.small || image.url;
+        // style.display = 'block';
+        // style.willChange = 'transform';
+        this.animationEl.classList.remove('hide');
+        animationFn();
+    }
+
+    _fadeOut(image) {
+        const duration = this.duration;
+        const data = this._getPositionAndSize(image.el);
+        const style = this.animationEl.style;
+        style.top = data.top + 'px';
+        style.left = data.left + 'px';
+
+        const currentViewer = this._getCurrentViewer();
+        const rect = this._getPositionAndSize(currentViewer.el);
+        let differTop = rect.top - data.top;
+        let differLeft = rect.left - data.left;
+        let differWidth = rect.width - data.width;
+        let differHeight = rect.height - data.height;
+        let stepTop = differTop / duration;
+        let stepLeft = differLeft / duration;
+        let stepWidth = differWidth / duration;
+        let stepHeight = differHeight / duration;
+        let stepOpacity = 1 / duration;
+        let currentOpacity = 1;
+        let currentWidth = rect.width;
+        let currentHeight = rect.height;
+        let nextAnimation = true;
+
+        setTranslateStyle(this.animationEl, differLeft, differTop);
+        style.width = rect.width + 'px';
+        style.height = rect.height + 'px';
+        const animationFn = () => {
+            if (nextAnimation) {
+                nextAnimation = false;
+                if (Math.abs(differTop) > 0.5) {
+                    differTop -= stepTop;
+                    nextAnimation = true;
+                }
+                if (Math.abs(differLeft) > 0.5) {
+                    differLeft -= stepLeft;
+                    nextAnimation = true;
+                }
+                if (currentWidth >= data.width) {
+                    currentWidth -= stepWidth;
+                    nextAnimation = true;
+                    style.width = currentWidth + 'px';
+                }
+                if (differHeight >= data.height) {
+                    currentHeight -= stepHeight;
+                    nextAnimation = true;
+                    style.height = currentHeight + 'px';
+                }
+                if (currentOpacity > 0) {
+                    currentOpacity -= stepOpacity;
+                    nextAnimation = true;
+                    this.el.style.opacity = currentOpacity;
+                }
+                setTranslateStyle(this.animationEl, differLeft, differTop);
+                window.requestAnimationFrame(animationFn);
+            } else {
+                window.requestAnimationFrame(() => {
+                    this.el.style.display = 'none';
+                    // style.willChange = 'auto';
+                    this.animationEl.classList.add('hide');
+                });
+            }
+        };
+        this.animationEl.children[0].src = image.url;
+        // style.visibility = 'visible';
+        // style.willChange = 'transform';
+        this.animationEl.classList.remove('hide');
+        animationFn();
     }
 
     /**
@@ -232,10 +399,11 @@ class ImageViewer {
      */
     reset() {
         const viewer = this.viewers[1];
+        viewer.addAnimation();
         viewer.init(viewer.displayIndex, true, null, false);
-        setTimeout(() => {
+        window.requestAnimationFrame(() => {
             lock.releaseLock(LOCK_NAME);
-        }, 0);
+        });
     }
 
     /**
@@ -260,20 +428,20 @@ class ImageViewer {
      * @returns {boolean}
      */
     swipeToPrev() {
-        let prevImage = this._getPrevImage();
+        let prevImage = this._getPrevImage().url;
         if (prevImage) {
             this.currentIndex--;
             this.translateX += this.width;
-            setTranslateStyle(this.bodyEl, this.translateX, 0);
+            setTranslateStyle(this.viewerWrapperEl, this.translateX, 0);
 
-            let image = this._getSpecificImage(this.currentIndex - 1);
+            const image = this._getSpecificImage(this.currentIndex - 1).url;
             if (image || this.currentIndex === 0) {
-                let viewer = this.loopViewers(1);
+                const viewer = this.loopViewers(1);
                 viewer.init(viewer.displayIndex - 3, true, null, true, image);
             }
             return true;
         } else {
-            setTranslateStyle(this.bodyEl, this.translateX, 0);
+            setTranslateStyle(this.viewerWrapperEl, this.translateX, 0);
             return false;
         }
     }
@@ -283,20 +451,20 @@ class ImageViewer {
      * @returns {boolean}
      */
     swipeToNext() {
-        let nextImage = this._getNextImage();
+        let nextImage = this._getNextImage().url;
         if (nextImage) {
             this.currentIndex++;
             this.translateX -= this.width;
-            setTranslateStyle(this.bodyEl, this.translateX, 0);
+            setTranslateStyle(this.viewerWrapperEl, this.translateX, 0);
 
-            let image = this._getSpecificImage(this.currentIndex + 1);
+            const image = this._getSpecificImage(this.currentIndex + 1).url;
             if (image || this.currentIndex === this.imagesLength - 1) {
-                let viewer = this.loopViewers(0);
+                const viewer = this.loopViewers(0);
                 viewer.init(viewer.displayIndex + 3, true, null, true, image);
             }
             return true;
         } else {
-            setTranslateStyle(this.bodyEl, this.translateX, 0);
+            setTranslateStyle(this.viewerWrapperEl, this.translateX, 0);
             return false;
         }
     }
@@ -304,19 +472,20 @@ class ImageViewer {
     /**
      * 根据给定的下标移动到指定图片处
      * @param index 数组下标，从0开始
+     * @param callback 任务完成时的回调函数
      */
-    swipeInByIndex(index) {
+    swipeInByIndex(index, callback) {
         if (!isNaN(index) && -1 < index && index < this.imagesLength) {
             this.currentIndex = index;
             this.translateX = 0;
-            setTranslateStyle(this.bodyEl, 0, 0);
+            setTranslateStyle(this.viewerWrapperEl, 0, 0);
 
             this.viewers = this.viewers.sort(function (a, b) {
                 return a.index < b.index;
             });
-            this.viewers[0].init(-1, true, null, true, this._getPrevImage());
-            this.viewers[1].init(0, true, null, true, this._getCurrentImage());
-            this.viewers[2].init(1, true, null, true, this._getNextImage());
+            this.viewers[0].init(LEFT_IMG, true, null, true, this._getPrevImage().url);
+            this.viewers[1].init(CENTER_IMG, true, callback, true, this._getCurrentImage().url);
+            this.viewers[2].init(RIGHT_IMG, true, null, true, this._getNextImage().url);
 
             this._updateCountElement();
         } else {
@@ -340,7 +509,13 @@ class ImageViewer {
 
     close() {
         if (this.el) {
-            this.el.style.display = 'none';
+            const currentImage = this._getCurrentImage();
+            if (this.opt.fadeOut && currentImage.el) {
+                this.bodyEl.style.visibility = 'hidden';
+                currentImage.el && this._fadeOut(currentImage);
+            } else {
+                this.el.style.display = 'none';
+            }
         }
     }
 
@@ -351,10 +526,19 @@ class ImageViewer {
             this._create();
             this._init();
             this._bindEvent();
-        } else {
-            this.swipeInByIndex(this.currentIndex);
         }
-        this.el.style.display = 'block';
+
+        const currentImage = this._getCurrentImage();
+        if (this.opt.fadeIn && currentImage.el) {
+            this.el.style.opacity = 0;
+            this.bodyEl.style.visibility = 'hidden';
+        }
+        window.requestAnimationFrame(() => {
+            this.el.style.display = 'block';
+            this.swipeInByIndex(this.currentIndex, () => {
+                this.opt.fadeIn && currentImage.el && this._fadeIn(currentImage);
+            });
+        });
     }
 }
 

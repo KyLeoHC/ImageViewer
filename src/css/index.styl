@@ -1,64 +1,91 @@
 .image-viewer {
-    position absolute;
-    top 0;
-    left 0;
-    width 100%;
-    height 100%;
-    background-color #000;
-    z-index 100;
-    font-size 0;
-    transform translate3d(0, 0, 0);
-    backface-visibility hidden;
-    overflow hidden;
+    position fixed
+    top 0
+    left 0
+    width 100%
+    height 100%
+    background-color #000
+    z-index 100
+    font-size 0
+    transform translate3d(0, 0, 0)
+    backface-visibility hidden
+    overflow hidden
 
     .viewer-animation {
-        transition transform .3s;
+        transition transform .3s
     }
 
     .viewer {
-        display inline-block;
-        position absolute;
-        top 50%;
-        width 100%;
-        text-align center;
-        transform translate3d(0, -50%, 0);
-        backface-visibility hidden;
+        display inline-block
+        position absolute
+        top 50%
+        width 100%
+        text-align center
+        transform translate3d(0, -50%, 0)
+        backface-visibility hidden
     }
 
     .image-header {
-        position absolute;
-        top 0;
-        left 0;
-        width 100%;
-        color #fff;
-        font-size 12px;
-        z-index 11;
+        position absolute
+        top 0
+        left 0
+        width 100%
+        color #fff
+        font-size 12px
+        z-index 11
     }
 
     .image-body {
-        width 100%;
-        height 100%;
-        font-size 0;
-        z-index 10;
+        width 100%
+        height 100%
+        font-size 0
+        z-index 10
+
+        .viewer-wrapper {
+            height 100%
+        }
 
         .panel {
-            display inline-block;
-            overflow hidden;
+            display inline-block
+            overflow hidden
 
             img {
-                max-width 100%;
-                max-height 100%;
+                max-width 100%
+                max-height 100%
+            }
+
+            span {
+                display none
+                font-size 12px
+                color #fff
             }
         }
     }
 
     .image-footer {
-        position absolute;
-        left 0;
-        bottom 0;
-        width 100%;
-        color #fff;
-        font-size 12px;
-        z-index 11;
+        position absolute
+        left 0
+        bottom 0
+        width 100%
+        color #fff
+        font-size 12px
+        z-index 11
+    }
+
+    .image-animation {
+        position absolute
+        z-index 5
+        will-change transform, width, height
+
+        img {
+            max-width 100%
+            max-height 100%
+        }
+
+        &.hide {
+            width 0 !important
+            height 0 !important
+            will-change auto
+        }
     }
 }
