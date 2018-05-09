@@ -95,6 +95,7 @@ class ImageViewer {
             item = this.itemList[i];
             this.viewers.push(new Viewer(this, item, this.width, this.height, i));
         }
+        this.swipeInByIndex(this.currentIndex);
         lock.createLock(LOCK_NAME);
     }
 

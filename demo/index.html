@@ -76,22 +76,29 @@
                 return '<span class="number-current"></span>/<span class="number-total"></span>';
             },
             beforeSwipe: function (current) {
-                // console.info('current-before: ' + current);
+                console.info('current-before: ' + current);
             },
             afterSwipe: function (current) {
-                // console.info('current-after: ' + current);
+                console.info('current-after: ' + current);
             },
             swipeLastLeft: function (imageViewer, distance) {
-                // console.log('swipeLastLeft', distance);
+                console.log('swipeLastLeft', distance);
                 // if (distance > 50) {
-                //     imageViewer.setImageOption(['images/4.jpg']);
+                //     imageViewer.setImageOption([{
+                //         thumbnail: 'thumbnails/6.jpg',
+                //         url: 'images/6.jpg',
+                //         el: document.getElementById('img5')
+                //     }]);
                 //     return true;
                 // }
             },
             swipeFirstRight: function (imageViewer, distance) {
-                // console.log('swipeFirstRight', distance);
+                console.log('swipeFirstRight', distance);
                 // if (distance > 30) {
-                //     imageViewer.setImageOption(['images/5.jpg', 'images/6.jpg', 'images/7.jpg']);
+                //     imageViewer.setImageOption([
+                //         {thumbnail: 'thumbnails/7.jpg', url: 'images/7.jpg', el: document.getElementById('img6')},
+                //         {thumbnail: 'thumbnails/8.jpg', url: 'images/8.jpg', el: document.getElementById('img7')}
+                //     ]);
                 //     return true;
                 // }
             }
