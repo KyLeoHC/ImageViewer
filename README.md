@@ -3,7 +3,7 @@ ImageViewer是一个用于web移动端的图片预览组件。
 
 ## 在线示例
 请使用手机打开链接查看，PC端请打开控制台模拟移动设备
-[demo](http://freeui.org/imageViewer/)
+[demo](http://freeui.org/imageViewer2/)
 
 ## 引入方式
 将本项目dist文件夹中的js文件放到目标项目中即可。
@@ -25,39 +25,70 @@ headerRender和footerRender返回的html字符串，可以为对应的标签添�
 会自动寻找拥有这两个样式类的标签，并且在图片滑动时添加一些数据，`number-current`样式类对应的是当前图片所在的数组下标，
 `number-total`样式类对应的是图片总数。
 ```javascript
-var images = ['images/1.png', 'images/2.gif', 'images/3.png', 'images/4.jpeg'];
-var imageViewer = new ImageViewer(images, {
-    container: 'body',
-    enableScale: true,
-    startIndex: 0,
-    headerRender: function () {
-        return '<span></span>';
-    },
-    footerRender: function () {
-        return '<span class="number-current"></span>/<span class="number-total"></span>';
-    },
-    beforeSwipe: function (current) {
-        console.info('current-before: ' + current);
-    },
-    afterSwipe: function (current) {
-        console.info('current-after: ' + current);
-    },
-    swipeLastLeft: function (imageViewer, distance) {
-        console.log('swipeLastLeft', distance);
-        if (distance > 50) {
-            imageViewer.setImageOption(['images/4.jpg']);
-            return true;
+document.addEventListener('DOMContentLoaded', function () {
+    var images = [
+        {thumbnail: 'thumbnails/2.jpg', url: 'images/2.jpg', el: document.getElementById('img1')},
+        {thumbnail: 'thumbnails/3.jpg', url: 'images/3.jpg', el: document.getElementById('img2')},
+        {thumbnail: 'thumbnails/4.jpg', url: 'images/4.jpg', el: document.getElementById('img3')},
+        {thumbnail: 'thumbnails/5.jpg', url: 'images/5.jpg', el: document.getElementById('img4')},
+        {thumbnail: 'thumbnails/6.jpg', url: 'images/6.jpg', el: document.getElementById('img5')},
+        {thumbnail: 'thumbnails/7.jpg', url: 'images/7.jpg', el: document.getElementById('img6')},
+        {thumbnail: 'thumbnails/8.jpg', url: 'images/8.jpg', el: document.getElementById('img7')}
+    ];
+    window.imageViewer = new ImageViewer(images, {
+        container: 'body',
+        enableScale: true,
+        fadeIn: true,
+        fadeOut: true,
+        startIndex: 0,
+        headerRender: function () {
+            setTimeout(function () {
+                document.getElementById('close').addEventListener('click', function () {
+                    imageViewer.close();
+                }, false);
+            }, 0);
+            return '<div id="close">关闭</div>';
+        },
+        footerRender: function () {
+            return '<span class="number-current"></span>/<span class="number-total"></span>';
+        },
+        beforeSwipe: function (current) {
+            console.info('current-before: ' + current);
+        },
+        afterSwipe: function (current) {
+            console.info('current-after: ' + current);
+        },
+        swipeLastLeft: function (imageViewer, distance) {
+            console.log('swipeLastLeft', distance);
+            // if (distance > 50) {
+            //     imageViewer.setImageOption([{
+            //         thumbnail: 'thumbnails/6.jpg',
+            //         url: 'images/6.jpg',
+            //         el: document.getElementById('img5')
+            //     }]);
+            //     return true;
+            // }
+        },
+        swipeFirstRight: function (imageViewer, distance) {
+            console.log('swipeFirstRight', distance);
+            // if (distance > 30) {
+            //     imageViewer.setImageOption([
+            //         {thumbnail: 'thumbnails/7.jpg', url: 'images/7.jpg', el: document.getElementById('img6')},
+            //         {thumbnail: 'thumbnails/8.jpg', url: 'images/8.jpg', el: document.getElementById('img7')}
+            //     ]);
+            //     return true;
+            // }
         }
-    },
-    swipeFirstRight: function (imageViewer, distance) {         
-        console.log('swipeFirstRight', distance);
-        if (distance > 30) {
-            imageViewer.setImageOption(['images/5.jpg', 'images/6.jpg', 'images/7.jpg']);
-            return true;
+    });
+
+    document.getElementsByClassName('img-list')[0].addEventListener('click', function (event) {
+        var index = event.target.getAttribute('data-index');
+        if (index) {
+            imageViewer.open(parseInt(index));
+            // imageViewer.open(0);
         }
-    }
-});
-imageViewer.open();
+    }, false);
+}, false);
 ```
 
 ## 内置API
