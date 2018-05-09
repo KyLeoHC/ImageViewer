@@ -95,7 +95,6 @@ class ImageViewer {
             item = this.itemList[i];
             this.viewers.push(new Viewer(this, item, this.width, this.height, i));
         }
-        this.swipeInByIndex(this.currentIndex);
         lock.createLock(LOCK_NAME);
     }
 
@@ -372,7 +371,7 @@ class ImageViewer {
                         nextAnimation = true;
                         style.width = currentWidth + 'px';
                     }
-                    if (differHeight >= data.height) {
+                    if (currentHeight >= data.height) {
                         currentHeight -= stepHeight;
                         nextAnimation = true;
                         style.height = currentHeight + 'px';
@@ -515,6 +514,7 @@ class ImageViewer {
         this.imagesLength = images.length;
         this.currentIndex = startIndex;
         this._init();
+        this.swipeInByIndex(this.currentIndex);
     }
 
     destroy() {
