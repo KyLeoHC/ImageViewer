@@ -17,7 +17,7 @@ import lock from '../common/lock';
 import Touch from './touch';
 import Viewer from './viewer';
 
-const defaultImgOption = {small: '', url: ''};
+const defaultImgOption = {thumbnail: '', url: ''};
 
 class ImageViewer {
     constructor(images = [], opt = {}) {
@@ -31,6 +31,7 @@ class ImageViewer {
         this.animationEl = null;
         this.currentNumberEl = null;
         this.totalNumberEl = null;
+        this.loadingEl = null;
         this.images = images; // 图片数据
         this.imagesLength = images.length; // 图片数据
         this.container = opt.container || 'body';
@@ -61,6 +62,7 @@ class ImageViewer {
                 </div>
                 <div class="image-footer"></div>
                 <div class="image-animation hide"><img></div> 
+                <div class="ball-clip-rotate hide"><div></div></div>
             </div>`;
 
         const divEl = document.createElement('div');
@@ -72,6 +74,7 @@ class ImageViewer {
         this.footerEl = query('.image-footer', this.el)[0];
         this.viewerWrapperEl = query('.image-body .viewer-wrapper', this.el)[0];
         this.animationEl = query('.image-animation', this.el)[0];
+        this.loadingEl = query('.ball-clip-rotate', this.el)[0];
         this.itemList = this.viewerWrapperEl.children;
         this.width = this.el.clientWidth;
         this.height = this.el.clientHeight;
@@ -185,9 +188,7 @@ class ImageViewer {
             if (!needBreak) {
                 distance !== 0 && this.viewerWrapperEl.classList.add(ITEM_ANIMATION_CLASS);
                 if (distance !== 0 && this._checkDistance(distance)) {
-                    this.viewers.forEach((viewer) => {
-                        viewer.removeAnimation();
-                    });
+                    this.viewers.forEach(viewer => viewer.removeAnimation());
                     needSwipe = distance > 0 ? this.swipeToPrev() : this.swipeToNext();
                     this._updateCountElement();
                 } else {
@@ -259,133 +260,150 @@ class ImageViewer {
         };
     }
 
-    _fadeIn(image) {
-        const duration = this.duration;
-        const data = this._getPositionAndSize(image.el);
-        const style = this.animationEl.style;
-        style.top = data.top + 'px';
-        style.left = data.left + 'px';
-        style.width = data.width + 'px';
-        style.height = data.height + 'px';
+    _fadeIn(callback) {
+        const image = this._getCurrentImage();
+        if (this.opt.fadeIn && image.el) {
+            const image = this._getCurrentImage();
+            const duration = this.duration;
+            const data = this._getPositionAndSize(image.el);
+            const style = this.animationEl.style;
+            style.top = data.top + 'px';
+            style.left = data.left + 'px';
+            style.width = data.width + 'px';
+            style.height = data.height + 'px';
 
-        const currentViewer = this._getCurrentViewer();
-        const rect = this._getPositionAndSize(currentViewer.el);
-        let stepTop = (rect.top - data.top) / duration;
-        let stepLeft = (rect.left - data.left) / duration;
-        let stepWidth = (rect.width - data.width) / duration;
-        let stepHeight = (rect.height - data.height) / duration;
-        let stepOpacity = 1 / duration;
-        let currentOpacity = 0;
-        let offsetTop = 0;
-        let offsetLeft = 0;
-        let nextAnimation = true;
+            const currentViewer = this._getCurrentViewer();
+            const rect = this._getPositionAndSize(currentViewer.el);
+            let stepTop = (rect.top - data.top) / duration;
+            let stepLeft = (rect.left - data.left) / duration;
+            let stepWidth = (rect.width - data.width) / duration;
+            let stepHeight = (rect.height - data.height) / duration;
+            let stepOpacity = 1 / duration;
+            let currentOpacity = 0;
+            let offsetTop = 0;
+            let offsetLeft = 0;
+            let nextAnimation = true;
 
-        const animationFn = () => {
-            if (nextAnimation) {
-                nextAnimation = false;
-                if (Math.abs(rect.top - data.top - offsetTop) >= 0.5) {
-                    offsetTop += stepTop;
-                    nextAnimation = true;
+            const animationFn = () => {
+                if (nextAnimation) {
+                    nextAnimation = false;
+                    if (Math.abs(rect.top - data.top - offsetTop) >= 0.5) {
+                        offsetTop += stepTop;
+                        nextAnimation = true;
+                    }
+                    if (Math.abs(rect.left - data.left - offsetLeft) >= 0.5) {
+                        offsetLeft += stepLeft;
+                        nextAnimation = true;
+                    }
+                    if (Math.abs(rect.width - data.width) >= 0.5) {
+                        data.width += stepWidth;
+                        nextAnimation = true;
+                        style.width = data.width + 'px';
+                    }
+                    if (Math.abs(rect.height - data.height) >= 0.5) {
+                        data.height += stepHeight;
+                        nextAnimation = true;
+                        style.height = data.height + 'px';
+                    }
+                    if (currentOpacity < 1) {
+                        currentOpacity += stepOpacity;
+                        nextAnimation = true;
+                        this.el.style.opacity = currentOpacity;
+                    }
+                    setTranslateStyle(this.animationEl, offsetLeft.toFixed(4), offsetTop.toFixed(4));
+                    window.requestAnimationFrame(animationFn);
+                } else {
+                    window.requestAnimationFrame(() => {
+                        this.animationEl.classList.add('hide');
+                        callback();
+                    });
                 }
-                if (Math.abs(rect.left - data.left - offsetLeft) >= 0.5) {
-                    offsetLeft += stepLeft;
-                    nextAnimation = true;
-                }
-                if (Math.abs(rect.width - data.width) >= 0.5) {
-                    data.width += stepWidth;
-                    nextAnimation = true;
-                    style.width = data.width + 'px';
-                }
-                if (Math.abs(rect.height - data.height) >= 0.5) {
-                    data.height += stepHeight;
-                    nextAnimation = true;
-                    style.height = data.height + 'px';
-                }
-                if (currentOpacity < 1) {
-                    currentOpacity += stepOpacity;
-                    nextAnimation = true;
-                    this.el.style.opacity = currentOpacity;
-                }
-                setTranslateStyle(this.animationEl, offsetLeft, offsetTop);
-                window.requestAnimationFrame(animationFn);
-            } else {
-                window.requestAnimationFrame(() => {
-                    this.el.style.opacity = 1;
-                    this.bodyEl.style.visibility = 'visible';
-                    this.animationEl.classList.add('hide');
-                });
-            }
-        };
-        this.animationEl.children[0].src = image.small;
-        this.animationEl.classList.remove('hide');
-        animationFn();
+            };
+            this.animationEl.children[0].src = image.thumbnail || image.url;
+            this.animationEl.classList.remove('hide');
+            animationFn();
+        } else {
+            callback();
+        }
     }
 
-    _fadeOut(image) {
-        const duration = this.duration;
-        const data = this._getPositionAndSize(image.el);
-        const style = this.animationEl.style;
-        style.top = data.top + 'px';
-        style.left = data.left + 'px';
+    _fadeOut(callback) {
+        const image = this._getCurrentImage();
+        if (this.opt.fadeOut && image.el) {
+            const duration = this.duration;
+            const data = this._getPositionAndSize(image.el);
+            const style = this.animationEl.style;
+            style.top = data.top + 'px';
+            style.left = data.left + 'px';
 
-        const currentViewer = this._getCurrentViewer();
-        const rect = this._getPositionAndSize(currentViewer.el);
-        let differTop = rect.top - data.top;
-        let differLeft = rect.left - data.left;
-        let differWidth = rect.width - data.width;
-        let differHeight = rect.height - data.height;
-        let stepTop = differTop / duration;
-        let stepLeft = differLeft / duration;
-        let stepWidth = differWidth / duration;
-        let stepHeight = differHeight / duration;
-        let stepOpacity = 1 / duration;
-        let currentOpacity = 1;
-        let currentWidth = rect.width;
-        let currentHeight = rect.height;
-        let nextAnimation = true;
+            const currentViewer = this._getCurrentViewer();
+            const rect = this._getPositionAndSize(currentViewer.el);
+            let differTop = rect.top - data.top;
+            let differLeft = rect.left - data.left;
+            let differWidth = rect.width - data.width;
+            let differHeight = rect.height - data.height;
+            let stepTop = differTop / duration;
+            let stepLeft = differLeft / duration;
+            let stepWidth = differWidth / duration;
+            let stepHeight = differHeight / duration;
+            let stepOpacity = 1 / duration;
+            let currentOpacity = 1;
+            let currentWidth = rect.width;
+            let currentHeight = rect.height;
+            let nextAnimation = true;
 
-        setTranslateStyle(this.animationEl, differLeft, differTop);
-        style.width = rect.width + 'px';
-        style.height = rect.height + 'px';
-        const animationFn = () => {
-            if (nextAnimation) {
-                nextAnimation = false;
-                if (Math.abs(differTop) > 0.5) {
-                    differTop -= stepTop;
-                    nextAnimation = true;
+            setTranslateStyle(this.animationEl, differLeft, differTop);
+            style.width = rect.width + 'px';
+            style.height = rect.height + 'px';
+            const animationFn = () => {
+                if (nextAnimation) {
+                    nextAnimation = false;
+                    if (Math.abs(differTop) > 0.5) {
+                        differTop -= stepTop;
+                        nextAnimation = true;
+                    }
+                    if (Math.abs(differLeft) > 0.5) {
+                        differLeft -= stepLeft;
+                        nextAnimation = true;
+                    }
+                    if (currentWidth >= data.width) {
+                        currentWidth -= stepWidth;
+                        nextAnimation = true;
+                        style.width = currentWidth + 'px';
+                    }
+                    if (differHeight >= data.height) {
+                        currentHeight -= stepHeight;
+                        nextAnimation = true;
+                        style.height = currentHeight + 'px';
+                    }
+                    if (currentOpacity > 0) {
+                        currentOpacity -= stepOpacity;
+                        nextAnimation = true;
+                        this.el.style.opacity = currentOpacity;
+                    }
+                    setTranslateStyle(this.animationEl, differLeft.toFixed(4), differTop.toFixed(4));
+                    window.requestAnimationFrame(animationFn);
+                } else {
+                    window.requestAnimationFrame(() => {
+                        this.animationEl.classList.add('hide');
+                        callback();
+                    });
                 }
-                if (Math.abs(differLeft) > 0.5) {
-                    differLeft -= stepLeft;
-                    nextAnimation = true;
-                }
-                if (currentWidth >= data.width) {
-                    currentWidth -= stepWidth;
-                    nextAnimation = true;
-                    style.width = currentWidth + 'px';
-                }
-                if (differHeight >= data.height) {
-                    currentHeight -= stepHeight;
-                    nextAnimation = true;
-                    style.height = currentHeight + 'px';
-                }
-                if (currentOpacity > 0) {
-                    currentOpacity -= stepOpacity;
-                    nextAnimation = true;
-                    this.el.style.opacity = currentOpacity;
-                }
-                setTranslateStyle(this.animationEl, differLeft, differTop);
-                window.requestAnimationFrame(animationFn);
-            } else {
-                window.requestAnimationFrame(() => {
-                    this.el.style.display = 'none';
-                    this._getCurrentViewer().clearImg();
-                    this.animationEl.classList.add('hide');
-                });
-            }
-        };
-        this.animationEl.children[0].src = image.url;
-        this.animationEl.classList.remove('hide');
-        animationFn();
+            };
+            this.animationEl.children[0].src = image.url;
+            this.animationEl.classList.remove('hide');
+            animationFn();
+        } else {
+            callback();
+        }
+    }
+
+    showLoading() {
+        this.loadingEl.classList.remove('hide');
+    }
+
+    hideLoading() {
+        this.loadingEl.classList.add('hide');
     }
 
     /**
@@ -394,7 +412,7 @@ class ImageViewer {
     reset() {
         const viewer = this.viewers[1];
         viewer.addAnimation();
-        viewer.init(viewer.displayIndex, true, null, false);
+        viewer._initImage(true);
         window.requestAnimationFrame(() => {
             lock.releaseLock(LOCK_NAME);
         });
@@ -422,16 +440,15 @@ class ImageViewer {
      * @returns {boolean}
      */
     swipeToPrev() {
-        let prevImage = this._getPrevImage().url;
-        if (prevImage) {
+        if (this._getPrevImage().url) {
             this.currentIndex--;
             this.translateX += this.width;
             setTranslateStyle(this.viewerWrapperEl, this.translateX, 0);
 
-            const image = this._getSpecificImage(this.currentIndex - 1).url;
-            if (image || this.currentIndex === 0) {
+            const image = this._getSpecificImage(this.currentIndex - 1);
+            if (image.url || this.currentIndex === 0) {
                 const viewer = this.loopViewers(1);
-                viewer.init(viewer.displayIndex - 3, true, null, true, image);
+                viewer.init(image, viewer.displayIndex - 3, true);
             }
             return true;
         } else {
@@ -445,16 +462,15 @@ class ImageViewer {
      * @returns {boolean}
      */
     swipeToNext() {
-        let nextImage = this._getNextImage().url;
-        if (nextImage) {
+        if (this._getNextImage().url) {
             this.currentIndex++;
             this.translateX -= this.width;
             setTranslateStyle(this.viewerWrapperEl, this.translateX, 0);
 
-            const image = this._getSpecificImage(this.currentIndex + 1).url;
-            if (image || this.currentIndex === this.imagesLength - 1) {
+            const image = this._getSpecificImage(this.currentIndex + 1);
+            if (image.url || this.currentIndex === this.imagesLength - 1) {
                 const viewer = this.loopViewers(0);
-                viewer.init(viewer.displayIndex + 3, true, null, true, image);
+                viewer.init(image, viewer.displayIndex + 3, true);
             }
             return true;
         } else {
@@ -466,9 +482,10 @@ class ImageViewer {
     /**
      * 根据给定的下标移动到指定图片处
      * @param index 数组下标，从0开始
+     * @param needLoadLarge 是否加载大图
      * @param callback 任务完成时的回调函数
      */
-    swipeInByIndex(index, callback) {
+    swipeInByIndex(index, needLoadLarge, callback) {
         if (!isNaN(index) && -1 < index && index < this.imagesLength) {
             this.currentIndex = index;
             this.translateX = 0;
@@ -477,9 +494,9 @@ class ImageViewer {
             this.viewers = this.viewers.sort((a, b) => {
                 return a.index < b.index;
             });
-            this.viewers[0].init(LEFT_IMG, true, null, true, this._getPrevImage().small);
-            this.viewers[1].init(CENTER_IMG, true, callback, true, this._getCurrentImage().small, this._getCurrentImage().url);
-            this.viewers[2].init(RIGHT_IMG, true, null, true, this._getNextImage().small);
+            this.viewers[0].init(this._getPrevImage(), LEFT_IMG, true);
+            this.viewers[1].init(this._getCurrentImage(), CENTER_IMG, true, needLoadLarge, callback);
+            this.viewers[2].init(this._getNextImage(), RIGHT_IMG, true);
 
             this._updateCountElement();
         } else {
@@ -503,14 +520,11 @@ class ImageViewer {
 
     close() {
         if (this.el) {
-            const currentImage = this._getCurrentImage();
-            if (this.opt.fadeOut && currentImage.el) {
-                this.bodyEl.style.visibility = 'hidden';
-                this._fadeOut(currentImage);
-            } else {
+            this.bodyEl.style.visibility = 'hidden';
+            this._fadeOut(() => {
                 this.el.style.display = 'none';
                 this._getCurrentViewer().clearImg();
-            }
+            });
         }
     }
 
@@ -528,10 +542,15 @@ class ImageViewer {
             this.el.style.opacity = 0;
             this.bodyEl.style.visibility = 'hidden';
         }
-        window.requestAnimationFrame(() => {
-            this.el.style.display = 'block';
-            this.swipeInByIndex(this.currentIndex, () => {
-                this.opt.fadeIn && currentImage.el && this._fadeIn(currentImage);
+        this.el.style.display = 'block';
+        this.swipeInByIndex(this.currentIndex, false, () => {
+            window.requestAnimationFrame(() => {
+                this._fadeIn(() => {
+                    this.el.style.opacity = 1;
+                    this.bodyEl.style.visibility = 'visible';
+                    // 下面这个再次调用是为了加载大图
+                    this.swipeInByIndex(this.currentIndex);
+                });
             });
         });
     }

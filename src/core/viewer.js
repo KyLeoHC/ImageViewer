@@ -5,10 +5,14 @@ import {
 } from '../common/dom';
 import {
     ITEM_ANIMATION_CLASS,
-    LOCK_NAME
+    LOCK_NAME,
+    CENTER_IMG
 } from '../common/profile';
 import lock from '../common/lock';
 import Event from '../common/event';
+
+const noop = () => {
+};
 
 class Viewer {
     constructor(imageViewer, el, width, height, index) {
@@ -18,7 +22,7 @@ class Viewer {
         this.panelEl = el.firstElementChild; // .panel类
         this.imageEl = query('img', this.el)[0];
         this.tipsEl = query('span', this.el)[0];
-        this.src = '';
+        this.imageOption = null;
         this.index = index;        // viewer排序用，记录原始的数组位置
         this.displayIndex = 0;
         this.width = width;
@@ -42,64 +46,102 @@ class Viewer {
         this._bindEvent();
     }
 
+    _initImage(resetScale, fn = noop) {
+        if (resetScale) {
+            this.scale = 1;
+            this.allowDistanceX = this.allowDistanceY = 0;
+        }
+        this.translatePanelX = 0;
+        this.translatePanelY = 0;
+        this.currentPanelX = 0;
+        this.currentPanelY = 0;
+        this.realWidth = this.panelEl.clientWidth * this.scale;
+        this.realHeight = this.panelEl.clientHeight * this.scale;
+        this.translateX = this.displayIndex * this.width;
+        this.translateY = -this.el.clientHeight / 2;
+        this.needResetX = this.needResetY = false;
+        setScaleAndTranslateStyle(this.panelEl, this.scale, this.translatePanelX, this.translatePanelY);
+        setTranslateStyle(this.el, this.translateX, this.translateY);
+        fn();
+    }
+
     /**
      * 初始化图片以及容器
-     * @param displayIndex 显示的位置，-1代表左边，0代表当前(即中间位置，目前显示的那张)，1代表右边
+     * @param imageOption 图片选项数据
+     * @param displayIndex 显示的位置
      * @param resetScale 是否重置缩放倍数
+     * @param needLoadLarge 是否加载大图
      * @param fn 初始化完成的回调函数
-     * @param needLoad 是否需要加载图片
-     * @param src 小图的url
-     * @param largeSrc 大图的url，如果传递该参数，则会先展示小图再加载大图
      */
-    init(displayIndex = 0, resetScale, fn, needLoad = true, src, largeSrc) {
-        const _initImage = () => {
-            if (resetScale) {
-                this.scale = 1;
-                this.allowDistanceX = this.allowDistanceY = 0;
-            }
-            if (needLoad) {
+    init(imageOption = this.imageOption, displayIndex, resetScale = false, needLoadLarge = true, fn) {
+        let src = '';
+        const success = force => {
+            if (this.imageEl.src.indexOf(src) > -1 || force) {
                 this.imageEl.style.display = '';
+                this.tipsEl.innerText = '';
+                this._initImage(resetScale, fn);
             }
-            this.translatePanelX = 0;
-            this.translatePanelY = 0;
-            this.currentPanelX = 0;
-            this.currentPanelY = 0;
-            this.realWidth = this.panelEl.clientWidth * this.scale;
-            this.realHeight = this.panelEl.clientHeight * this.scale;
-            this.translateX = this.displayIndex * this.width;
-            this.translateY = -this.el.clientHeight / 2;
-            this.needResetX = this.needResetY = false;
-            setScaleAndTranslateStyle(this.panelEl, this.scale, this.translatePanelX, this.translatePanelY);
-            setTranslateStyle(this.el, this.translateX, this.translateY);
-            fn && fn.apply(this);
         };
-        this.displayIndex = displayIndex;
-
-        if (needLoad) {
-            this.src = src;
-            this.imageEl.src = this.src;
-            this.imageEl.style.display = 'none';
-            if (src) {
-                this.tipsEl.style.display = 'inline-block';
-                this.tipsEl.innerText = '图片加载中';
-            }
-            this.event.on(this.SUCCESS_EVENT, () => {
-                // 如果图片尚未加载完就切换下一张图片，那么图片的url是不一样的
-                if (src && src === this.src) {
-                    _initImage();
-                    this.tipsEl.style.display = 'none';
-                }
-            });
-            this.event.on(this.FAIL_EVENT, () => {
-                if (src && src === this.src) {
-                    this.imageEl.style.display = 'none';
+        const fail = force => {
+            if (this.imageEl.src.indexOf(src) > -1 || force) {
+                this.imageEl.style.display = 'none';
+                if (src) {
                     this.tipsEl.innerText = '图片加载失败';
                 }
-            });
-            setTranslateStyle(this.el, this.displayIndex * this.width, this.translateY);
+            }
+        };
+
+        this.imageOption = imageOption;
+        this.displayIndex = displayIndex;
+
+        if (needLoadLarge) {
+            if (imageOption._hasLoadLarge) {
+                // 大图已加载好的情况下
+                src = imageOption.url;
+            } else {
+                src = imageOption.thumbnail;
+                if (src) {
+                    this.removeAnimation();
+                    this.imageViewer.showLoading();
+                    window.requestAnimationFrame(() => {
+                        // 缩略图存在的情况下，后台加载大图
+                        this.loadImg(imageOption.url, () => {
+                            // 判断当前viewer的url是否和当时正在加载的图片一致
+                            // 因为存在可能图片尚未加载完用户就切换到下一张图片的情况
+                            if (this.imageEl.src.indexOf(imageOption.thumbnail) > -1) {
+                                this.imageViewer.hideLoading();
+                                this.imageEl.src = imageOption.url;
+                                success(true);
+                            }
+                            imageOption._hasLoadLarge = true;
+                        }, () => {
+                            if (this.imageEl.src.indexOf(imageOption.thumbnail) > -1) {
+                                this.imageViewer.hideLoading();
+                                fail(true);
+                            }
+                            imageOption._hasLoadLarge = true;
+                        });
+                    });
+                } else {
+                    src = imageOption.url;
+                    this.imageEl.style.display = 'none';
+                }
+            }
         } else {
-            _initImage();
+            src = imageOption.thumbnail;
         }
+
+        this.imageEl.src = src;
+        this.event.on(this.SUCCESS_EVENT, success);
+        this.event.on(this.FAIL_EVENT, fail);
+        setTranslateStyle(this.el, this.displayIndex * this.width, this.translateY);
+    }
+
+    loadImg(url = '', success, fail) {
+        const img = new Image();
+        img.onload = () => success();
+        img.onerror = () => fail();
+        img.src = url;
     }
 
     _bindEvent() {
@@ -132,7 +174,7 @@ class Viewer {
         this.allowDistanceY = (this.realHeight - this.height) / 2 / this.scale + 2;
         if (this.realWidth < this.width || this.realHeight < this.height) {
             this.addAnimation();
-            this.init(this.displayIndex, false, null, false);
+            this._initImage(false);
         }
         window.requestAnimationFrame(() => {
             if (this.isScale()) {
@@ -189,7 +231,7 @@ class Viewer {
         }
         if (needSwipe) {
             // 滑动到下一张，重置当前图片的尺寸
-            this.init(this.displayIndex, true, null, false);
+            this._initImage(true);
             window.requestAnimationFrame(() => {
                 lock.releaseLock(LOCK_NAME);
             });
@@ -231,7 +273,8 @@ class Viewer {
     }
 
     clearImg() {
-        this.src = this.imageEl.src = '';
+        this.imageEl.src = '';
+        this.imageOption = null;
     }
 }
 

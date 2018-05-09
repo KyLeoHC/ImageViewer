@@ -32,7 +32,7 @@
         width 100%
         color #fff
         font-size 12px
-        z-index 11
+        z-index 12
     }
 
     .image-body {
@@ -55,7 +55,6 @@
             }
 
             span {
-                display none
                 font-size 12px
                 color #fff
             }
@@ -69,7 +68,7 @@
         width 100%
         color #fff
         font-size 12px
-        z-index 11
+        z-index 12
     }
 
     .image-animation {
@@ -86,6 +85,45 @@
             width 0 !important
             height 0 !important
             will-change auto
+        }
+    }
+
+    .ball-clip-rotate {
+        position absolute
+        top 50%
+        left 0
+        transform translateY(-50%)
+        width 100%
+        z-index 11
+        text-align center
+
+        > div {
+            display inline-block
+            width 26px
+            height 26px
+            border-radius 100%
+            border 2px solid #fff
+            border-bottom-color transparent
+            background 0 0
+            animation ballRotate .75s 0s linear infinite
+        }
+
+        &.hide {
+            display none
+        }
+    }
+
+    @keyframes ballRotate {
+        0% {
+            transform rotate(0)
+        }
+
+        50% {
+            transform rotate(180deg)
+        }
+
+        100% {
+            transform rotate(360deg)
         }
     }
 }

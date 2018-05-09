@@ -154,6 +154,8 @@ class Touch {
     }
 
     _cancel() {
+        this._startEvent = null;
+        this.hasTriggerStart = false;
     }
 
     handleEvent(event) {
