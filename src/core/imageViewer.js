@@ -449,6 +449,7 @@ class ImageViewer {
             if (image.url || this.currentIndex === 0) {
                 const viewer = this.loopViewers(1);
                 viewer.init(image, viewer.displayIndex - 3, true);
+                this._getCurrentViewer().init();
             }
             return true;
         } else {
@@ -471,6 +472,7 @@ class ImageViewer {
             if (image.url || this.currentIndex === this.imagesLength - 1) {
                 const viewer = this.loopViewers(0);
                 viewer.init(image, viewer.displayIndex + 3, true);
+                this._getCurrentViewer().init();
             }
             return true;
         } else {
@@ -492,7 +494,7 @@ class ImageViewer {
             setTranslateStyle(this.viewerWrapperEl, 0, 0);
 
             this.viewers = this.viewers.sort((a, b) => {
-                return a.index < b.index;
+                return a.index - b.index;
             });
             this.viewers[0].init(this._getPrevImage(), LEFT_IMG, true);
             this.viewers[1].init(this._getCurrentImage(), CENTER_IMG, true, needLoadLarge, callback);

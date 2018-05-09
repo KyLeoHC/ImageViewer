@@ -11,11 +11,13 @@ import {
 import lock from '../common/lock';
 import Event from '../common/event';
 
+let id = 0;
 const noop = () => {
 };
 
 class Viewer {
     constructor(imageViewer, el, width, height, index) {
+        this.id = ++id;
         this.event = new Event(false);
         this.imageViewer = imageViewer;
         this.el = el;              // .viewer类
@@ -73,7 +75,7 @@ class Viewer {
      * @param needLoadLarge 是否加载大图
      * @param fn 初始化完成的回调函数
      */
-    init(imageOption = this.imageOption, displayIndex, resetScale = false, needLoadLarge = true, fn) {
+    init(imageOption = this.imageOption, displayIndex = this.displayIndex, resetScale = false, needLoadLarge = true, fn) {
         let src = '';
         const success = force => {
             if (this.imageEl.src.indexOf(src) > -1 || force) {
@@ -101,27 +103,28 @@ class Viewer {
             } else {
                 src = imageOption.thumbnail;
                 if (src) {
-                    this.removeAnimation();
-                    this.imageViewer.showLoading();
-                    window.requestAnimationFrame(() => {
-                        // 缩略图存在的情况下，后台加载大图
-                        this.loadImg(imageOption.url, () => {
-                            // 判断当前viewer的url是否和当时正在加载的图片一致
-                            // 因为存在可能图片尚未加载完用户就切换到下一张图片的情况
-                            if (this.imageEl.src.indexOf(imageOption.thumbnail) > -1) {
-                                this.imageViewer.hideLoading();
-                                this.imageEl.src = imageOption.url;
-                                success(true);
-                            }
-                            imageOption._hasLoadLarge = true;
-                        }, () => {
-                            if (this.imageEl.src.indexOf(imageOption.thumbnail) > -1) {
-                                this.imageViewer.hideLoading();
-                                fail(true);
-                            }
-                            imageOption._hasLoadLarge = true;
+                    if (this.isActive()) {
+                        this.imageViewer.showLoading();
+                        window.requestAnimationFrame(() => {
+                            // 缩略图存在的情况下，后台加载大图
+                            this.loadImg(imageOption.url, () => {
+                                // 判断当前viewer的url是否和当时正在加载的图片一致
+                                // 因为存在可能图片尚未加载完用户就切换到下一张图片的情况
+                                if (this.imageEl.src.indexOf(imageOption.thumbnail) > -1 && this.isActive()) {
+                                    this.imageViewer.hideLoading();
+                                    this.imageEl.src = imageOption.url;
+                                    success(true);
+                                }
+                                imageOption._hasLoadLarge = true;
+                            }, () => {
+                                if (this.imageEl.src.indexOf(imageOption.thumbnail) > -1 && this.isActive()) {
+                                    this.imageViewer.hideLoading();
+                                    fail(true);
+                                }
+                                imageOption._hasLoadLarge = true;
+                            });
                         });
-                    });
+                    }
                 } else {
                     src = imageOption.url;
                     this.imageEl.style.display = 'none';
@@ -137,11 +140,25 @@ class Viewer {
         setTranslateStyle(this.el, this.displayIndex * this.width, this.translateY);
     }
 
+    /**
+     * 加载图片
+     * @param url
+     * @param success
+     * @param fail
+     */
     loadImg(url = '', success, fail) {
         const img = new Image();
         img.onload = () => success();
         img.onerror = () => fail();
         img.src = url;
+    }
+
+    /**
+     * 判断是否是当前所展示的viewer
+     * @returns {boolean}
+     */
+    isActive() {
+        return this.imageViewer._getCurrentViewer().id === this.id;
     }
 
     _bindEvent() {
@@ -259,7 +276,7 @@ class Viewer {
     }
 
     isScale() {
-        return Math.abs(this.scale - 1) > 0.01;
+        return Math.abs(this.scale - 1) > 0.001;
     }
 
     addAnimation() {
