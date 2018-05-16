@@ -18,6 +18,7 @@ const noop = () => {
 class Viewer {
     constructor(imageViewer, el, width, height, index) {
         this.id = ++id;
+        this.src = ''; // 当前图片的url，会同步赋值到图片标签的src属性
         this.event = new Event(false);
         this.imageViewer = imageViewer;
         this.el = el; // .viewer类
@@ -78,14 +79,14 @@ class Viewer {
     init(imageOption = this.imageOption, displayIndex = this.displayIndex, resetScale = false, needLoadLarge = true, fn) {
         let src = '';
         const success = force => {
-            if (this.imageEl.src.indexOf(src) > -1 || force) {
+            if (this.src === src || force) {
                 this.imageEl.style.display = '';
                 this.tipsEl.innerText = '';
                 this._initImage(resetScale, fn);
             }
         };
         const fail = force => {
-            if (this.imageEl.src.indexOf(src) > -1 || force) {
+            if (this.src === src || force) {
                 this.imageEl.style.display = 'none';
                 if (src) {
                     this.tipsEl.innerText = '图片加载失败';
@@ -96,7 +97,7 @@ class Viewer {
         this.imageOption = imageOption;
         this.displayIndex = displayIndex;
 
-        if (needLoadLarge) {
+        if (needLoadLarge && this.src !== this.imageOption.url) {
             if (imageOption._hasLoadLarge) {
                 // 大图已加载好的情况下
                 src = imageOption.url;
@@ -110,14 +111,14 @@ class Viewer {
                             this.loadImg(imageOption.url, () => {
                                 // 判断当前viewer的url是否和当时正在加载的图片一致
                                 // 因为存在可能图片尚未加载完用户就切换到下一张图片的情况
-                                if (this.imageEl.src.indexOf(imageOption.thumbnail) > -1 && this.isActive()) {
+                                if (this.src === imageOption.thumbnail && this.isActive()) {
                                     this.imageViewer.hideLoading();
-                                    this.imageEl.src = imageOption.url;
+                                    this._setImageUrl(imageOption.url);
                                     success(true);
                                 }
                                 imageOption._hasLoadLarge = true;
                             }, () => {
-                                if (this.imageEl.src.indexOf(imageOption.thumbnail) > -1 && this.isActive()) {
+                                if (this.src === imageOption.thumbnail && this.isActive()) {
                                     this.imageViewer.hideLoading();
                                     fail(true);
                                 }
@@ -131,13 +132,22 @@ class Viewer {
                 }
             }
         } else {
-            src = imageOption.thumbnail;
+            src = imageOption.thumbnail || imageOption.url;
         }
 
-        this.imageEl.src = src;
+        this._setImageUrl(src);
         this.event.on(this.SUCCESS_EVENT, success);
         this.event.on(this.FAIL_EVENT, fail);
         setTranslateStyle(this.el, this.displayIndex * this.width, this.translateY);
+    }
+
+    /**
+     * 设置图片链接
+     * @param url
+     * @private
+     */
+    _setImageUrl(url) {
+        this.imageEl.src = this.src = url;
     }
 
     /**
@@ -290,6 +300,7 @@ class Viewer {
     }
 
     clearImg() {
+        this.src = '';
         this.imageEl.src = '';
         this.imageOption = null;
     }

@@ -37,7 +37,7 @@ class ImageViewer {
         this.imagesLength = images.length; // 图片数据
         this.container = opt.container || 'body';
         this.enableScale = !!opt.enableScale; // 是否开启图片缩放功能
-        this.currentIndex = isNumber(opt.startIndex) ? opt.startIndex : 0; // 起始坐标，从0开始
+        this.currentIndex = opt.startIndex || 0; // 起始坐标，从0开始
         this.viewers = [];
         this.scaleStart = 1;
         this.isScale = false;
@@ -549,6 +549,7 @@ class ImageViewer {
         this.el.style.display = 'block';
         this.swipeInByIndex(this.currentIndex, false, () => {
             window.requestAnimationFrame(() => {
+                // @todo: 没有提供el元素选项时，采用从屏幕中间渐变出来(关闭)的动画
                 this._fadeIn(() => {
                     this.el.style.opacity = 1;
                     this.bodyEl.style.visibility = 'visible';

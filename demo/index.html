@@ -66,14 +66,24 @@
     document.addEventListener('DOMContentLoaded', function () {
         FastClick.attach(document.body);
 
+        // 图片对象说明:
+        // thumbnail:缩略图的链接(非必传)
+        // url: 原图的链接(必传)
+        // el: 用于计算位置以实现渐变动画(非必传，不需要动画的时候可以忽略)
+        // var images = [
+        //     {thumbnail: 'thumbnails/2.jpg', url: 'images/2.jpg', el: document.getElementById('img1')},
+        //     {thumbnail: 'thumbnails/3.jpg', url: 'images/3.jpg', el: document.getElementById('img2')},
+        //     {thumbnail: 'thumbnails/4.jpg', url: 'images/4.jpg', el: document.getElementById('img3')},
+        //     {thumbnail: 'thumbnails/5.jpg', url: 'images/5.jpg', el: document.getElementById('img4')},
+        //     {thumbnail: 'thumbnails/6.jpg', url: 'images/6.jpg', el: document.getElementById('img5')},
+        //     {thumbnail: 'thumbnails/7.jpg', url: 'images/7.jpg', el: document.getElementById('img6')},
+        //     {thumbnail: 'thumbnails/8.jpg', url: 'images/8.jpg', el: document.getElementById('img7')}
+        // ];
         var images = [
-            {thumbnail: 'thumbnails/2.jpg', url: 'images/2.jpg', el: document.getElementById('img1')},
-            {thumbnail: 'thumbnails/3.jpg', url: 'images/3.jpg', el: document.getElementById('img2')},
-            {thumbnail: 'thumbnails/4.jpg', url: 'images/4.jpg', el: document.getElementById('img3')},
-            {thumbnail: 'thumbnails/5.jpg', url: 'images/5.jpg', el: document.getElementById('img4')},
-            {thumbnail: 'thumbnails/6.jpg', url: 'images/6.jpg', el: document.getElementById('img5')},
-            {thumbnail: 'thumbnails/7.jpg', url: 'images/7.jpg', el: document.getElementById('img6')},
-            {thumbnail: 'thumbnails/8.jpg', url: 'images/8.jpg', el: document.getElementById('img7')}
+            {url: 'images/2.jpg'},
+            {url: 'images/3.jpg'},
+            {url: 'images/4.jpg'},
+            {url: 'images/5.jpg'}
         ];
         window.imageViewer = new ImageViewer(images, {
             container: 'body',
