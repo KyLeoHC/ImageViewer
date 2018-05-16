@@ -2,7 +2,7 @@
   "name": "image-viewer-gallery",
   "version": "2.0.0",
   "scripts": {
-    "dev": "webpack-dev-server --config webpack.config.dev.js --inline --hot --open",
+    "dev": "webpack-dev-server --config webpack.config.dev.js",
     "dist": "cross-env NODE_ENV=production webpack --display-optimization-bailout --config webpack.config.dist.js"
   },
   "description": "A lib for image display.",
@@ -23,10 +23,19 @@
   "devDependencies": {
     "autoprefixer": "^8.4.1",
     "babel-core": "^6.26.3",
+    "babel-eslint": "^8.2.3",
     "babel-loader": "^7.1.4",
     "babel-preset-env": "^1.6.1",
     "cross-env": "^5.0.1",
     "css-loader": "^0.28.4",
+    "eslint": "^4.19.1",
+    "eslint-config-standard": "^11.0.0",
+    "eslint-friendly-formatter": "^4.0.1",
+    "eslint-loader": "^2.0.0",
+    "eslint-plugin-import": "^2.11.0",
+    "eslint-plugin-node": "^6.0.1",
+    "eslint-plugin-promise": "^3.7.0",
+    "eslint-plugin-standard": "^3.1.0",
     "postcss-loader": "^2.1.4",
     "style-loader": "^0.21.0",
     "stylus": "^0.54.5",

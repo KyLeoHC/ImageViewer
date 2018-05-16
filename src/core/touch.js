@@ -39,8 +39,8 @@ class EventWrapper {
         }
         this.deltaX = deltaX;
         this.deltaY = deltaY;
-        if (Math.abs(deltaX) > this.threshold
-            || Math.abs(deltaY) > this.threshold) {
+        if (Math.abs(deltaX) > this.threshold ||
+            Math.abs(deltaY) > this.threshold) {
             this.type.push('pan');
             this.valid = true;
         }
@@ -49,10 +49,10 @@ class EventWrapper {
     _initScale() {
         // scale值为缩放的倍数
         let scale = 1;
-        if (this.touch.enableScale
-            && this.prevEvent
-            && this.prevEvent.touches.length > 1
-            && this.touches.length > 1) {
+        if (this.touch.enableScale &&
+            this.prevEvent &&
+            this.prevEvent.touches.length > 1 &&
+            this.touches.length > 1) {
             // 仅当有两个手指操作时才会有缩放值
             const currentWidth = Math.abs(this.touches[0].clientX - this.touches[1].clientX);
             const currentHeight = Math.abs(this.touches[0].clientY - this.touches[1].clientY);
@@ -68,14 +68,14 @@ class EventWrapper {
 
     _initTap() {
         const startEvent = this.touch._startEvent;
-        if (startEvent
-            && this.srcEvent.type === 'touchstart'
-            && startEvent.touches.length === 1
-            && this.touches.length === 1) {
+        if (startEvent &&
+            this.srcEvent.type === 'touchstart' &&
+            startEvent.touches.length === 1 &&
+            this.touches.length === 1) {
             const timeGap = this.time - startEvent.time;
-            if (timeGap < 250
-                && Math.abs(this.touches[0].clientX - startEvent.touches[0].clientX) < 30
-                && Math.abs(this.touches[0].clientY - startEvent.touches[0].clientY) < 30) {
+            if (timeGap < 250 &&
+                Math.abs(this.touches[0].clientX - startEvent.touches[0].clientX) < 30 &&
+                Math.abs(this.touches[0].clientY - startEvent.touches[0].clientY) < 30) {
                 this.type = ['doubleTap'];
                 this.valid = true;
             }

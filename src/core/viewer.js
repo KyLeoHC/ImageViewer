@@ -5,8 +5,7 @@ import {
 } from '../common/dom';
 import {
     ITEM_ANIMATION_CLASS,
-    LOCK_NAME,
-    CENTER_IMG
+    LOCK_NAME
 } from '../common/profile';
 import lock from '../common/lock';
 import Event from '../common/event';
@@ -20,12 +19,12 @@ class Viewer {
         this.id = ++id;
         this.event = new Event(false);
         this.imageViewer = imageViewer;
-        this.el = el;              // .viewer类
+        this.el = el; // .viewer类
         this.panelEl = el.firstElementChild; // .panel类
         this.imageEl = query('img', this.el)[0];
         this.tipsEl = query('span', this.el)[0];
         this.imageOption = null;
-        this.index = index;        // viewer排序用，记录原始的数组位置
+        this.index = index; // viewer排序用，记录原始的数组位置
         this.displayIndex = 0;
         this.width = width;
         this.height = height;
@@ -33,16 +32,16 @@ class Viewer {
         this.realHeight = 0;
         this.translateX = 0;
         this.translateY = 0;
-        this.scale = 1;            // 缩放比例
-        this.currentScale = 1;     // 当前正在缩放的倍数(临时保存,当事件结束后,会赋值回scale)
-        this.translatePanelX = 0;  // 最终图片面板所在的X轴坐标
-        this.translatePanelY = 0;  // 最终图片面板所在的Y轴坐标
-        this.currentPanelX = 0;    // 当前图片面板所在的X轴坐标（手指尚未离开屏幕）
-        this.currentPanelY = 0;    // 当前图片面板所在的Y轴坐标（手指尚未离开屏幕）
-        this.allowDistanceX = 0;   // 图片放大后，允许拖动的最大X轴距离
-        this.allowDistanceY = 0;   // 图片放大后，允许拖动的最大Y轴距离
-        this.needResetX = false;   // 拖动图片超出边界时，需要重置一下x轴的坐标
-        this.needResetY = false;   // 拖动图片超出边界时，需要重置一下y轴的坐标
+        this.scale = 1; // 缩放比例
+        this.currentScale = 1; // 当前正在缩放的倍数(临时保存,当事件结束后,会赋值回scale)
+        this.translatePanelX = 0; // 最终图片面板所在的X轴坐标
+        this.translatePanelY = 0; // 最终图片面板所在的Y轴坐标
+        this.currentPanelX = 0; // 当前图片面板所在的X轴坐标（手指尚未离开屏幕）
+        this.currentPanelY = 0; // 当前图片面板所在的Y轴坐标（手指尚未离开屏幕）
+        this.allowDistanceX = 0; // 图片放大后，允许拖动的最大X轴距离
+        this.allowDistanceY = 0; // 图片放大后，允许拖动的最大Y轴距离
+        this.needResetX = false; // 拖动图片超出边界时，需要重置一下x轴的坐标
+        this.needResetY = false; // 拖动图片超出边界时，需要重置一下y轴的坐标
         this.SUCCESS_EVENT = 'LOAD_COMPLETE';
         this.FAIL_EVENT = 'LOAD_FAIL';
         this._bindEvent();
@@ -254,14 +253,14 @@ class Viewer {
             });
         } else {
             if (this.needResetX) {
-                this.translatePanelX = this.currentPanelX > 0 ?
-                    this.allowDistanceX : -this.allowDistanceX;
+                this.translatePanelX = this.currentPanelX > 0
+                    ? this.allowDistanceX : -this.allowDistanceX;
             } else {
                 this.translatePanelX = this.currentPanelX;
             }
             if (this.needResetY) {
-                this.translatePanelY = this.currentPanelY > 0 ?
-                    this.allowDistanceY : -this.allowDistanceY;
+                this.translatePanelY = this.currentPanelY > 0
+                    ? this.allowDistanceY : -this.allowDistanceY;
             } else {
                 this.translatePanelY = this.currentPanelY;
             }

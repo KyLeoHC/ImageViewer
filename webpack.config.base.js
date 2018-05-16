@@ -1,4 +1,4 @@
-const webpack = require('webpack');
+const path = require('path');
 
 let config = {
     entry: {
@@ -10,6 +10,16 @@ let config = {
     module: {
         noParse: /es6-promise\.js$/,
         rules: [
+            {
+                test: /\.js$/,
+                loader: 'eslint-loader',
+                enforce: 'pre',
+                include: [path.resolve(__dirname, './src')],
+                exclude: ['node_modules'],
+                options: {
+                    formatter: require('eslint-friendly-formatter')
+                }
+            },
             {
                 test: /\.js$/,
                 exclude: /node_modules/,

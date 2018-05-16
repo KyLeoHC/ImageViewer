@@ -1,6 +1,7 @@
 const transformProp = (function getTransformProperty() {
+    const style = document.createElement('div').style;
     let props = ['transform', 'webkitTransform', 'MozTransform', 'oTransform', 'msTransform'];
-    let style = document.createElement('div').style, availProp = '';
+    let availProp = '';
     props.forEach(function (prop) {
         if (style[prop] !== undefined) {
             availProp = prop;

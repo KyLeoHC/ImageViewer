@@ -488,7 +488,7 @@ class ImageViewer {
      * @param callback 任务完成时的回调函数
      */
     swipeInByIndex(index, needLoadLarge, callback) {
-        if (!isNaN(index) && -1 < index && index < this.imagesLength) {
+        if (!isNaN(index) && index > -1 && index < this.imagesLength) {
             this.currentIndex = index;
             this.translateX = 0;
             setTranslateStyle(this.viewerWrapperEl, 0, 0);
@@ -508,7 +508,7 @@ class ImageViewer {
 
     setImageOption(images = [], startIndex = 0) {
         if (!images.length) {
-            debug('images array can not be empty!')
+            debug('images array can not be empty!');
         }
         this.images = images;
         this.imagesLength = images.length;

@@ -22,7 +22,7 @@ baseConfig.output = {
 //     })
 // ]);
 
-baseConfig.devtool = 'source-map';
+// baseConfig.devtool = 'source-map';
 baseConfig.mode = 'production';
 
 module.exports = baseConfig;
