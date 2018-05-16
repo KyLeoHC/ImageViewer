@@ -9,6 +9,7 @@ import {
 } from '../common/profile';
 import lock from '../common/lock';
 import Event from '../common/event';
+import {isNumber} from '../common/utils';
 
 let id = 0;
 const noop = () => {
@@ -183,7 +184,7 @@ class Viewer {
     }
 
     _pinchEnd(scale) {
-        this.scale = isNaN(scale) ? this.currentScale : scale;
+        this.scale = isNumber(scale) ? scale : this.currentScale;
         this.realWidth = this.panelEl.clientWidth * this.scale;
         this.realHeight = this.panelEl.clientHeight * this.scale;
         this.allowDistanceX = (this.realWidth - this.width) / 2 / this.scale + 2;

@@ -13,6 +13,7 @@ import {
     CENTER_IMG,
     RIGHT_IMG
 } from '../common/profile';
+import {isNumber} from '../common/utils';
 import lock from '../common/lock';
 import Touch from './touch';
 import Viewer from './viewer';
@@ -35,8 +36,8 @@ class ImageViewer {
         this.images = images; // 图片数据
         this.imagesLength = images.length; // 图片数据
         this.container = opt.container || 'body';
-        this.enableScale = opt.enableScale === undefined ? true : opt.enableScale; // 是否开启图片缩放功能
-        this.currentIndex = opt.startIndex || 0; // 起始坐标，从0开始
+        this.enableScale = !!opt.enableScale; // 是否开启图片缩放功能
+        this.currentIndex = isNumber(opt.startIndex) ? opt.startIndex : 0; // 起始坐标，从0开始
         this.viewers = [];
         this.scaleStart = 1;
         this.isScale = false;
@@ -532,7 +533,7 @@ class ImageViewer {
     }
 
     open(index) {
-        this.currentIndex = index === undefined ? this.currentIndex : index;
+        this.currentIndex = isNumber(index) ? index : this.currentIndex;
         if (!this.el) {
             // 仅仅实例化，但尚未初始化
             this._create();
