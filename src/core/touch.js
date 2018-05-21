@@ -1,3 +1,6 @@
+/**
+ * Touch多点触摸模块
+ */
 import Event from '../common/event';
 import supportPassive from '../common/supportPassive';
 
@@ -28,6 +31,7 @@ class EventWrapper {
     }
 
     _initDelta() {
+        // @todo: 这里有个问题，假如第一个手指没移动而是第二个手指移动，则位移不生效
         // delta值为位移的距离
         let deltaX = this.touches[0].clientX;
         let deltaY = this.touches[0].clientY;
@@ -69,8 +73,8 @@ class EventWrapper {
     _initTap() {
         const startEvent = this.touch._startEvent;
         if (startEvent &&
-            this.srcEvent.type === 'touchstart' &&
             startEvent.touches.length === 1 &&
+            this.srcEvent.type === 'touchstart' &&
             this.touches.length === 1) {
             const timeGap = this.time - startEvent.time;
             if (timeGap < 250 &&
@@ -100,8 +104,17 @@ class Touch {
             this.hasTriggerStart = false;
             this._startEvent = null;
             this._prevEvent = null;
+            this.tapTimeoutId = null;
+            this.isTapStart = false;
             this._commonEvent = new Event();
             this._bindEvent();
+        }
+    }
+
+    _cancelTap() {
+        if (this.tapTimeoutId) {
+            clearTimeout(this.tapTimeoutId);
+            this.isTapStart = false;
         }
     }
 
@@ -115,6 +128,14 @@ class Touch {
 
     _start(event) {
         this._startEvent = new EventWrapper(event, null, this);
+        if (this._startEvent.touches.length > 1) {
+            this._cancelTap();
+        } else {
+            this.isTapStart = true;
+            this.tapTimeoutId = setTimeout(() => {
+                this._cancelTap();
+            }, 300);
+        }
     }
 
     _move(event) {
@@ -148,8 +169,15 @@ class Touch {
                 }
                 this._startEvent = null;
             }
-            // 需要注意的是，双击事件不需要满足最小移动距离的要求
-            this._startEvent && this._startEvent.type.includes('doubleTap') && this._commonEvent.emit('doubleTap', endEvent);
+            if (this.isTapStart && endEvent.type.length === 0) {
+                // 触发单击事件
+                this._cancelTap();
+                endEvent.type = ['type'];
+                this._commonEvent.emit('tap', endEvent);
+            } else {
+                // 双击事件不需要满足最小移动距离的要求
+                this._startEvent && this._startEvent.type.includes('doubleTap') && this._commonEvent.emit('doubleTap', endEvent);
+            }
         }
     }
 

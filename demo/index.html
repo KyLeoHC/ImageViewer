@@ -49,6 +49,7 @@
 </head>
 <body>
 <div class="container">
+    <div class="tips">单击关闭预览</div>
     <div class="tips">图片放大后，双击还原图片尺寸</div>
     <div class="img-list">
         <div><img id="img1" src="thumbnails/2.jpg" data-index="0"></div>
@@ -66,31 +67,36 @@
     document.addEventListener('DOMContentLoaded', function () {
         FastClick.attach(document.body);
 
+        function getElement(index) {
+            // 可以不返回任何一个值，仅仅传入一个空函数指明要开启渐变动画
+            return document.getElementById('img' + (index + 1));
+        }
+
         // 图片对象说明:
-        // thumbnail:缩略图的链接(非必传)
+        // thumbnail: 缩略图的链接(非必传)
         // url: 原图的链接(必传)
-        // el: 用于计算位置以实现渐变动画(非必传，不需要动画的时候可以忽略)
-        // var images = [
-        //     {thumbnail: 'thumbnails/2.jpg', url: 'images/2.jpg', el: document.getElementById('img1')},
-        //     {thumbnail: 'thumbnails/3.jpg', url: 'images/3.jpg', el: document.getElementById('img2')},
-        //     {thumbnail: 'thumbnails/4.jpg', url: 'images/4.jpg', el: document.getElementById('img3')},
-        //     {thumbnail: 'thumbnails/5.jpg', url: 'images/5.jpg', el: document.getElementById('img4')},
-        //     {thumbnail: 'thumbnails/6.jpg', url: 'images/6.jpg', el: document.getElementById('img5')},
-        //     {thumbnail: 'thumbnails/7.jpg', url: 'images/7.jpg', el: document.getElementById('img6')},
-        //     {thumbnail: 'thumbnails/8.jpg', url: 'images/8.jpg', el: document.getElementById('img7')}
-        // ];
         var images = [
-            {url: 'images/2.jpg'},
-            {url: 'images/3.jpg'},
-            {url: 'images/4.jpg'},
-            {url: 'images/5.jpg'}
+            {thumbnail: 'thumbnails/2.jpg', url: 'images/2.jpg'},
+            {thumbnail: 'thumbnails/3.jpg', url: 'images/3.jpg'},
+            {thumbnail: 'thumbnails/4.jpg', url: 'images/4.jpg'},
+            {thumbnail: 'thumbnails/5.jpg', url: 'images/5.jpg'},
+            {thumbnail: 'thumbnails/6.jpg', url: 'images/6.jpg'},
+            {thumbnail: 'thumbnails/7.jpg', url: 'images/7.jpg'},
+            {thumbnail: 'thumbnails/8.jpg', url: 'images/8.jpg'}
         ];
+        // var images = [
+        //     {url: 'images/2.jpg'},
+        //     {url: 'images/3.jpg'},
+        //     {url: 'images/4.jpg'},
+        //     {url: 'images/5.jpg'}
+        // ];
         window.imageViewer = new ImageViewer(images, {
             container: 'body',
             enableScale: true,
-            fadeIn: true,
-            fadeOut: true,
+            enableTapClose: true,
             startIndex: 0,
+            fadeInFn: getElement,
+            fadeOutFn: getElement,
             headerRender: function () {
                 setTimeout(function () {
                     document.getElementById('close').addEventListener('click', function () {

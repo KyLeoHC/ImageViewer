@@ -13,7 +13,7 @@ import {
     CENTER_IMG,
     RIGHT_IMG
 } from '../common/profile';
-import {isNumber} from '../common/utils';
+import {isNumber, isPlainObject} from '../common/utils';
 import lock from '../common/lock';
 import Touch from './touch';
 import Viewer from './viewer';
@@ -114,6 +114,10 @@ class ImageViewer {
         touch.on('panmove', event => this._dealPanAction(event, 'panmove'));
         touch.on('panend', event => this._dealPanAction(event, 'panend'));
         if (this.enableScale) {
+            touch.on('tap', () => {
+                console.log('tap', new Date());
+                this.opt.enableTapClose && this.close();
+            });
             touch.on('doubleTap', this.reset.bind(this));
             touch.on('pinchstart', event => this._dealScaleAction(event, 'pinchstart'));
             touch.on('pinch', event => this._dealScaleAction(event, 'pinch'));
@@ -251,22 +255,32 @@ class ImageViewer {
         return this.images[index] || defaultImgOption;
     }
 
-    _getPositionAndSize(el) {
-        const rect = el.getBoundingClientRect();
-        return {
-            top: rect.top,
-            left: rect.left,
-            width: rect.width,
-            height: rect.height
-        };
+    _getPositionAndSize(value) {
+        if (isPlainObject(value)) {
+            return {
+                top: value.top || 0,
+                left: value.left || 0,
+                width: value.width || 0,
+                height: value.height || 0
+            };
+        } else if (value.getBoundingClientRect) {
+            const rect = value.getBoundingClientRect();
+            return {
+                top: rect.top,
+                left: rect.left,
+                width: rect.width,
+                height: rect.height
+            };
+        } else {
+            return {top: 0, left: 0, width: 0, height: 0};
+        }
     }
 
     _fadeIn(callback) {
-        const image = this._getCurrentImage();
-        if (this.opt.fadeIn && image.el) {
+        if (this.opt.fadeInFn) {
             const image = this._getCurrentImage();
             const duration = this.duration;
-            const data = this._getPositionAndSize(image.el);
+            const data = this._getPositionAndSize(this.opt.fadeInFn(this.currentIndex));
             const style = this.animationEl.style;
             style.top = data.top + 'px';
             style.left = data.left + 'px';
@@ -298,18 +312,18 @@ class ImageViewer {
                     }
                     if (Math.abs(rect.width - data.width) >= 0.5) {
                         data.width += stepWidth;
-                        nextAnimation = true;
                         style.width = data.width + 'px';
+                        nextAnimation = true;
                     }
                     if (Math.abs(rect.height - data.height) >= 0.5) {
                         data.height += stepHeight;
-                        nextAnimation = true;
                         style.height = data.height + 'px';
+                        nextAnimation = true;
                     }
                     if (currentOpacity < 1) {
                         currentOpacity += stepOpacity;
-                        nextAnimation = true;
                         this.el.style.opacity = currentOpacity;
+                        nextAnimation = true;
                     }
                     setTranslateStyle(this.animationEl, offsetLeft.toFixed(4), offsetTop.toFixed(4));
                     window.requestAnimationFrame(animationFn);
@@ -329,10 +343,10 @@ class ImageViewer {
     }
 
     _fadeOut(callback) {
-        const image = this._getCurrentImage();
-        if (this.opt.fadeOut && image.el) {
+        if (this.opt.fadeOutFn) {
+            const image = this._getCurrentImage();
             const duration = this.duration;
-            const data = this._getPositionAndSize(image.el);
+            const data = this._getPositionAndSize(this.opt.fadeOutFn(this.currentIndex));
             const style = this.animationEl.style;
             style.top = data.top + 'px';
             style.left = data.left + 'px';
@@ -369,18 +383,18 @@ class ImageViewer {
                     }
                     if (currentWidth >= data.width) {
                         currentWidth -= stepWidth;
-                        nextAnimation = true;
                         style.width = currentWidth + 'px';
+                        nextAnimation = true;
                     }
                     if (currentHeight >= data.height) {
                         currentHeight -= stepHeight;
-                        nextAnimation = true;
                         style.height = currentHeight + 'px';
+                        nextAnimation = true;
                     }
                     if (currentOpacity > 0) {
                         currentOpacity -= stepOpacity;
-                        nextAnimation = true;
                         this.el.style.opacity = currentOpacity;
+                        nextAnimation = true;
                     }
                     setTranslateStyle(this.animationEl, differLeft.toFixed(4), differTop.toFixed(4));
                     window.requestAnimationFrame(animationFn);
@@ -541,8 +555,7 @@ class ImageViewer {
             this._bindEvent();
         }
 
-        const currentImage = this._getCurrentImage();
-        if (this.opt.fadeIn && currentImage.el) {
+        if (this.opt.fadeInFn) {
             this.el.style.opacity = 0;
             this.bodyEl.style.visibility = 'hidden';
         }
