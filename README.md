@@ -24,37 +24,37 @@ ImageViewer是这个图片预览组件的核心类，实例化第一个入参是
 - `swipeFirstRight`：当前图片是第一张并且向右滑动结束时的回调函数，第一个入参为当前ImageViewer实例，第二个入参是滑动的X轴距离(参数可选);
 - `swipeLastLeft`：当前图片是最后一张并且向左滑动结束时的回调函数，第一个入参为当前ImageViewer实例，第二个入参是滑动的X轴距离(参数可选);
 
+`fadeInFn`和`fadeOutFn`选项的函数，返回值可以是一个元素节点对象，也可以是一个结构为`{width,height,top,left}`的对象值，还可以什么都不返回。
+
 headerRender和footerRender返回的html字符串，可以为对应的标签添加上`number-current`和`number-total`样式类，该组件
 会自动寻找拥有这两个样式类的标签，并且在图片滑动时添加一些数据，`number-current`样式类对应的是当前图片所在的数组下标，
 `number-total`样式类对应的是图片总数。
 ```javascript
 document.addEventListener('DOMContentLoaded', function () {
+    function getElement(index) {
+        // 可以不返回任何一个值，仅仅传入一个空函数指明要开启渐变动画
+        return document.getElementById('img' + (index + 1));
+    }
+
     // 图片对象说明:
     // thumbnail: 缩略图的链接(非必传)
     // url: 原图的链接(必传)
-    // el: 用于计算位置以实现渐变动画(非必传，不需要动画的时候可以忽略)
-    // var images = [
-    //     {thumbnail: 'thumbnails/2.jpg', url: 'images/2.jpg', el: document.getElementById('img1')},
-    //     {thumbnail: 'thumbnails/3.jpg', url: 'images/3.jpg', el: document.getElementById('img2')},
-    //     {thumbnail: 'thumbnails/4.jpg', url: 'images/4.jpg', el: document.getElementById('img3')},
-    //     {thumbnail: 'thumbnails/5.jpg', url: 'images/5.jpg', el: document.getElementById('img4')},
-    //     {thumbnail: 'thumbnails/6.jpg', url: 'images/6.jpg', el: document.getElementById('img5')},
-    //     {thumbnail: 'thumbnails/7.jpg', url: 'images/7.jpg', el: document.getElementById('img6')},
-    //     {thumbnail: 'thumbnails/8.jpg', url: 'images/8.jpg', el: document.getElementById('img7')}
-    // ];
     var images = [
         {url: 'images/2.jpg'},
-        {url: 'images/3.jpg'},
-        {url: 'images/4.jpg'},
-        {url: 'images/5.jpg'}
+        {thumbnail: 'thumbnails/3.jpg', url: 'images/3.jpg'},
+        {thumbnail: 'thumbnails/4.jpg', url: 'images/4.jpg'},
+        {thumbnail: 'thumbnails/5.jpg', url: 'images/5.jpg'},
+        {thumbnail: 'thumbnails/6.jpg', url: 'images/6.jpg'},
+        {thumbnail: 'thumbnails/7.jpg', url: 'images/7.jpg'},
+        {url: 'images/8.jpg'}
     ];
     window.imageViewer = new ImageViewer(images, {
         container: 'body',
         enableScale: true,
         enableTapClose: true,
-        fadeIn: true,
-        fadeOut: true,
         startIndex: 0,
+        fadeInFn: getElement,
+        fadeOutFn: getElement,
         headerRender: function () {
             setTimeout(function () {
                 document.getElementById('close').addEventListener('click', function () {
@@ -77,8 +77,7 @@ document.addEventListener('DOMContentLoaded', function () {
             // if (distance > 50) {
             //     imageViewer.setImageOption([{
             //         thumbnail: 'thumbnails/6.jpg',
-            //         url: 'images/6.jpg',
-            //         el: document.getElementById('img5')
+            //         url: 'images/6.jpg'
             //     }]);
             //     return true;
             // }
@@ -87,8 +86,8 @@ document.addEventListener('DOMContentLoaded', function () {
             console.log('swipeFirstRight', distance);
             // if (distance > 30) {
             //     imageViewer.setImageOption([
-            //         {thumbnail: 'thumbnails/7.jpg', url: 'images/7.jpg', el: document.getElementById('img6')},
-            //         {thumbnail: 'thumbnails/8.jpg', url: 'images/8.jpg', el: document.getElementById('img7')}
+            //         {thumbnail: 'thumbnails/7.jpg', url: 'images/7.jpg'},
+            //         {thumbnail: 'thumbnails/8.jpg', url: 'images/8.jpg'}
             //     ]);
             //     return true;
             // }
