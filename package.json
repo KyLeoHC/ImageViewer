@@ -6,7 +6,7 @@
     "dist": "cross-env NODE_ENV=production webpack --display-optimization-bailout --config webpack.config.dist.js"
   },
   "description": "A lib for image display.",
-  "main": "dist/imageViewer.min",
+  "main": "src/index.js",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/KyLeoHC/ImageViewer.git"

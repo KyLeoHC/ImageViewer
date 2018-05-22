@@ -161,6 +161,12 @@ class Touch {
         if (this._startEvent) {
             const endEvent = new EventWrapper(event, this._startEvent, this);
 
+            if (this.isTapStart && endEvent.type.length === 0) {
+                // 触发单击事件
+                this._cancelTap();
+                endEvent.type = ['type'];
+                this._commonEvent.emit('tap', endEvent);
+            }
             if (endEvent.valid) {
                 if (this._prevEvent) {
                     this._prevEvent.type.includes('pinch') && this._commonEvent.emit('pinchend', endEvent);
@@ -169,15 +175,8 @@ class Touch {
                 }
                 this._startEvent = null;
             }
-            if (this.isTapStart && endEvent.type.length === 0) {
-                // 触发单击事件
-                this._cancelTap();
-                endEvent.type = ['type'];
-                this._commonEvent.emit('tap', endEvent);
-            } else {
-                // 双击事件不需要满足最小移动距离的要求
-                this._startEvent && this._startEvent.type.includes('doubleTap') && this._commonEvent.emit('doubleTap', endEvent);
-            }
+            // 双击事件不需要满足最小移动距离的要求
+            this._startEvent && this._startEvent.type.includes('doubleTap') && this._commonEvent.emit('doubleTap', endEvent);
         }
     }
 

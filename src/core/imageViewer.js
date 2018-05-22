@@ -41,6 +41,7 @@ class ImageViewer {
         this.viewers = [];
         this.scaleStart = 1;
         this.isScale = false;
+        this.isMove = false;
         this.width = 0;
         this.height = 0;
         this.itemList = []; // 各个图片容器元素的dom节点
@@ -110,20 +111,30 @@ class ImageViewer {
 
     _bindEvent() {
         const touch = new Touch(this.bodyEl, {enableScale: this.enableScale});
+        touch.on('tap', () => this._dealTap());
         touch.on('panstart', event => this._dealPanAction(event, 'panstart'));
         touch.on('panmove', event => this._dealPanAction(event, 'panmove'));
         touch.on('panend', event => this._dealPanAction(event, 'panend'));
         if (this.enableScale) {
-            touch.on('tap', () => {
-                console.log('tap', new Date());
-                this.opt.enableTapClose && this.close();
-            });
-            touch.on('doubleTap', this.reset.bind(this));
             touch.on('pinchstart', event => this._dealScaleAction(event, 'pinchstart'));
             touch.on('pinch', event => this._dealScaleAction(event, 'pinch'));
             touch.on('pinchend', event => this._dealScaleAction(event, 'pinchend'));
         }
         this.touch = touch;
+    }
+
+    /**
+     * 处理单击事件
+     * 如果有缩放，则先还原图片尺寸，否则就关闭图片预览
+     * @private
+     */
+    _dealTap() {
+        const currentViewer = this._getCurrentViewer();
+        if (currentViewer.isScale()) {
+            this.reset();
+        } else {
+            this.opt.enableTapClose && this.close();
+        }
     }
 
     _dealPanAction(event, type) {
@@ -142,6 +153,7 @@ class ImageViewer {
     }
 
     _dealScaleAction(event, type) {
+        if (this.isMove) return;
         switch (type) {
             case 'pinchstart':
                 this._dealWithScaleActionStart(event);
@@ -156,6 +168,7 @@ class ImageViewer {
     }
 
     _dealWithMoveActionStart(event) {
+        this.isMove = true;
         if (lock.getLockState(LOCK_NAME)) {
             this._getCurrentViewer()._translatePanelStart(event);
         } else {
@@ -175,11 +188,11 @@ class ImageViewer {
     }
 
     _dealWithMoveActionEnd(event, force) {
+        let needSwipe = false;
         if (lock.getLockState(LOCK_NAME) && !force) {
             this._getCurrentViewer()._translatePanelEnd(event);
         } else {
             const distance = event.deltaX;
-            let needSwipe = false;
             let needBreak = false;
 
             if (this.currentIndex === 0 && distance > 0 && this.opt.swipeFirstRight) {
@@ -202,8 +215,11 @@ class ImageViewer {
                 this.opt.afterSwipe && this.opt.afterSwipe(this.currentIndex);
             }
             this.viewerWrapperEl.style.willChange = 'auto';
-            return needSwipe;
         }
+        window.requestAnimationFrame(() => {
+            this.isMove = false;
+        });
+        return needSwipe;
     }
 
     _dealWithScaleActionStart(event) {
@@ -503,7 +519,7 @@ class ImageViewer {
      * @param callback 任务完成时的回调函数
      */
     swipeInByIndex(index, needLoadLarge, callback) {
-        if (!isNaN(index) && index > -1 && index < this.imagesLength) {
+        if (isNumber(index) && index > -1 && index < this.imagesLength) {
             this.currentIndex = index;
             this.translateX = 0;
             setTranslateStyle(this.viewerWrapperEl, 0, 0);
@@ -562,7 +578,6 @@ class ImageViewer {
         this.el.style.display = 'block';
         this.swipeInByIndex(this.currentIndex, false, () => {
             window.requestAnimationFrame(() => {
-                // @todo: 没有提供el元素选项时，采用从屏幕中间渐变出来(关闭)的动画
                 this._fadeIn(() => {
                     this.el.style.opacity = 1;
                     this.bodyEl.style.visibility = 'visible';
