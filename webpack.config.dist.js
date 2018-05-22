@@ -1,28 +1,26 @@
-let webpack = require('webpack');
-let path = require('path');
-let baseConfig = require('./webpack.config.base');
+const path = require('path');
+const baseConfig = require('./webpack.config.base');
 
-baseConfig.output = {
-    path: path.resolve(__dirname, 'dist'),
-    filename: '[name].min.js'
-};
-// baseConfig.plugins = baseConfig.plugins.concat([
-//     new webpack.DefinePlugin({
-//         'process.env': {
-//             NODE_ENV: JSON.stringify('production'),
-//         }
-//     }),
-//     new webpack.optimize.ModuleConcatenationPlugin(),
-//     new webpack.optimize.UglifyJsPlugin({
-//         compress: {
-//             warnings: false
-//         },
-//         comments: false,
-//         sourceMap: true
-//     })
-// ]);
+const umdConfig = Object.assign({
+    output: {
+        path: path.resolve(__dirname, 'dist'),
+        filename: '[name].min.js',
+        library: 'ImageViewer',
+        libraryExport: 'default',
+        libraryTarget: 'umd'
+    },
+    mode: 'production'
+}, baseConfig);
 
-// baseConfig.devtool = 'source-map';
-baseConfig.mode = 'production';
+const commonConfig = Object.assign({
+    output: {
+        path: path.resolve(__dirname, 'dist'),
+        filename: '[name].common.js',
+        library: 'ImageViewer',
+        libraryExport: 'default',
+        libraryTarget: 'commonjs2'
+    },
+    mode: 'production'
+}, baseConfig);
 
-module.exports = baseConfig;
+module.exports = [umdConfig, commonConfig];

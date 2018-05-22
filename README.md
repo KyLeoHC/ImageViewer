@@ -1,3 +1,5 @@
+<a href="https://www.npmjs.com/package/image-viewer-gallery"><img src="https://img.shields.io/npm/v/image-viewer-gallery.svg" alt="Version"></a>
+
 # ImageViewer
 ImageViewer是一个用于web移动端的图片预览组件。
 
@@ -112,3 +114,6 @@ ImageViewer类的实例拥有以下可用的API函数：
 - `setImageOption`：设置图片数据，第一个入参为图片数组，第二个入参为开始预览的第一张图片所在数组下标；
 - `swipeInByIndex`：将对应的图片切换到当前显示界面上，入参为所要展示的图片所在数组下标；
 
+## License
+
+[MIT License](https://github.com/KyLeoHC/ImageViewer/blob/master/LICENSE)

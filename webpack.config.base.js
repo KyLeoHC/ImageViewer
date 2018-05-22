@@ -1,6 +1,6 @@
 const path = require('path');
 
-let config = {
+const config = {
     entry: {
         imageViewer: './src/index'
     },
