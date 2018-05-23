@@ -17,6 +17,7 @@ import {isNumber, isPlainObject} from '../common/utils';
 import lock from '../common/lock';
 import Touch from './touch';
 import Viewer from './viewer';
+import template from '../html/template.html';
 
 const defaultImgOption = {thumbnail: '', url: ''};
 
@@ -32,7 +33,6 @@ class ImageViewer {
         this.animationEl = null;
         this.currentNumberEl = null;
         this.totalNumberEl = null;
-        this.loadingEl = null;
         this.images = images; // 图片数据
         this.imagesLength = images.length; // 图片数据
         this.container = opt.container || 'body';
@@ -52,23 +52,9 @@ class ImageViewer {
     _create() {
         this.el = query('.image-viewer')[0];
         this.destroy();
-        let imageViewerTemplate =
-            `<div class="image-viewer">
-                <div class="image-header"></div>
-                <div class="image-body">
-                    <div class="viewer-wrapper">
-                        <div class="viewer"><div class="panel"><img><span></span></div></div>
-                        <div class="viewer"><div class="panel"><img><span></span></div></div>
-                        <div class="viewer"><div class="panel"><img><span></span></div></div>     
-                    </div>
-                </div>
-                <div class="image-footer"></div>
-                <div class="image-animation hide"><img></div> 
-                <div class="ball-clip-rotate hide"><div></div></div>
-            </div>`;
 
         const divEl = document.createElement('div');
-        divEl.innerHTML = imageViewerTemplate;
+        divEl.innerHTML = template;
         this.el = divEl.firstElementChild;
         query(this.container)[0].appendChild(this.el);
         this.headerEl = query('.image-header', this.el)[0];
@@ -76,7 +62,6 @@ class ImageViewer {
         this.footerEl = query('.image-footer', this.el)[0];
         this.viewerWrapperEl = query('.image-body .viewer-wrapper', this.el)[0];
         this.animationEl = query('.image-animation', this.el)[0];
-        this.loadingEl = query('.ball-clip-rotate', this.el)[0];
         this.itemList = this.viewerWrapperEl.children;
         this.width = this.el.clientWidth;
         this.height = this.el.clientHeight;
@@ -427,14 +412,6 @@ class ImageViewer {
         } else {
             callback();
         }
-    }
-
-    showLoading() {
-        this.loadingEl.classList.remove('hide');
-    }
-
-    hideLoading() {
-        this.loadingEl.classList.add('hide');
     }
 
     /**

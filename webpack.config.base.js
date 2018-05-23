@@ -11,6 +11,16 @@ const config = {
         noParse: /es6-promise\.js$/,
         rules: [
             {
+                test: /\.(html)$/,
+                use: {
+                    loader: 'html-loader',
+                    options: {
+                        attrs: false,
+                        minimize: true
+                    }
+                }
+            },
+            {
                 test: /\.js$/,
                 loader: 'eslint-loader',
                 enforce: 'pre',
