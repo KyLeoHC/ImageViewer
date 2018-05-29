@@ -6,6 +6,7 @@ import supportPassive from '../common/supportPassive';
 
 let id = 0;
 
+// @todo: 将事件包装器中的判断逻辑转移到主体touch类上(EventWrapper类仅用作事件封装)
 class EventWrapper {
     constructor(event, prevEvent, touch) {
         this.time = new Date().getTime();

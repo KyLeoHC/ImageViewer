@@ -344,6 +344,7 @@ class ImageViewer {
     }
 
     _fadeOut(callback) {
+        // @todo: 将透明度渐变和尺寸渐变分离开，先尺寸渐变完成后再渐变透明度
         if (this.opt.fadeOutFn) {
             const image = this._getCurrentImage();
             const duration = this.duration;
