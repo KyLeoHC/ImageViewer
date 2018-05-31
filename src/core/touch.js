@@ -6,85 +6,22 @@ import supportPassive from '../common/supportPassive';
 
 let id = 0;
 
-// @todo: 将事件包装器中的判断逻辑转移到主体touch类上(EventWrapper类仅用作事件封装)
 class EventWrapper {
-    constructor(event, prevEvent, touch) {
+    constructor(event) {
         this.time = new Date().getTime();
         this.srcEvent = event;
-        this.prevEvent = prevEvent;
-        this.touch = touch; // Touch类的实例
         this.type = [];
-        this.valid = false;
-        this.threshold = 4; // 事件有效的最小移动距离
-
+        this.deltaX = 0;
+        this.deltaY = 0;
+        this.scale = 1;
+        this._getTouches();
         this.preventDefault();
         this.stopPropagation();
-
-        this._getTouches();
-        this._initDelta();
-        this._initScale();
-        this._initTap();
     }
 
     _getTouches() {
         const list = this.srcEvent.touches.length ? this.srcEvent.touches : this.srcEvent.changedTouches;
         this.touches = Array.prototype.slice.call(list, 0); // 手指的数量
-    }
-
-    _initDelta() {
-        // @todo: 这里有个问题，假如第一个手指没移动而是第二个手指移动，则位移不生效
-        // delta值为位移的距离
-        let deltaX = this.touches[0].clientX;
-        let deltaY = this.touches[0].clientY;
-        if (this.prevEvent) {
-            deltaX -= this.prevEvent.touches[0].clientX;
-            deltaY -= this.prevEvent.touches[0].clientY;
-        } else {
-            deltaX = deltaY = 0;
-        }
-        this.deltaX = deltaX;
-        this.deltaY = deltaY;
-        if (Math.abs(deltaX) > this.threshold ||
-            Math.abs(deltaY) > this.threshold) {
-            this.type.push('pan');
-            this.valid = true;
-        }
-    }
-
-    _initScale() {
-        // scale值为缩放的倍数
-        let scale = 1;
-        if (this.touch.enableScale &&
-            this.prevEvent &&
-            this.prevEvent.touches.length > 1 &&
-            this.touches.length > 1) {
-            // 仅当有两个手指操作时才会有缩放值
-            const currentWidth = Math.abs(this.touches[0].clientX - this.touches[1].clientX);
-            const currentHeight = Math.abs(this.touches[0].clientY - this.touches[1].clientY);
-            const prevWidth = Math.abs(this.prevEvent.touches[0].clientX - this.prevEvent.touches[1].clientX);
-            const prevHeight = Math.abs(this.prevEvent.touches[0].clientY - this.prevEvent.touches[1].clientY);
-            const currentDistance = Math.sqrt(currentWidth * currentWidth + currentHeight * currentHeight);
-            const preDistance = Math.sqrt(prevWidth * prevWidth + prevHeight * prevHeight);
-            scale = currentDistance / preDistance;
-            this.type.push('pinch');
-        }
-        this.scale = scale;
-    }
-
-    _initTap() {
-        const startEvent = this.touch._startEvent;
-        if (startEvent &&
-            startEvent.touches.length === 1 &&
-            this.srcEvent.type === 'touchstart' &&
-            this.touches.length === 1) {
-            const timeGap = this.time - startEvent.time;
-            if (timeGap < 250 &&
-                Math.abs(this.touches[0].clientX - startEvent.touches[0].clientX) < 30 &&
-                Math.abs(this.touches[0].clientY - startEvent.touches[0].clientY) < 30) {
-                this.type = ['doubleTap'];
-                this.valid = true;
-            }
-        }
     }
 
     stopPropagation() {
@@ -101,10 +38,12 @@ class Touch {
         if (el) {
             this.id = ++id;
             this.el = el;
+            this.threshold = 4; // 事件有效的最小移动距离
             this.enableScale = !!options.enableScale;
             this.hasTriggerStart = false;
+            this._doubleTapStartEvent = null;
             this._startEvent = null;
-            this._prevEvent = null;
+            this._moveEvent = null;
             this.tapTimeoutId = null;
             this.isTapStart = false;
             this._commonEvent = new Event();
@@ -128,7 +67,7 @@ class Touch {
     }
 
     _start(event) {
-        this._startEvent = new EventWrapper(event, null, this);
+        this._startEvent = new EventWrapper(event);
         if (this._startEvent.touches.length > 1) {
             this._cancelTap();
         } else {
@@ -140,45 +79,89 @@ class Touch {
     }
 
     _move(event) {
-        if (this._startEvent) {
-            const newEvent = new EventWrapper(event, this._startEvent, this);
+        const startEvent = this._startEvent;
+        if (startEvent) {
+            let canTrigger = false;
+            const moveEvent = new EventWrapper(event);
 
-            if (newEvent.valid) {
-                // 满足最小移动间距的要求，事件才是有效的
-                // 这时才触发相关移动和缩放事件
+            // 计算位移的水平和垂直距离
+            moveEvent.deltaX = moveEvent.touches[0].clientX - startEvent.touches[0].clientX;
+            moveEvent.deltaY = moveEvent.touches[0].clientY - startEvent.touches[0].clientY;
+            if (Math.abs(moveEvent.deltaX) > this.threshold ||
+                Math.abs(moveEvent.deltaY) > this.threshold) {
+                moveEvent.type.push('pan');
+                canTrigger = true;
+            }
+
+            // 计算缩放的倍数
+            let scale = 1;
+            if (this.enableScale &&
+                startEvent.touches.length > 1 &&
+                moveEvent.touches.length > 1) {
+                // 仅当有两个手指操作时才会有缩放值
+                const currentWidth = Math.abs(moveEvent.touches[0].clientX - moveEvent.touches[1].clientX);
+                const currentHeight = Math.abs(moveEvent.touches[0].clientY - moveEvent.touches[1].clientY);
+                const prevWidth = Math.abs(startEvent.touches[0].clientX - startEvent.touches[1].clientX);
+                const prevHeight = Math.abs(startEvent.touches[0].clientY - startEvent.touches[1].clientY);
+                const currentDistance = Math.sqrt(currentWidth * currentWidth + currentHeight * currentHeight);
+                const preDistance = Math.sqrt(prevWidth * prevWidth + prevHeight * prevHeight);
+                scale = currentDistance / preDistance;
+                moveEvent.type.push('pinch');
+            }
+            moveEvent.scale = scale;
+
+            if (canTrigger) {
+                // 满足最小移动间距的要求时，才触发相关移动和缩放事件
                 if (!this.hasTriggerStart) {
                     this.hasTriggerStart = true;
-                    newEvent.type.includes('pinch') && this._commonEvent.emit('pinchstart', this._startEvent);
-                    newEvent.type.includes('pan') && this._commonEvent.emit('panstart', this._startEvent);
+                    moveEvent.type.includes('pinch') && this._commonEvent.emit('pinchstart', startEvent);
+                    moveEvent.type.includes('pan') && this._commonEvent.emit('panstart', startEvent);
                 }
-                newEvent.type.includes('pinch') && this._commonEvent.emit('pinch', newEvent);
-                newEvent.type.includes('pan') && this._commonEvent.emit('panmove', newEvent);
-                this._prevEvent = newEvent;
+                moveEvent.type.includes('pinch') && this._commonEvent.emit('pinch', moveEvent);
+                moveEvent.type.includes('pan') && this._commonEvent.emit('panmove', moveEvent);
+                this._moveEvent = moveEvent;
             }
         }
     }
 
     _end(event) {
-        if (this._startEvent) {
-            const endEvent = new EventWrapper(event, this._startEvent, this);
+        const startEvent = this._startEvent;
+        if (startEvent) {
+            const moveEvent = this._moveEvent;
+            const endEvent = new EventWrapper(event);
 
-            if (this.isTapStart && endEvent.type.length === 0) {
-                // 触发单击事件
-                this._cancelTap();
-                endEvent.type = ['type'];
-                this._commonEvent.emit('tap', endEvent);
-            }
-            if (endEvent.valid) {
-                if (this._prevEvent) {
-                    this._prevEvent.type.includes('pinch') && this._commonEvent.emit('pinchend', endEvent);
-                    endEvent.type.includes('pan') && this._commonEvent.emit('panend', endEvent);
-                    this.hasTriggerStart = false;
-                }
+            if (moveEvent) {
+                moveEvent.type.includes('pinch') && this._commonEvent.emit('pinchend', moveEvent);
+                moveEvent.type.includes('pan') && this._commonEvent.emit('panend', moveEvent);
+                this.hasTriggerStart = false;
                 this._startEvent = null;
+                this._moveEvent = null;
+            } else {
+                // 判断触发单击事件
+                if (this.isTapStart) {
+                    // 触发单击事件
+                    endEvent.type = ['tap'];
+                    this._commonEvent.emit('tap', endEvent);
+                }
+                // 判断触发双击事件
+                if (startEvent.touches.length === 1 &&
+                    endEvent.touches.length === 1) {
+                    if (this._doubleTapStartEvent) {
+                        const timeGap = endEvent.time - this._doubleTapStartEvent.time;
+                        if (timeGap < 300) {
+                            endEvent.type = ['doubleTap'];
+                            this._commonEvent.emit('doubleTap', endEvent);
+                        }
+                        this._doubleTapStartEvent = null;
+                    } else {
+                        this._doubleTapStartEvent = this._startEvent;
+                    }
+                } else {
+                    this._doubleTapStartEvent = null;
+                }
             }
-            // 双击事件不需要满足最小移动距离的要求
-            this._startEvent && this._startEvent.type.includes('doubleTap') && this._commonEvent.emit('doubleTap', endEvent);
         }
+        this._cancelTap();
     }
 
     _cancel() {

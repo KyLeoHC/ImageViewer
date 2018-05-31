@@ -13,7 +13,11 @@ import {
     CENTER_IMG,
     RIGHT_IMG
 } from '../common/profile';
-import {isNumber, isPlainObject} from '../common/utils';
+import {
+    isNumber,
+    isPlainObject,
+    compareNumberABS
+} from '../common/utils';
 import lock from '../common/lock';
 import Touch from './touch';
 import Viewer from './viewer';
@@ -24,7 +28,7 @@ const defaultImgOption = {thumbnail: '', url: ''};
 class ImageViewer {
     constructor(images = [], opt = {}) {
         this.opt = opt;
-        this.duration = this.opt.duration || 10;
+        this.duration = this.opt.duration || 14;
         this.el = null;
         this.headerEl = null;
         this.bodyEl = null;
@@ -303,27 +307,27 @@ class ImageViewer {
             const animationFn = () => {
                 if (nextAnimation) {
                     nextAnimation = false;
-                    if (Math.abs(rect.top - data.top - offsetTop) >= 0.5) {
+                    if (compareNumberABS(rect.top, data.top + offsetTop)) {
                         offsetTop += stepTop;
                         nextAnimation = true;
                     }
-                    if (Math.abs(rect.left - data.left - offsetLeft) >= 0.5) {
+                    if (compareNumberABS(rect.left, data.left + offsetLeft)) {
                         offsetLeft += stepLeft;
                         nextAnimation = true;
                     }
-                    if (Math.abs(rect.width - data.width) >= 0.5) {
+                    if (compareNumberABS(rect.width, data.width)) {
                         data.width += stepWidth;
                         style.width = data.width + 'px';
                         nextAnimation = true;
                     }
-                    if (Math.abs(rect.height - data.height) >= 0.5) {
+                    if (compareNumberABS(rect.height, data.height)) {
                         data.height += stepHeight;
                         style.height = data.height + 'px';
                         nextAnimation = true;
                     }
                     if (currentOpacity < 1) {
                         currentOpacity += stepOpacity;
-                        this.el.style.opacity = currentOpacity;
+                        this.bodyEl.style.opacity = currentOpacity;
                         nextAnimation = true;
                     }
                     setTranslateStyle(this.animationEl, offsetLeft.toFixed(4), offsetTop.toFixed(4));
@@ -344,11 +348,10 @@ class ImageViewer {
     }
 
     _fadeOut(callback) {
-        // @todo: 将透明度渐变和尺寸渐变分离开，先尺寸渐变完成后再渐变透明度
         if (this.opt.fadeOutFn) {
             const image = this._getCurrentImage();
             const duration = this.duration;
-            const data = this._getPositionAndSize(this.opt.fadeOutFn(this.currentIndex));
+            const data = this._getPositionAndSize(this.opt.fadeInFn(this.currentIndex));
             const style = this.animationEl.style;
             style.top = data.top + 'px';
             style.left = data.left + 'px';
@@ -357,12 +360,10 @@ class ImageViewer {
             const rect = this._getPositionAndSize(currentViewer.el);
             let differTop = rect.top - data.top;
             let differLeft = rect.left - data.left;
-            let differWidth = rect.width - data.width;
-            let differHeight = rect.height - data.height;
             let stepTop = differTop / duration;
             let stepLeft = differLeft / duration;
-            let stepWidth = differWidth / duration;
-            let stepHeight = differHeight / duration;
+            let stepWidth = (rect.width - data.width) / duration;
+            let stepHeight = (rect.height - data.height) / duration;
             let stepOpacity = 1 / duration;
             let currentOpacity = 1;
             let currentWidth = rect.width;
@@ -375,27 +376,29 @@ class ImageViewer {
             const animationFn = () => {
                 if (nextAnimation) {
                     nextAnimation = false;
-                    if (Math.abs(differTop) > 0.5) {
+                    if (compareNumberABS(differTop)) {
                         differTop -= stepTop;
                         nextAnimation = true;
                     }
-                    if (Math.abs(differLeft) > 0.5) {
+                    if (compareNumberABS(differLeft)) {
                         differLeft -= stepLeft;
                         nextAnimation = true;
                     }
-                    if (currentWidth >= data.width) {
+                    if (compareNumberABS(currentWidth, data.width)) {
                         currentWidth -= stepWidth;
+                        currentWidth = compareNumberABS(currentWidth, data.width) ? currentWidth : data.width;
                         style.width = currentWidth + 'px';
                         nextAnimation = true;
                     }
-                    if (currentHeight >= data.height) {
+                    if (compareNumberABS(currentHeight, data.height)) {
                         currentHeight -= stepHeight;
+                        currentHeight = compareNumberABS(currentHeight, data.height) ? currentHeight : data.height;
                         style.height = currentHeight + 'px';
                         nextAnimation = true;
                     }
                     if (currentOpacity > 0) {
                         currentOpacity -= stepOpacity;
-                        this.el.style.opacity = currentOpacity;
+                        this.bodyEl.style.opacity = currentOpacity >= 0 ? currentOpacity : 0;
                         nextAnimation = true;
                     }
                     setTranslateStyle(this.animationEl, differLeft.toFixed(4), differTop.toFixed(4));
@@ -532,10 +535,11 @@ class ImageViewer {
 
     close() {
         if (this.el) {
-            this.bodyEl.style.visibility = 'hidden';
+            this.viewerWrapperEl.style.visibility = 'hidden';
             this._fadeOut(() => {
-                this.el.style.display = 'none';
+                this.animationEl.children[0].src = '';
                 this._getCurrentViewer().clearImg();
+                this.el.style.display = 'none';
             });
         }
     }
@@ -550,15 +554,15 @@ class ImageViewer {
         }
 
         if (this.opt.fadeInFn) {
-            this.el.style.opacity = 0;
-            this.bodyEl.style.visibility = 'hidden';
+            this.bodyEl.style.opacity = 0;
+            this.viewerWrapperEl.style.visibility = 'hidden';
         }
         this.el.style.display = 'block';
         this.swipeInByIndex(this.currentIndex, false, () => {
             window.requestAnimationFrame(() => {
                 this._fadeIn(() => {
-                    this.el.style.opacity = 1;
-                    this.bodyEl.style.visibility = 'visible';
+                    this.bodyEl.style.opacity = 1;
+                    this.viewerWrapperEl.style.visibility = 'visible';
                     // 下面这个再次调用是为了加载大图
                     this.swipeInByIndex(this.currentIndex);
                 });
