@@ -35,6 +35,7 @@ class Viewer {
         this.realHeight = 0;
         this.translateX = 0;
         this.translateY = 0;
+        this.canScale = false;
         this.scale = 1; // 缩放比例
         this.currentScale = 1; // 当前正在缩放的倍数(临时保存,当事件结束后,会赋值回scale)
         this.translatePanelX = 0; // 最终图片面板所在的X轴坐标
@@ -77,12 +78,13 @@ class Viewer {
      * @param needLoadLarge 是否加载大图
      * @param fn 初始化完成的回调函数
      */
-    init(imageOption = this.imageOption, displayIndex = this.displayIndex, resetScale = false, needLoadLarge = true, fn) {
+    init(imageOption = this.imageOption, displayIndex = this.displayIndex, resetScale = false, needLoadLarge = true, fn = noop) {
         let src = '';
         const success = force => {
             if (this.src === src || force) {
-                this.imageEl.style.display = '';
+                this.canScale = true;
                 this.tipsEl.innerText = '';
+                this.imageEl.style.display = '';
                 this._initImage(resetScale, fn);
             }
         };
@@ -90,6 +92,7 @@ class Viewer {
             if (this.src === src || force) {
                 this.imageEl.style.display = 'none';
                 if (src && this.isActive()) {
+                    this._initImage(resetScale);
                     this.tipsEl.innerText = 'load image fail';
                 } else {
                     this.tipsEl.innerText = '';
@@ -98,9 +101,9 @@ class Viewer {
             }
         };
 
+        this.canScale = false;
         this.imageOption = imageOption;
         this.displayIndex = displayIndex;
-
         this.hideLoading();
         if (needLoadLarge && this.src !== this.imageOption.url) {
             if (imageOption._hasLoadLarge) {
@@ -203,11 +206,17 @@ class Viewer {
     }
 
     _pinchStart() {
+        if (!this.canScale) {
+            return;
+        }
         this.removeAnimation();
         this.panelEl.style.willChange = 'transform';
     }
 
     _pinch(scale) {
+        if (!this.canScale) {
+            return;
+        }
         let currentScale = scale * this.scale + this.scale;
         if (currentScale > 0.5 && currentScale < 8) {
             this.currentScale = currentScale;
@@ -216,6 +225,9 @@ class Viewer {
     }
 
     _pinchEnd(scale) {
+        if (!this.canScale) {
+            return;
+        }
         this.scale = isNumber(scale) ? scale : this.currentScale;
         this.realWidth = this.panelEl.clientWidth * this.scale;
         this.realHeight = this.panelEl.clientHeight * this.scale;
