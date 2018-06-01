@@ -210,6 +210,7 @@ class ImageViewer {
     }
 
     _dealWithScaleActionStart(event) {
+        this.viewerWrapperEl.classList.remove(ITEM_ANIMATION_CLASS);
         this.isScale = true;
         this.scaleStart = event.scale;
         this._getCurrentViewer()._pinchStart();
@@ -373,6 +374,7 @@ class ImageViewer {
         if (this._getPrevImage().url) {
             this.currentIndex--;
             this.translateX += this.width;
+            this.viewerWrapperEl.classList.add(ITEM_ANIMATION_CLASS);
             setTranslateStyle(this.viewerWrapperEl, this.translateX, 0);
 
             const image = this._getSpecificImage(this.currentIndex - 1);
@@ -397,6 +399,7 @@ class ImageViewer {
         if (this._getNextImage().url) {
             this.currentIndex++;
             this.translateX -= this.width;
+            this.viewerWrapperEl.classList.add(ITEM_ANIMATION_CLASS);
             setTranslateStyle(this.viewerWrapperEl, this.translateX, 0);
 
             const image = this._getSpecificImage(this.currentIndex + 1);
