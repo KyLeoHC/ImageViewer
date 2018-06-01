@@ -22,7 +22,7 @@ npm install image-viewer-gallery --save-dev
 ImageViewer是这个图片预览组件的核心类，实例化第一个入参是图片数组（必传），第二个为一些可选的选项参数对象。
 选项参数包括：
 - `container`：一个简单的选择器，代表该图片预览组件所应该插入到的地方(参数可选，默认为body元素);
-- `duration`: 渐变动画时间(参数可选，默认14);
+- `duration`: 渐变动画速度(参数可选，默认14);
 - `enableScale`：是否启用图片缩放功能(参数可选，默认为true);
 - `enableTapClose`：是否允许单击关闭图片预览(参数可选，默认为false);
 - `fadeInFn`：是否开启图片预览渐变打开效果(参数可选);
