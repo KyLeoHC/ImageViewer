@@ -196,7 +196,6 @@ class ImageViewer {
                 if (distance !== 0 && this._checkDistance(distance)) {
                     this.viewers.forEach(viewer => viewer.removeAnimation());
                     needSwipe = distance > 0 ? this.swipeToPrev() : this.swipeToNext();
-                    this._updateCountElement();
                 } else {
                     setTranslateStyle(this.viewerWrapperEl, this.translateX, 0);
                 }
@@ -381,6 +380,7 @@ class ImageViewer {
                 const viewer = this.loopViewers(1);
                 viewer.init(image, viewer.displayIndex - 3, true);
                 this._getCurrentViewer().init();
+                this._updateCountElement();
             }
             return true;
         } else {
@@ -404,6 +404,7 @@ class ImageViewer {
                 const viewer = this.loopViewers(0);
                 viewer.init(image, viewer.displayIndex + 3, true);
                 this._getCurrentViewer().init();
+                this._updateCountElement();
             }
             return true;
         } else {
@@ -444,7 +445,6 @@ class ImageViewer {
         this.images = images;
         this.imagesLength = images.length;
         this.currentIndex = startIndex;
-        this._init();
         this.swipeInByIndex(this.currentIndex);
     }
 

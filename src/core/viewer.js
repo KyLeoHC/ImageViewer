@@ -89,9 +89,12 @@ class Viewer {
         const fail = force => {
             if (this.src === src || force) {
                 this.imageEl.style.display = 'none';
-                if (src) {
-                    this.tipsEl.innerText = '图片加载失败';
+                if (src && this.isActive()) {
+                    this.tipsEl.innerText = 'load image fail';
+                } else {
+                    this.tipsEl.innerText = '';
                 }
+                fn();
             }
         };
 
