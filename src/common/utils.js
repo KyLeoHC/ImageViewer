@@ -16,17 +16,7 @@ const isPlainObject = value => {
     return Object.prototype.toString.call(value) === '[object Object]';
 };
 
-/**
- * 比较两个值(取绝对值)
- * @param a
- * @param b
- */
-const compareNumberABS = (a = 0, b = 0) => {
-    return Math.abs(a - b) > 0.05;
-};
-
 export {
     isNumber,
-    isPlainObject,
-    compareNumberABS
+    isPlainObject
 };

@@ -15,8 +15,7 @@ import {
 } from '../common/profile';
 import {
     isNumber,
-    isPlainObject,
-    compareNumberABS
+    isPlainObject
 } from '../common/utils';
 import lock from '../common/lock';
 import Touch from './touch';
@@ -281,67 +280,49 @@ class ImageViewer {
         }
     }
 
+    _animation(url, type, callback) {
+        const duration = this.duration;
+        const style = this.animationEl.style;
+        const currentViewer = this._getCurrentViewer();
+        const start = type === 1 ? this.opt.fadeInFn(this.currentIndex) : currentViewer.el;
+        const end = type === 1 ? currentViewer.el : this.opt.fadeInFn(this.currentIndex);
+        const data = this._getPositionAndSize(start);
+        const target = this._getPositionAndSize(end);
+        const stepTop = (target.top - data.top) / duration;
+        const stepLeft = (target.left - data.left) / duration;
+        const stepScaleX = (target.width - data.width) / data.width / duration;
+        const stepScaleY = (target.height - data.height) / data.height / duration;
+        let stepOpacity = 1 / duration;
+        let count = 0;
+
+        style.top = data.top + 'px';
+        style.left = data.left + 'px';
+        style.width = data.width + 'px';
+        style.height = data.height + 'px';
+        const animationFn = () => {
+            count++;
+            if (count <= duration) {
+                style.width = (1 + stepScaleX * count) * data.width + 'px';
+                style.height = (1 + stepScaleY * count) * data.height + 'px';
+                setTranslateStyle(this.animationEl, stepLeft * count, stepTop * count);
+                this.bodyEl.style.opacity = type === 1 ? (stepOpacity * count) : (1 - stepOpacity * count);
+                window.requestAnimationFrame(animationFn);
+            } else {
+                window.requestAnimationFrame(() => {
+                    this.animationEl.classList.add('hide');
+                    callback();
+                });
+            }
+        };
+        this.animationEl.children[0].src = url;
+        this.animationEl.classList.remove('hide');
+        animationFn();
+    }
+
     _fadeIn(callback) {
         if (this.opt.fadeInFn) {
             const image = this._getCurrentImage();
-            const duration = this.duration;
-            const data = this._getPositionAndSize(this.opt.fadeInFn(this.currentIndex));
-            const style = this.animationEl.style;
-            style.top = data.top + 'px';
-            style.left = data.left + 'px';
-            style.width = data.width + 'px';
-            style.height = data.height + 'px';
-
-            const currentViewer = this._getCurrentViewer();
-            const rect = this._getPositionAndSize(currentViewer.el);
-            let stepTop = (rect.top - data.top) / duration;
-            let stepLeft = (rect.left - data.left) / duration;
-            let stepWidth = (rect.width - data.width) / duration;
-            let stepHeight = (rect.height - data.height) / duration;
-            let stepOpacity = 1 / duration;
-            let currentOpacity = 0;
-            let offsetTop = 0;
-            let offsetLeft = 0;
-            let nextAnimation = true;
-
-            const animationFn = () => {
-                if (nextAnimation) {
-                    nextAnimation = false;
-                    if (compareNumberABS(rect.top, data.top + offsetTop)) {
-                        offsetTop += stepTop;
-                        nextAnimation = true;
-                    }
-                    if (compareNumberABS(rect.left, data.left + offsetLeft)) {
-                        offsetLeft += stepLeft;
-                        nextAnimation = true;
-                    }
-                    if (compareNumberABS(rect.width, data.width)) {
-                        data.width += stepWidth;
-                        style.width = data.width + 'px';
-                        nextAnimation = true;
-                    }
-                    if (compareNumberABS(rect.height, data.height)) {
-                        data.height += stepHeight;
-                        style.height = data.height + 'px';
-                        nextAnimation = true;
-                    }
-                    if (currentOpacity < 1) {
-                        currentOpacity += stepOpacity;
-                        this.bodyEl.style.opacity = currentOpacity;
-                        nextAnimation = true;
-                    }
-                    setTranslateStyle(this.animationEl, offsetLeft.toFixed(4), offsetTop.toFixed(4));
-                    window.requestAnimationFrame(animationFn);
-                } else {
-                    window.requestAnimationFrame(() => {
-                        this.animationEl.classList.add('hide');
-                        callback();
-                    });
-                }
-            };
-            this.animationEl.children[0].src = image.thumbnail || image.url;
-            this.animationEl.classList.remove('hide');
-            animationFn();
+            this._animation(image.thumbnail || image.url, 1, callback);
         } else {
             callback();
         }
@@ -350,69 +331,7 @@ class ImageViewer {
     _fadeOut(callback) {
         if (this.opt.fadeOutFn) {
             const image = this._getCurrentImage();
-            const duration = this.duration;
-            const data = this._getPositionAndSize(this.opt.fadeInFn(this.currentIndex));
-            const style = this.animationEl.style;
-            style.top = data.top + 'px';
-            style.left = data.left + 'px';
-
-            const currentViewer = this._getCurrentViewer();
-            const rect = this._getPositionAndSize(currentViewer.el);
-            let differTop = rect.top - data.top;
-            let differLeft = rect.left - data.left;
-            let stepTop = differTop / duration;
-            let stepLeft = differLeft / duration;
-            let stepWidth = (rect.width - data.width) / duration;
-            let stepHeight = (rect.height - data.height) / duration;
-            let stepOpacity = 1 / duration;
-            let currentOpacity = 1;
-            let currentWidth = rect.width;
-            let currentHeight = rect.height;
-            let nextAnimation = true;
-
-            setTranslateStyle(this.animationEl, differLeft, differTop);
-            style.width = rect.width + 'px';
-            style.height = rect.height + 'px';
-            const animationFn = () => {
-                if (nextAnimation) {
-                    nextAnimation = false;
-                    if (compareNumberABS(differTop)) {
-                        differTop -= stepTop;
-                        nextAnimation = true;
-                    }
-                    if (compareNumberABS(differLeft)) {
-                        differLeft -= stepLeft;
-                        nextAnimation = true;
-                    }
-                    if (compareNumberABS(currentWidth, data.width)) {
-                        currentWidth -= stepWidth;
-                        currentWidth = compareNumberABS(currentWidth, data.width) ? currentWidth : data.width;
-                        style.width = currentWidth + 'px';
-                        nextAnimation = true;
-                    }
-                    if (compareNumberABS(currentHeight, data.height)) {
-                        currentHeight -= stepHeight;
-                        currentHeight = compareNumberABS(currentHeight, data.height) ? currentHeight : data.height;
-                        style.height = currentHeight + 'px';
-                        nextAnimation = true;
-                    }
-                    if (currentOpacity > 0) {
-                        currentOpacity -= stepOpacity;
-                        this.bodyEl.style.opacity = currentOpacity >= 0 ? currentOpacity : 0;
-                        nextAnimation = true;
-                    }
-                    setTranslateStyle(this.animationEl, differLeft.toFixed(4), differTop.toFixed(4));
-                    window.requestAnimationFrame(animationFn);
-                } else {
-                    window.requestAnimationFrame(() => {
-                        this.animationEl.classList.add('hide');
-                        callback();
-                    });
-                }
-            };
-            this.animationEl.children[0].src = image.url;
-            this.animationEl.classList.remove('hide');
-            animationFn();
+            this._animation(image.url, 2, callback);
         } else {
             callback();
         }
@@ -559,6 +478,7 @@ class ImageViewer {
         }
         this.el.style.display = 'block';
         this.swipeInByIndex(this.currentIndex, false, () => {
+            this._getCurrentViewer().removeAnimation();
             window.requestAnimationFrame(() => {
                 this._fadeIn(() => {
                     this.bodyEl.style.opacity = 1;
