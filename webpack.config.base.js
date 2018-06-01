@@ -1,4 +1,11 @@
+const fs = require('fs');
 const path = require('path');
+const webpack = require('webpack');
+
+const getVersion = () => {
+    const json = JSON.parse(fs.readFileSync('./package.json').toString());
+    return json.version;
+};
 
 const config = {
     entry: {
@@ -72,7 +79,11 @@ const config = {
             }
         ]
     },
-    plugins: []
+    plugins: [
+        new webpack.DefinePlugin({
+            __VERSION__: JSON.stringify(getVersion())
+        })
+    ]
 };
 
 module.exports = config;

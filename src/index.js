@@ -5,4 +5,7 @@ import css from './css/index.styl';
 
 polyfill();
 
+/* eslint no-undef:0 */
+ImageViewer.version = __VERSION__;
+
 export default ImageViewer;
