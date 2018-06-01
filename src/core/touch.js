@@ -128,7 +128,6 @@ class Touch {
         const startEvent = this._startEvent;
         if (startEvent) {
             const moveEvent = this._moveEvent;
-            const endEvent = new EventWrapper(event);
 
             if (moveEvent) {
                 moveEvent.type.includes('pinch') && this._commonEvent.emit('pinchend', moveEvent);
@@ -137,6 +136,7 @@ class Touch {
                 this._startEvent = null;
                 this._moveEvent = null;
             } else {
+                const endEvent = new EventWrapper(event);
                 // 判断触发单击事件
                 if (this.isTapStart) {
                     // 触发单击事件
