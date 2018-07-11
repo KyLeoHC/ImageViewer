@@ -44,6 +44,8 @@ headerRender和footerRender返回的html字符串，可以为对应的标签添�
 document.addEventListener('DOMContentLoaded', function () {
     function getElement(index) {
         // 可以不返回任何一个值，仅仅传入一个空函数指明要开启渐变动画
+        // 也可以直接返回position数据 {top: 0, left: 0, width: 0, height: 0}
+        // 也可以直接就是一个空函数，不返回任何值(此时只有简单的透明度渐变动画)
         return document.getElementById('img' + (index + 1));
     }
 

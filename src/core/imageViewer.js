@@ -83,7 +83,7 @@ class ImageViewer {
         this.viewers = [];
         for (let i = 0, length = this.itemList.length, item; i < length; i++) {
             item = this.itemList[i];
-            this.viewers.push(new Viewer(this, item, this.width, this.height, i));
+            this.viewers.push(new Viewer(this, item, i));
         }
         lock.createLock(LOCK_NAME);
     }
@@ -267,7 +267,7 @@ class ImageViewer {
                 width: value.width || 0,
                 height: value.height || 0
             };
-        } else if (value.getBoundingClientRect) {
+        } else if (value && value.getBoundingClientRect) {
             const rect = value.getBoundingClientRect();
             return {
                 top: rect.top,
@@ -280,19 +280,28 @@ class ImageViewer {
         }
     }
 
+    /**
+     * 渐变动画函数
+     * @param url 图片链接
+     * @param type 1: 渐变打开 2: 渐变关闭
+     * @param callback 动画完成的回调
+     * @private
+     */
     _animation(url, type, callback) {
         const duration = this.duration;
         const style = this.animationEl.style;
         const currentViewer = this._getCurrentViewer();
         const start = type === 1 ? this.opt.fadeInFn(this.currentIndex) : currentViewer.el;
         const end = type === 1 ? currentViewer.el : this.opt.fadeInFn(this.currentIndex);
+        // 动画起始的position数据
         const data = this._getPositionAndSize(start);
+        // 动画结束的position数据
         const target = this._getPositionAndSize(end);
         const stepTop = (target.top - data.top) / duration;
         const stepLeft = (target.left - data.left) / duration;
         const stepScaleX = (target.width - data.width) / data.width / duration;
         const stepScaleY = (target.height - data.height) / data.height / duration;
-        let stepOpacity = 1 / duration;
+        const stepOpacity = 1 / duration;
         let count = 0;
 
         style.top = data.top + 'px';
@@ -302,20 +311,30 @@ class ImageViewer {
         const animationFn = () => {
             count++;
             if (count <= duration) {
-                style.width = (1 + stepScaleX * count) * data.width + 'px';
-                style.height = (1 + stepScaleY * count) * data.height + 'px';
-                setTranslateStyle(this.animationEl, stepLeft * count, stepTop * count);
+                if ((type === 1 && start) || (type === 2 && end)) {
+                    // 如果是没有渐变的目标对象position数据
+                    // 则采用简单的透明度消失动画
+                    style.width = (1 + stepScaleX * count) * data.width + 'px';
+                    style.height = (1 + stepScaleY * count) * data.height + 'px';
+                    setTranslateStyle(this.animationEl, stepLeft * count, stepTop * count);
+                }
                 this.bodyEl.style.opacity = type === 1 ? (stepOpacity * count) : (1 - stepOpacity * count);
                 window.requestAnimationFrame(animationFn);
             } else {
                 window.requestAnimationFrame(() => {
-                    this.animationEl.classList.add('hide');
                     callback();
+                    window.requestAnimationFrame(() => {
+                        this.animationEl.classList.add('hide');
+                    });
                 });
             }
         };
-        this.animationEl.children[0].src = url;
-        this.animationEl.classList.remove('hide');
+        if (type === 1 || (type === 2 && end)) {
+            // 如果是渐变关闭(type = 2)并且没有渐变的目标对象position数据
+            // 则采用简单的透明度消失动画
+            this.animationEl.children[0].src = url;
+            this.animationEl.classList.remove('hide');
+        }
         animationFn();
     }
 
@@ -487,7 +506,7 @@ class ImageViewer {
                     this.bodyEl.style.opacity = 1;
                     this.viewerWrapperEl.style.visibility = 'visible';
                     // 下面这个再次调用是为了加载大图
-                    this.swipeInByIndex(this.currentIndex);
+                    this._getCurrentImage().thumbnail && this.swipeInByIndex(this.currentIndex);
                 });
             });
         });

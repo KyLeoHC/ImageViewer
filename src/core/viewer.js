@@ -16,7 +16,7 @@ const noop = () => {
 };
 
 class Viewer {
-    constructor(imageViewer, el, width, height, index) {
+    constructor(imageViewer, el, index) {
         this.id = ++id;
         this.src = ''; // 当前图片的url，会同步赋值到图片标签的src属性
         this.event = new Event(false);
@@ -29,8 +29,8 @@ class Viewer {
         this.imageOption = null;
         this.index = index; // viewer排序用，记录原始的数组位置
         this.displayIndex = 0;
-        this.width = width;
-        this.height = height;
+        this.width = imageViewer.width;
+        this.height = imageViewer.height;
         this.realWidth = 0;
         this.realHeight = 0;
         this.translateX = 0;
@@ -63,6 +63,9 @@ class Viewer {
         this.realWidth = this.panelEl.clientWidth * this.scale;
         this.realHeight = this.panelEl.clientHeight * this.scale;
         this.translateX = this.displayIndex * this.width;
+        // 在IOS的safari下，css中的100%高度并不等同于我们视觉上的可视区域高度
+        // 实际上还包括了上导航栏和下工具栏的高度，所以这里可以考虑取元素高度和window可视区域高度中的最小值
+        // this.translateY = -Math.min(this.el.clientHeight, window.innerHeight || 0) / 2;
         this.translateY = -this.el.clientHeight / 2;
         this.needResetX = this.needResetY = false;
         setScaleAndTranslateStyle(this.panelEl, this.scale, this.translatePanelX, this.translatePanelY);
@@ -146,9 +149,13 @@ class Viewer {
         }
 
         this._setImageUrl(src);
-        this.event.on(this.SUCCESS_EVENT, success);
-        this.event.on(this.FAIL_EVENT, fail);
-        setTranslateStyle(this.el, this.displayIndex * this.width, this.translateY);
+        if (this.imageEl.width || this.imageEl.height) {
+            success();
+        } else {
+            this.event.on(this.SUCCESS_EVENT, success);
+            this.event.on(this.FAIL_EVENT, fail);
+            this._initImage(true);
+        }
     }
 
     /**
@@ -169,15 +176,20 @@ class Viewer {
      */
     loadImg(url = '', success, fail, end) {
         const img = new Image();
-        img.onload = () => {
+        img.src = url;
+        if (img.width || img.height) {
             success();
             end();
-        };
-        img.onerror = () => {
-            fail();
-            end();
-        };
-        img.src = url;
+        } else {
+            img.onload = () => {
+                success();
+                end();
+            };
+            img.onerror = () => {
+                fail();
+                end();
+            };
+        }
     }
 
     showLoading() {
