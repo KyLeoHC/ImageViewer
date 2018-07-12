@@ -4,6 +4,8 @@ import {
     setScaleAndTranslateStyle
 } from '../common/dom';
 import {
+    LOAD_IMG_COMPLETE,
+    LOAD_IMG_FAIL,
     ITEM_ANIMATION_CLASS,
     LOCK_NAME
 } from '../common/profile';
@@ -44,8 +46,6 @@ class Viewer {
         this.allowDistanceY = 0; // 图片放大后，允许拖动的最大Y轴距离
         this.needResetX = false; // 拖动图片超出边界时，需要重置一下x轴的坐标
         this.needResetY = false; // 拖动图片超出边界时，需要重置一下y轴的坐标
-        this.SUCCESS_EVENT = 'LOAD_COMPLETE';
-        this.FAIL_EVENT = 'LOAD_FAIL';
         this._bindEvent();
     }
 
@@ -124,7 +124,7 @@ class Viewer {
                                 if (this.isActive()) {
                                     // 当前所展示的图片，加载完之后需要立即初始化尺寸
                                     this._setImageUrl(imageOption.url);
-                                    this.event.once(this.SUCCESS_EVENT, () => {
+                                    this.event.once(LOAD_IMG_COMPLETE, () => {
                                         success(true);
                                     });
                                 }
@@ -149,8 +149,8 @@ class Viewer {
         }
 
         this._setImageUrl(src);
-        this.event.once(this.SUCCESS_EVENT, success);
-        this.event.once(this.FAIL_EVENT, fail);
+        this.event.once(LOAD_IMG_COMPLETE, success);
+        this.event.once(LOAD_IMG_FAIL, fail);
         this._initImage(true);
     }
 
@@ -206,10 +206,10 @@ class Viewer {
 
     _bindEvent() {
         this.imageEl.addEventListener('load', () => {
-            this.event.emit(this.SUCCESS_EVENT);
+            this.event.emit(LOAD_IMG_COMPLETE);
         }, false);
         this.imageEl.addEventListener('error', () => {
-            this.event.emit(this.FAIL_EVENT);
+            this.event.emit(LOAD_IMG_FAIL);
         }, false);
     }
 

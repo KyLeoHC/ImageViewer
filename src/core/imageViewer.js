@@ -8,6 +8,8 @@ import {
     setScaleAndTranslateStyle
 } from '../common/dom';
 import {
+    LOAD_IMG_COMPLETE,
+    LOAD_IMG_FAIL,
     LOCK_NAME,
     ITEM_ANIMATION_CLASS,
     LEFT_IMG,
@@ -18,6 +20,7 @@ import {
     isNumber,
     isPlainObject
 } from '../common/utils';
+import Event from '../common/event';
 import lock from '../common/lock';
 import Touch from './touch';
 import Viewer from './viewer';
@@ -35,6 +38,7 @@ class ImageViewer {
         this.footerEl = null;
         this.viewerWrapperEl = null;
         this.animationEl = null;
+        this.animationImgEl = null;
         this.currentNumberEl = null;
         this.totalNumberEl = null;
         this.images = images; // 图片数据
@@ -51,6 +55,7 @@ class ImageViewer {
         this.itemList = []; // 各个图片容器元素的dom节点
         this.translateX = 0;
         this.touch = null;
+        this.event = new Event(false);
     }
 
     _create() {
@@ -61,11 +66,13 @@ class ImageViewer {
         divEl.innerHTML = template;
         this.el = divEl.firstElementChild;
         query(this.container)[0].appendChild(this.el);
+        this.bgEl = query('.image-viewer-bg', this.el)[0];
         this.headerEl = query('.image-header', this.el)[0];
         this.bodyEl = query('.image-body', this.el)[0];
         this.footerEl = query('.image-footer', this.el)[0];
         this.viewerWrapperEl = query('.image-body .viewer-wrapper', this.el)[0];
         this.animationEl = query('.image-animation', this.el)[0];
+        this.animationImgEl = this.animationEl.children[0];
         this.itemList = this.viewerWrapperEl.children;
         this.width = this.el.clientWidth;
         this.height = this.el.clientHeight;
@@ -89,6 +96,13 @@ class ImageViewer {
             this.viewers.push(new Viewer(this, item, i));
         }
         lock.createLock(LOCK_NAME);
+
+        this.animationImgEl.addEventListener('load', () => {
+            this.event.emit(LOAD_IMG_COMPLETE);
+        }, false);
+        this.animationImgEl.addEventListener('error', () => {
+            this.event.emit(LOAD_IMG_FAIL);
+        }, false);
     }
 
     _updateCountElement() {
@@ -284,12 +298,12 @@ class ImageViewer {
     _initDuration() {
         const duration = this.opt.duration;
         if (duration !== undefined) {
-            if (this.bodyEl.style.transitionDuration !== undefined) {
+            if (this.bgEl.style.transitionDuration !== undefined) {
                 this.animationEl.style.transitionDuration =
-                    this.bodyEl.style.transitionDuration = `${duration}ms`;
-            } else if (this.bodyEl.style.webkitTransitionDuration !== undefined) {
+                    this.bgEl.style.transitionDuration = `${duration}ms`;
+            } else if (this.bgEl.style.webkitTransitionDuration !== undefined) {
                 this.animationEl.style.webkitTransitionDuration =
-                    this.bodyEl.style.webkitTransitionDuration = `${duration}ms`;
+                    this.bgEl.style.webkitTransitionDuration = `${duration}ms`;
             } else {
                 debug('transition duration prop not found.');
             }
@@ -318,19 +332,20 @@ class ImageViewer {
         this.animationEl.style.height = (type === 1 ? end.height : start.height) + 'px';
         setScaleAndTranslateStyle(this.animationEl, type === 1 ? scale : 1, start.left, start.top);
         imgEl.src = url;
-        this.animationEl.classList.remove('hide');
-        window.requestAnimationFrame(() => {
-            this.el.classList.add('animation');
-            this.bodyEl.style.opacity = type === 1 ? 1 : 0.001;
-            setScaleAndTranslateStyle(this.animationEl, type === 1 ? 1 : scale, end.left, end.top);
+        this.event.once(LOAD_IMG_COMPLETE, () => {
+            this.animationEl.classList.remove('hide');
+            // 延迟20ms是为了确保动画元素节点完全呈现出来了，避免部分机型因为快速显示和隐藏元素导致的闪烁现象
             setTimeout(() => {
-                this.el.classList.remove('animation');
-                this.animationEl.classList.add('hide');
-                callback();
-                imgEl.src = '';
-                // this.animationEl.style.width = this.animationEl.style.height = '0px';
-                // setScaleAndTranslateStyle(this.animationEl, 1, 0, 0);
-            }, duration + 20);
+                this.viewerWrapperEl.style.visibility = 'hidden';
+                this.el.classList.add('animation');
+                this.bgEl.style.opacity = type === 1 ? 1 : 0.001;
+                setScaleAndTranslateStyle(this.animationEl, type === 1 ? 1 : scale, end.left, end.top);
+                setTimeout(() => {
+                    this.el.classList.remove('animation');
+                    this.animationEl.classList.add('hide');
+                    callback();
+                }, duration + 20);
+            }, 20);
         });
     }
 
@@ -472,7 +487,6 @@ class ImageViewer {
 
     close() {
         if (this.el) {
-            this.viewerWrapperEl.style.visibility = 'hidden';
             this._fadeOut(() => {
                 this.animationEl.children[0].src = '';
                 this._getCurrentViewer().clearImg();
@@ -491,7 +505,7 @@ class ImageViewer {
         }
 
         if (this.opt.fadeInFn) {
-            this.bodyEl.style.opacity = 0.001;
+            this.bgEl.style.opacity = 0.001;
             this.viewerWrapperEl.style.visibility = 'hidden';
         }
         this.el.style.display = 'block';
@@ -499,7 +513,7 @@ class ImageViewer {
             this._getCurrentViewer().removeAnimation();
             window.requestAnimationFrame(() => {
                 this._fadeIn(() => {
-                    this.bodyEl.style.opacity = 1;
+                    this.bgEl.style.opacity = 1;
                     this.viewerWrapperEl.style.visibility = 'visible';
                     // 下面这个再次调用是为了加载大图
                     this._getCurrentImage().thumbnail && this.viewers[1].init(this._getCurrentImage(), CENTER_IMG, true);
