@@ -31,10 +31,10 @@
     .viewer {
         display inline-block
         position absolute
-        top 50%
+        top 0
+        left 0
         width 100%
         text-align center
-        transform translate3d(0, -50%, 0)
         backface-visibility hidden
     }
 
@@ -94,8 +94,8 @@
         top 0
         left 0
         z-index 5
-        transition none
         text-align center
+        transition none
         transform-origin left top
         backface-visibility hidden
 
@@ -106,8 +106,7 @@
 
         &.hide {
             // 不采用display: none的方式，是因为在某些机型上面会有闪一下的不好体验
-            //width 0 !important
-            height 0 !important
+            width 0 !important
         }
     }
 

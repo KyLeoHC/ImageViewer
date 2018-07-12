@@ -29,8 +29,6 @@ class Viewer {
         this.imageOption = null;
         this.index = index; // viewer排序用，记录原始的数组位置
         this.displayIndex = 0;
-        this.width = imageViewer.width;
-        this.height = imageViewer.height;
         this.realWidth = 0;
         this.realHeight = 0;
         this.translateX = 0;
@@ -62,11 +60,10 @@ class Viewer {
         this.currentPanelY = 0;
         this.realWidth = this.panelEl.clientWidth * this.scale;
         this.realHeight = this.panelEl.clientHeight * this.scale;
-        this.translateX = this.displayIndex * this.width;
+        this.translateX = this.displayIndex * this.imageViewer.width;
         // 在IOS的safari下，css中的100%高度并不等同于我们视觉上的可视区域高度
         // 实际上还包括了上导航栏和下工具栏的高度，所以这里可以考虑取元素高度和window可视区域高度中的最小值
-        // this.translateY = -Math.min(this.el.clientHeight, window.innerHeight || 0) / 2;
-        this.translateY = -this.el.clientHeight / 2;
+        this.translateY = (this.imageViewer.height - this.el.clientHeight) / 2;
         this.needResetX = this.needResetY = false;
         setScaleAndTranslateStyle(this.panelEl, this.scale, this.translatePanelX, this.translatePanelY);
         setTranslateStyle(this.el, this.translateX, this.translateY);
@@ -241,9 +238,9 @@ class Viewer {
         this.scale = isNumber(scale) ? scale : this.currentScale;
         this.realWidth = this.panelEl.clientWidth * this.scale;
         this.realHeight = this.panelEl.clientHeight * this.scale;
-        this.allowDistanceX = (this.realWidth - this.width) / 2 + 2;
-        this.allowDistanceY = (this.realHeight - this.height) / 2 + 2;
-        if (this.realWidth < this.width || this.realHeight < this.height) {
+        this.allowDistanceX = (this.realWidth - this.imageViewer.width) / 2 + 2;
+        this.allowDistanceY = (this.realHeight - this.imageViewer.height) / 2 + 2;
+        if (this.realWidth < this.imageViewer.width || this.realHeight < this.imageViewer.height) {
             this.addAnimation();
             this._initImage(false);
         }
@@ -268,7 +265,7 @@ class Viewer {
         let tempX = 0;
         const translatePanelX = event.deltaX;
         const translatePanelY = event.deltaY;
-        if (this.realWidth <= this.width && translatePanelX) {
+        if (this.realWidth <= this.imageViewer.width && translatePanelX) {
             this.imageViewer._dealWithMoveAction({deltaX: translatePanelX}, true);
         } else {
             if (this.allowDistanceX > 0 && translatePanelX) {
@@ -294,7 +291,7 @@ class Viewer {
     _translatePanelEnd(event) {
         let needSwipe = false;
         const translatePanelX = event.deltaX;
-        if (this.realWidth <= this.width && translatePanelX) {
+        if (this.realWidth <= this.imageViewer.width && translatePanelX) {
             needSwipe = this.imageViewer._dealWithMoveActionEnd({deltaX: translatePanelX}, true);
         } else if (this.needResetX) {
             needSwipe = this.imageViewer._dealWithMoveActionEnd({deltaX: this._calculate(this.currentPanelX, this.allowDistanceX)}, true);

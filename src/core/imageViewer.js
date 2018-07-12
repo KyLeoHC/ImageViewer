@@ -305,30 +305,31 @@ class ImageViewer {
      */
     _animation(url, type, callback) {
         const duration = this.duration;
-        const style = this.animationEl.style;
+        const imgEl = this.animationEl.children[0];
         const currentViewer = this._getCurrentViewer();
-        const start = type === 1 ? this.opt.fadeInFn(this.currentIndex) : currentViewer.el;
-        const end = type === 1 ? currentViewer.el : this.opt.fadeInFn(this.currentIndex);
         // 动画起始的position数据
-        const data = this._getPositionAndSize(start);
+        const start = this._getPositionAndSize(type === 1 ? this.opt.fadeInFn(this.currentIndex) : currentViewer.panelEl);
         // 动画结束的position数据
-        const target = this._getPositionAndSize(end);
-        const scale = Math.min(data.width, target.width) / Math.max(data.width, target.width);
+        const end = this._getPositionAndSize(type === 1 ? currentViewer.panelEl : this.opt.fadeInFn(this.currentIndex));
+        const scale = Math.min(start.width, end.width) / Math.max(start.width, end.width);
 
-        style.width = (type === 1 ? target.width : data.width) + 'px';
-        style.height = (type === 1 ? target.height : data.height) + 'px';
-        setScaleAndTranslateStyle(this.animationEl, type === 1 ? scale : 1, data.left, data.top);
-        this.animationEl.children[0].src = url;
+        // 动画元素宽度和高度取反，因为会有缩放
+        this.animationEl.style.width = (type === 1 ? end.width : start.width) + 'px';
+        this.animationEl.style.height = (type === 1 ? end.height : start.height) + 'px';
+        setScaleAndTranslateStyle(this.animationEl, type === 1 ? scale : 1, start.left, start.top);
+        imgEl.src = url;
         this.animationEl.classList.remove('hide');
-
         window.requestAnimationFrame(() => {
             this.el.classList.add('animation');
             this.bodyEl.style.opacity = type === 1 ? 1 : 0.001;
-            setScaleAndTranslateStyle(this.animationEl, type === 1 ? 1 : scale, target.left, target.top);
+            setScaleAndTranslateStyle(this.animationEl, type === 1 ? 1 : scale, end.left, end.top);
             setTimeout(() => {
                 this.el.classList.remove('animation');
-                callback();
                 this.animationEl.classList.add('hide');
+                callback();
+                imgEl.src = '';
+                // this.animationEl.style.width = this.animationEl.style.height = '0px';
+                // setScaleAndTranslateStyle(this.animationEl, 1, 0, 0);
             }, duration + 20);
         });
     }
