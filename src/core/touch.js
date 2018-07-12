@@ -29,7 +29,9 @@ class EventWrapper {
     }
 
     preventDefault() {
-        this.srcEvent.preventDefault && this.srcEvent.preventDefault();
+        this.srcEvent.preventDefault
+            ? this.srcEvent.preventDefault()
+            : (this.srcEvent.returnValue = false);
     }
 }
 
@@ -114,11 +116,11 @@ class Touch {
                 // 满足最小移动间距的要求时，才触发相关移动和缩放事件
                 if (!this.hasTriggerStart) {
                     this.hasTriggerStart = true;
-                    moveEvent.type.includes('pinch') && this._commonEvent.emit('pinchstart', startEvent);
-                    moveEvent.type.includes('pan') && this._commonEvent.emit('panstart', startEvent);
+                    moveEvent.type.indexOf('pinch') > -1 && this._commonEvent.emit('pinchstart', startEvent);
+                    moveEvent.type.indexOf('pan') > -1 && this._commonEvent.emit('panstart', startEvent);
                 }
-                moveEvent.type.includes('pinch') && this._commonEvent.emit('pinch', moveEvent);
-                moveEvent.type.includes('pan') && this._commonEvent.emit('panmove', moveEvent);
+                moveEvent.type.indexOf('pinch') > -1 && this._commonEvent.emit('pinch', moveEvent);
+                moveEvent.type.indexOf('pan') > -1 && this._commonEvent.emit('panmove', moveEvent);
                 this._moveEvent = moveEvent;
             }
         }
@@ -130,8 +132,8 @@ class Touch {
             const moveEvent = this._moveEvent;
 
             if (moveEvent) {
-                moveEvent.type.includes('pinch') && this._commonEvent.emit('pinchend', moveEvent);
-                moveEvent.type.includes('pan') && this._commonEvent.emit('panend', moveEvent);
+                moveEvent.type.indexOf('pinch') > -1 && this._commonEvent.emit('pinchend', moveEvent);
+                moveEvent.type.indexOf('pan') > -1 && this._commonEvent.emit('panend', moveEvent);
                 this.hasTriggerStart = false;
                 this._startEvent = null;
                 this._moveEvent = null;

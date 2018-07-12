@@ -108,38 +108,41 @@ class Viewer {
         this.imageOption = imageOption;
         this.displayIndex = displayIndex;
         this.hideLoading();
-        if (needLoadLarge && this.src !== this.imageOption.url) {
+        if (needLoadLarge) {
             if (imageOption._hasLoadLarge) {
                 // 大图已加载好的情况下
                 src = imageOption.url;
             } else {
                 src = imageOption.thumbnail;
                 if (src) {
-                    if (this.isActive()) {
+                    // 缩略图存在的情况下
+                    // 如果是当前图片则后台加载大图
+                    if (this.isActive() && imageOption.url) {
                         this.showLoading();
-                        window.requestAnimationFrame(() => {
-                            // 缩略图存在的情况下，后台加载大图
-                            this.loadImg(imageOption.url, () => {
-                                // 判断当前viewer的url是否和当时正在加载的图片一致
-                                if (this.src === imageOption.thumbnail) {
-                                    this.hideLoading();
-                                    if (this.isActive()) {
-                                        // 非当前所展示的图片，加载完之后不需要立即初始化尺寸
-                                        this._setImageUrl(imageOption.url);
+                        // 缩略图存在的情况下，后台加载大图
+                        this.loadImg(imageOption.url, () => {
+                            // 判断当前viewer的url是否和当时正在加载的图片一致
+                            if (this.src === imageOption.thumbnail) {
+                                this.hideLoading();
+                                if (this.isActive()) {
+                                    // 当前所展示的图片，加载完之后需要立即初始化尺寸
+                                    this._setImageUrl(imageOption.url);
+                                    this.event.once(this.SUCCESS_EVENT, () => {
                                         success(true);
-                                    }
+                                    });
                                 }
-                            }, () => {
-                                if (this.src === imageOption.thumbnail) {
-                                    this.hideLoading();
-                                    this.isActive() && fail(true);
-                                }
-                            }, () => {
-                                imageOption._hasLoadLarge = true;
-                            });
+                            }
+                        }, () => {
+                            if (this.src === imageOption.thumbnail) {
+                                this.hideLoading();
+                                this.isActive() && fail(true);
+                            }
+                        }, () => {
+                            imageOption._hasLoadLarge = true;
                         });
                     }
                 } else {
+                    // 没有缩略图的情况下
                     src = imageOption.url;
                     this.imageEl.style.display = 'none';
                 }
@@ -149,13 +152,9 @@ class Viewer {
         }
 
         this._setImageUrl(src);
-        if (this.imageEl.width || this.imageEl.height) {
-            success();
-        } else {
-            this.event.on(this.SUCCESS_EVENT, success);
-            this.event.on(this.FAIL_EVENT, fail);
-            this._initImage(true);
-        }
+        this.event.once(this.SUCCESS_EVENT, success);
+        this.event.once(this.FAIL_EVENT, fail);
+        this._initImage(true);
     }
 
     /**
@@ -222,7 +221,6 @@ class Viewer {
             return;
         }
         this.removeAnimation();
-        this.panelEl.style.willChange = 'transform';
     }
 
     _pinch(scale) {
@@ -243,8 +241,8 @@ class Viewer {
         this.scale = isNumber(scale) ? scale : this.currentScale;
         this.realWidth = this.panelEl.clientWidth * this.scale;
         this.realHeight = this.panelEl.clientHeight * this.scale;
-        this.allowDistanceX = (this.realWidth - this.width) / 2 / this.scale + 2;
-        this.allowDistanceY = (this.realHeight - this.height) / 2 / this.scale + 2;
+        this.allowDistanceX = (this.realWidth - this.width) / 2 + 2;
+        this.allowDistanceY = (this.realHeight - this.height) / 2 + 2;
         if (this.realWidth < this.width || this.realHeight < this.height) {
             this.addAnimation();
             this._initImage(false);
@@ -255,7 +253,6 @@ class Viewer {
             } else {
                 lock.releaseLock(LOCK_NAME);
             }
-            this.panelEl.style.willChange = 'auto';
         });
     }
 
@@ -275,7 +272,7 @@ class Viewer {
             this.imageViewer._dealWithMoveAction({deltaX: translatePanelX}, true);
         } else {
             if (this.allowDistanceX > 0 && translatePanelX) {
-                this.currentPanelX = translatePanelX / this.scale + this.translatePanelX;
+                this.currentPanelX = translatePanelX + this.translatePanelX;
                 this.needResetX = !(-this.allowDistanceX < this.currentPanelX && this.currentPanelX < this.allowDistanceX);
             }
 
@@ -288,7 +285,7 @@ class Viewer {
             }
         }
         if (this.allowDistanceY > 0 && translatePanelY) {
-            this.currentPanelY = translatePanelY / this.scale + this.translatePanelY;
+            this.currentPanelY = translatePanelY + this.translatePanelY;
             this.needResetY = !(-this.allowDistanceY < this.currentPanelY && this.currentPanelY < this.allowDistanceY);
         }
         setScaleAndTranslateStyle(this.panelEl, this.scale, tempX, this.currentPanelY);

@@ -4,7 +4,8 @@ import {
 import {
     query,
     removeElement,
-    setTranslateStyle
+    setTranslateStyle,
+    setScaleAndTranslateStyle
 } from '../common/dom';
 import {
     LOCK_NAME,
@@ -27,7 +28,7 @@ const defaultImgOption = {thumbnail: '', url: ''};
 class ImageViewer {
     constructor(images = [], opt = {}) {
         this.opt = opt;
-        this.duration = this.opt.duration || 14;
+        this.duration = this.opt.duration || 333;
         this.el = null;
         this.headerEl = null;
         this.bodyEl = null;
@@ -77,6 +78,8 @@ class ImageViewer {
         }
         this.currentNumberEl = query('.number-current', this.el)[0]; // 当前滑动所在的图片下标的元素节点
         this.totalNumberEl = query('.number-total', this.el)[0]; // 图片总数的元素节点
+
+        this._initDuration();
     }
 
     _init() {
@@ -162,7 +165,6 @@ class ImageViewer {
         } else {
             this.viewerWrapperEl.classList.remove(ITEM_ANIMATION_CLASS);
             this.opt.beforeSwipe && this.opt.beforeSwipe(this.currentIndex);
-            this.viewerWrapperEl.style.willChange = 'transform';
         }
     }
 
@@ -201,7 +203,6 @@ class ImageViewer {
                 }
                 this.opt.afterSwipe && this.opt.afterSwipe(this.currentIndex);
             }
-            this.viewerWrapperEl.style.willChange = 'auto';
         }
         window.requestAnimationFrame(() => {
             this.isMove = false;
@@ -280,6 +281,21 @@ class ImageViewer {
         }
     }
 
+    _initDuration() {
+        const duration = this.opt.duration;
+        if (duration !== undefined) {
+            if (this.bodyEl.style.transitionDuration !== undefined) {
+                this.animationEl.style.transitionDuration =
+                    this.bodyEl.style.transitionDuration = `${duration}ms`;
+            } else if (this.bodyEl.style.webkitTransitionDuration !== undefined) {
+                this.animationEl.style.webkitTransitionDuration =
+                    this.bodyEl.style.webkitTransitionDuration = `${duration}ms`;
+            } else {
+                debug('transition duration prop not found.');
+            }
+        }
+    }
+
     /**
      * 渐变动画函数
      * @param url 图片链接
@@ -297,45 +313,24 @@ class ImageViewer {
         const data = this._getPositionAndSize(start);
         // 动画结束的position数据
         const target = this._getPositionAndSize(end);
-        const stepTop = (target.top - data.top) / duration;
-        const stepLeft = (target.left - data.left) / duration;
-        const stepScaleX = (target.width - data.width) / data.width / duration;
-        const stepScaleY = (target.height - data.height) / data.height / duration;
-        const stepOpacity = 1 / duration;
-        let count = 0;
+        const scale = Math.min(data.width, target.width) / Math.max(data.width, target.width);
 
-        style.top = data.top + 'px';
-        style.left = data.left + 'px';
-        style.width = data.width + 'px';
-        style.height = data.height + 'px';
-        const animationFn = () => {
-            count++;
-            if (count <= duration) {
-                if ((type === 1 && start) || (type === 2 && end)) {
-                    // 如果是没有渐变的目标对象position数据
-                    // 则采用简单的透明度消失动画
-                    style.width = (1 + stepScaleX * count) * data.width + 'px';
-                    style.height = (1 + stepScaleY * count) * data.height + 'px';
-                    setTranslateStyle(this.animationEl, stepLeft * count, stepTop * count);
-                }
-                this.bodyEl.style.opacity = type === 1 ? (stepOpacity * count) : (1 - stepOpacity * count);
-                window.requestAnimationFrame(animationFn);
-            } else {
-                window.requestAnimationFrame(() => {
-                    callback();
-                    window.requestAnimationFrame(() => {
-                        this.animationEl.classList.add('hide');
-                    });
-                });
-            }
-        };
-        if (type === 1 || (type === 2 && end)) {
-            // 如果是渐变关闭(type = 2)并且没有渐变的目标对象position数据
-            // 则采用简单的透明度消失动画
-            this.animationEl.children[0].src = url;
-            this.animationEl.classList.remove('hide');
-        }
-        animationFn();
+        style.width = (type === 1 ? target.width : data.width) + 'px';
+        style.height = (type === 1 ? target.height : data.height) + 'px';
+        setScaleAndTranslateStyle(this.animationEl, type === 1 ? scale : 1, data.left, data.top);
+        this.animationEl.children[0].src = url;
+        this.animationEl.classList.remove('hide');
+
+        window.requestAnimationFrame(() => {
+            this.el.classList.add('animation');
+            this.bodyEl.style.opacity = type === 1 ? 1 : 0.001;
+            setScaleAndTranslateStyle(this.animationEl, type === 1 ? 1 : scale, target.left, target.top);
+            setTimeout(() => {
+                this.el.classList.remove('animation');
+                callback();
+                this.animationEl.classList.add('hide');
+            }, duration + 20);
+        });
     }
 
     _fadeIn(callback) {
@@ -495,7 +490,7 @@ class ImageViewer {
         }
 
         if (this.opt.fadeInFn) {
-            this.bodyEl.style.opacity = 0;
+            this.bodyEl.style.opacity = 0.001;
             this.viewerWrapperEl.style.visibility = 'hidden';
         }
         this.el.style.display = 'block';
@@ -506,7 +501,7 @@ class ImageViewer {
                     this.bodyEl.style.opacity = 1;
                     this.viewerWrapperEl.style.visibility = 'visible';
                     // 下面这个再次调用是为了加载大图
-                    this._getCurrentImage().thumbnail && this.swipeInByIndex(this.currentIndex);
+                    this._getCurrentImage().thumbnail && this.viewers[1].init(this._getCurrentImage(), CENTER_IMG, true);
                 });
             });
         });

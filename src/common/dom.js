@@ -27,7 +27,7 @@ function setTranslateStyle(el, x, y) {
 }
 
 function setScaleAndTranslateStyle(el, scale, x, y) {
-    el.style[transformProp] = `scale3d(${scale},${scale},1) translate3d(${x + 'px'},${y + 'px'},0)`;
+    el.style[transformProp] = `translate3d(${x + 'px'},${y + 'px'},0) scale(${scale})`;
 }
 
 export {

@@ -9,21 +9,45 @@ class Event {
     }
 
     /**
+     * 增加handler
+     * @param name
+     * @param fn
+     * @param enableMultiple
+     * @param once
+     */
+    addHandlers(name, fn, enableMultiple, once = false) {
+        enableMultiple = enableMultiple === undefined ? this._enableMultiple : enableMultiple;
+        if (enableMultiple) {
+            if (!this._handlers[name]) {
+                this._handlers[name] = [];
+            }
+            this._handlers[name].push({
+                once,
+                fn
+            });
+        } else {
+            this._handlers[name] = [{
+                once,
+                fn
+            }];
+        }
+    }
+
+    /**
      * 绑定事件处理函数
      * @param name 事件名字
      * @param handler 对应的事件处理函数
      * @param enableMultiple 标记该事件是否允许挂载多个处理函数
      */
     on(name, handler, enableMultiple) {
-        enableMultiple = enableMultiple === undefined ? this._enableMultiple : enableMultiple;
-        if (enableMultiple) {
-            if (!this._handlers[name]) {
-                this._handlers[name] = [];
-            }
-            this._handlers[name].push(handler);
-        } else {
-            this._handlers[name] = [handler];
-        }
+        this.addHandlers(name, handler, enableMultiple, false);
+    }
+
+    /**
+     * 绑定事件处理函数(执行一次之后就自动移除)
+     */
+    once(name, handler, enableMultiple) {
+        this.addHandlers(name, handler, enableMultiple, true);
     }
 
     /**
@@ -42,11 +66,14 @@ class Event {
     emit(name, ...args) {
         const handlers = this._handlers[name] || [];
         if (handlers.length) {
+            // 保留的handler，除去那些执行一次的handler
+            const stayHandlers = [];
             // 仅当存在处理函数时才执行
             handlers.forEach(handler => {
-                // !event.stop && handler.apply(this, args);
-                handler.apply(this, args);
+                !handler.once && stayHandlers.push(handler);
+                handler.fn.apply(handler, args);
             });
+            this._handlers[name] = stayHandlers;
         }
     }
 }
