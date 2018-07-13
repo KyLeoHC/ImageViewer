@@ -78,7 +78,13 @@ class Viewer {
      * @param needLoadLarge 是否加载大图
      * @param fn 初始化完成的回调函数
      */
-    init(imageOption = this.imageOption, displayIndex = this.displayIndex, resetScale = false, needLoadLarge = true, fn = noop) {
+    init(
+        imageOption = this.imageOption,
+        displayIndex = this.displayIndex,
+        resetScale = false,
+        needLoadLarge = true,
+        fn = noop
+    ) {
         let src = '';
         const success = force => {
             if (this.src === src || force) {
@@ -143,10 +149,12 @@ class Viewer {
             src = imageOption.thumbnail || imageOption.url;
         }
 
-        this.event.once(LOAD_IMG_COMPLETE, success);
-        this.event.once(LOAD_IMG_FAIL, fail);
-        this._setImageUrl(src);
-        this._initImage(true);
+        if (this.src !== src) {
+            this.event.once(LOAD_IMG_COMPLETE, success);
+            this.event.once(LOAD_IMG_FAIL, fail);
+            this._setImageUrl(src);
+            this._initImage(true);
+        }
     }
 
     /**
