@@ -119,22 +119,17 @@ class Viewer {
                         // 缩略图存在的情况下，后台加载大图
                         this.loadImg(imageOption.url, () => {
                             // 判断当前viewer的url是否和当时正在加载的图片一致
-                            if (this.src === imageOption.thumbnail) {
-                                this.hideLoading();
-                                if (this.isActive()) {
-                                    // 当前所展示的图片，加载完之后需要立即初始化尺寸
-                                    this._setImageUrl(imageOption.url);
-                                    this.event.once(LOAD_IMG_COMPLETE, () => {
-                                        success(true);
-                                    });
-                                }
+                            if (this.isActive()) {
+                                // 当前所展示的图片，加载完之后需要立即初始化尺寸
+                                this.event.once(LOAD_IMG_COMPLETE, () => {
+                                    success(true);
+                                });
+                                this._setImageUrl(imageOption.url);
                             }
                         }, () => {
-                            if (this.src === imageOption.thumbnail) {
-                                this.hideLoading();
-                                this.isActive() && fail(true);
-                            }
+                            this.isActive() && fail(true);
                         }, () => {
+                            this.hideLoading();
                             imageOption._hasLoadLarge = true;
                         });
                     }
@@ -148,9 +143,9 @@ class Viewer {
             src = imageOption.thumbnail || imageOption.url;
         }
 
-        this._setImageUrl(src);
         this.event.once(LOAD_IMG_COMPLETE, success);
         this.event.once(LOAD_IMG_FAIL, fail);
+        this._setImageUrl(src);
         this._initImage(true);
     }
 
@@ -241,7 +236,7 @@ class Viewer {
         this.allowDistanceX = (this.realWidth - this.imageViewer.width) / 2 + 2;
         this.allowDistanceY = (this.realHeight - this.imageViewer.height) / 2 + 2;
 
-        const rect = this.el.getBoundingClientRect();
+        const rect = this.panelEl.getBoundingClientRect();
         if (this.realWidth < this.imageViewer.width ||
             this.realHeight < this.imageViewer.height ||
             rect.left > 0 ||

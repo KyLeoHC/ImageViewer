@@ -512,14 +512,12 @@ class ImageViewer {
         this.el.style.display = 'block';
         this.swipeInByIndex(this.currentIndex, false, () => {
             this._getCurrentViewer().removeAnimation();
-            setTimeout(() => {
-                this._fadeIn(() => {
-                    this.bgEl.style.opacity = 1;
-                    this.viewerWrapperEl.style.visibility = 'visible';
-                    // 下面这个再次调用是为了加载大图
-                    this._getCurrentImage().thumbnail && this.viewers[1].init(this._getCurrentImage(), CENTER_IMG, true);
-                });
-            }, 0);
+            this._fadeIn(() => {
+                this.bgEl.style.opacity = 1;
+                this.viewerWrapperEl.style.visibility = 'visible';
+                // 下面这个再次调用是为了加载大图
+                this._getCurrentImage().thumbnail && this.viewers[1].init(this._getCurrentImage(), CENTER_IMG, true);
+            });
         });
     }
 }
