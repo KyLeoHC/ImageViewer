@@ -218,9 +218,9 @@ class ImageViewer {
                 this.opt.afterSwipe && this.opt.afterSwipe(this.currentIndex);
             }
         }
-        window.requestAnimationFrame(() => {
+        setTimeout(() => {
             this.isMove = false;
-        });
+        }, 0);
         return needSwipe;
     }
 
@@ -237,9 +237,9 @@ class ImageViewer {
 
     _dealWithScaleActionEnd() {
         this._getCurrentViewer()._pinchEnd();
-        window.requestAnimationFrame(() => {
+        setTimeout(() => {
             this.isScale = false;
-        });
+        }, 0);
     }
 
     _getCurrentViewer() {
@@ -325,12 +325,11 @@ class ImageViewer {
         const start = this._getPositionAndSize(type === 1 ? this.opt.fadeInFn(this.currentIndex) : currentViewer.panelEl);
         // 动画结束的position数据
         const end = this._getPositionAndSize(type === 1 ? currentViewer.panelEl : this.opt.fadeInFn(this.currentIndex));
-        const scale = Math.min(start.width, end.width) / Math.max(start.width, end.width);
+        const scale = end.width / start.width;
+        this.animationEl.style.width = start.width + 'px';
+        this.animationEl.style.height = start.width + 'px';
+        setScaleAndTranslateStyle(this.animationEl, 1, start.left, start.top);
 
-        // 动画元素宽度和高度取反，因为会有缩放
-        this.animationEl.style.width = (type === 1 ? end.width : start.width) + 'px';
-        this.animationEl.style.height = (type === 1 ? end.height : start.height) + 'px';
-        setScaleAndTranslateStyle(this.animationEl, type === 1 ? scale : 1, start.left, start.top);
         imgEl.src = url;
         this.event.once(LOAD_IMG_COMPLETE, () => {
             this.animationEl.classList.remove('hide');
@@ -339,7 +338,7 @@ class ImageViewer {
                 this.viewerWrapperEl.style.visibility = 'hidden';
                 this.el.classList.add('animation');
                 this.bgEl.style.opacity = type === 1 ? 1 : 0.001;
-                setScaleAndTranslateStyle(this.animationEl, type === 1 ? 1 : scale, end.left, end.top);
+                setScaleAndTranslateStyle(this.animationEl, scale, end.left, end.top);
                 setTimeout(() => {
                     this.el.classList.remove('animation');
                     this.animationEl.classList.add('hide');
@@ -370,13 +369,15 @@ class ImageViewer {
     /**
      * 重置当前图片的缩放
      */
-    reset() {
+    reset(enableAnimate = true) {
         const viewer = this.viewers[1];
-        viewer.addAnimation();
-        viewer._initImage(true);
-        window.requestAnimationFrame(() => {
-            lock.releaseLock(LOCK_NAME);
-        });
+        if (viewer.isScale()) {
+            enableAnimate ? viewer.addAnimation() : viewer.removeAnimation();
+            viewer._initImage(true);
+            setTimeout(() => {
+                lock.releaseLock(LOCK_NAME);
+            }, 0);
+        }
     }
 
     /**
@@ -511,14 +512,14 @@ class ImageViewer {
         this.el.style.display = 'block';
         this.swipeInByIndex(this.currentIndex, false, () => {
             this._getCurrentViewer().removeAnimation();
-            window.requestAnimationFrame(() => {
+            setTimeout(() => {
                 this._fadeIn(() => {
                     this.bgEl.style.opacity = 1;
                     this.viewerWrapperEl.style.visibility = 'visible';
                     // 下面这个再次调用是为了加载大图
                     this._getCurrentImage().thumbnail && this.viewers[1].init(this._getCurrentImage(), CENTER_IMG, true);
                 });
-            });
+            }, 0);
         });
     }
 }

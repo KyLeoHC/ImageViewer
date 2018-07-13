@@ -244,13 +244,13 @@ class Viewer {
             this.addAnimation();
             this._initImage(false);
         }
-        window.requestAnimationFrame(() => {
+        setTimeout(() => {
             if (this.isScale()) {
                 lock.getLock(LOCK_NAME);
             } else {
                 lock.releaseLock(LOCK_NAME);
             }
-        });
+        }, 0);
     }
 
     _calculate(a, b) {
@@ -299,9 +299,9 @@ class Viewer {
         if (needSwipe) {
             // 滑动到下一张，重置当前图片的尺寸
             this._initImage(true);
-            window.requestAnimationFrame(() => {
+            setTimeout(() => {
                 lock.releaseLock(LOCK_NAME);
-            });
+            }, 0);
         } else {
             if (this.needResetX) {
                 this.translatePanelX = this.currentPanelX > 0
@@ -316,10 +316,10 @@ class Viewer {
                 this.translatePanelY = this.currentPanelY;
             }
             if (this.needResetX || this.needResetY) {
-                window.requestAnimationFrame(() => {
+                setTimeout(() => {
                     this.addAnimation();
                     setScaleAndTranslateStyle(this.panelEl, this.scale, this.translatePanelX, this.translatePanelY);
-                });
+                }, 0);
             }
             this.needResetX = this.needResetY = false;
         }
@@ -330,13 +330,13 @@ class Viewer {
     }
 
     addAnimation() {
-        this.panelEl.classList.add(ITEM_ANIMATION_CLASS);
         this.el.classList.add(ITEM_ANIMATION_CLASS);
+        this.panelEl.classList.add(ITEM_ANIMATION_CLASS);
     }
 
     removeAnimation() {
-        this.panelEl.classList.remove(ITEM_ANIMATION_CLASS);
         this.el.classList.remove(ITEM_ANIMATION_CLASS);
+        this.panelEl.classList.remove(ITEM_ANIMATION_CLASS);
     }
 
     clearImg() {
