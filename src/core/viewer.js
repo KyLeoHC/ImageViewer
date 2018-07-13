@@ -75,7 +75,7 @@ class Viewer {
      * @param imageOption 图片选项数据
      * @param displayIndex 显示的位置
      * @param resetScale 是否重置缩放倍数
-     * @param needLoadLarge 是否加载大图
+     * @param needLoadLarge 布尔值代表是否加载大图，数值1代表直接加载大图(忽略缩略图初始化)
      * @param fn 初始化完成的回调函数
      */
     init(
@@ -145,16 +145,18 @@ class Viewer {
                     this.imageEl.style.display = 'none';
                 }
             }
+            if (needLoadLarge === 1) {
+                // 直接返回，不执行后续初始化
+                return;
+            }
         } else {
             src = imageOption.thumbnail || imageOption.url;
         }
 
-        if (this.src !== src) {
-            this.event.once(LOAD_IMG_COMPLETE, success);
-            this.event.once(LOAD_IMG_FAIL, fail);
-            this._setImageUrl(src);
-            this._initImage(true);
-        }
+        this.event.once(LOAD_IMG_COMPLETE, success);
+        this.event.once(LOAD_IMG_FAIL, fail);
+        this._setImageUrl(src);
+        this._initImage(true);
     }
 
     /**
@@ -209,10 +211,10 @@ class Viewer {
 
     _bindEvent() {
         this.imageEl.addEventListener('load', () => {
-            this.event.emit(LOAD_IMG_COMPLETE);
+            this.isActive() && this.event.emit(LOAD_IMG_COMPLETE);
         }, false);
         this.imageEl.addEventListener('error', () => {
-            this.event.emit(LOAD_IMG_FAIL);
+            this.isActive() && this.event.emit(LOAD_IMG_FAIL);
         }, false);
     }
 

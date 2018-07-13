@@ -517,7 +517,7 @@ class ImageViewer {
                 this.viewerWrapperEl.style.visibility = 'visible';
                 // 下面这个再次调用是为了加载大图
                 this._getCurrentImage().thumbnail &&
-                this._getCurrentViewer().init(this._getCurrentImage(), CENTER_IMG, true);
+                this._getCurrentViewer().init(this._getCurrentImage(), CENTER_IMG, true, 1);
             });
         });
     }
