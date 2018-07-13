@@ -34,7 +34,8 @@
 
         .img-list > div {
             display: inline-block;
-            width: 40%;
+            max-width: 40%;
+            max-height: 200px;
             margin-left: 10px;
             overflow: hidden;
         }
@@ -69,6 +70,7 @@
         <div><img id="img5" src="thumbnails/6.jpg" data-index="4"></div>
         <div><img id="img6" src="thumbnails/7.jpg" data-index="5"></div>
         <div><img id="img7" src="thumbnails/8.jpg" data-index="6"></div>
+        <div><img id="img8" src="images/233.jpg" data-index="7"></div>
     </div>
     <ul id="logs"></ul>
 </div>
@@ -93,7 +95,8 @@
             {thumbnail: 'thumbnails/5.jpg', url: 'thumbnails/5.png'},
             {thumbnail: 'thumbnails/6.jpg', url: 'images/6.jpg'},
             {thumbnail: 'thumbnails/7.jpg', url: 'images/7.jpg'},
-            {url: 'thumbnails/8.jpg'}
+            {url: 'thumbnails/8.jpg'},
+            {url: 'images/233.jpg'}
         ];
         window.imageViewer = new ImageViewer(images, {
             // duration: 1000,

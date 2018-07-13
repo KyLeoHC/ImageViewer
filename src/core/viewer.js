@@ -240,7 +240,14 @@ class Viewer {
         this.realHeight = this.panelEl.clientHeight * this.scale;
         this.allowDistanceX = (this.realWidth - this.imageViewer.width) / 2 + 2;
         this.allowDistanceY = (this.realHeight - this.imageViewer.height) / 2 + 2;
-        if (this.realWidth < this.imageViewer.width || this.realHeight < this.imageViewer.height) {
+
+        const rect = this.el.getBoundingClientRect();
+        if (this.realWidth < this.imageViewer.width ||
+            this.realHeight < this.imageViewer.height ||
+            rect.left > 0 ||
+            rect.right < this.imageViewer.width ||
+            rect.top > 0 ||
+            rect.bottom < this.imageViewer.height) {
             this.addAnimation();
             this._initImage(false);
         }
