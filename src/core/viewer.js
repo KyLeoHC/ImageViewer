@@ -23,21 +23,21 @@ class Viewer {
         this.src = ''; // 当前图片的url，会同步赋值到图片标签的src属性
         this.event = new Event(false);
         this.imageViewer = imageViewer;
-        this.el = el; // .viewer类
-        this.panelEl = el.firstElementChild; // .panel类
+        this.el = el; // .viewer类(用于主元素的水平和垂直居中定位)
+        this.panelEl = el.firstElementChild; // .panel类(图片缩放、放大后的平移都是在这个节点上操作的)
         this.imageEl = query('img', this.el)[0];
         this.tipsEl = query('span', this.el)[0];
         this.loadingEl = query('.ball-clip-rotate', this.el)[0];
         this.imageOption = null;
         this.index = index; // viewer排序用，记录原始的数组位置
         this.displayIndex = 0;
-        this.realWidth = 0;
-        this.realHeight = 0;
-        this.translateX = 0;
-        this.translateY = 0;
         this.canScale = false;
         this.scale = 1; // 缩放比例
         this.currentScale = 1; // 当前正在缩放的倍数(临时保存,当事件结束后,会赋值回scale)
+        this.realWidth = 0; // 图片缩放后的尺寸
+        this.realHeight = 0; // 图片缩放后的尺寸
+        this.translateX = 0; // viewr的位置
+        this.translateY = 0; // viewr的位置
         this.translatePanelX = 0; // 最终图片面板所在的X轴坐标
         this.translatePanelY = 0; // 最终图片面板所在的Y轴坐标
         this.currentPanelX = 0; // 当前图片面板所在的X轴坐标（手指尚未离开屏幕）
@@ -115,6 +115,11 @@ class Viewer {
             if (imageOption._hasLoadLarge) {
                 // 大图已加载好的情况下
                 src = imageOption.url;
+                this.event.once(LOAD_IMG_COMPLETE, () => {
+                    success(true);
+                });
+                this._setImageUrl(imageOption.url);
+                return;
             } else {
                 src = imageOption.thumbnail;
                 if (src) {

@@ -327,13 +327,14 @@ class ImageViewer {
         const end = this._getPositionAndSize(type === 1 ? currentViewer.panelEl : this.opt.fadeInFn(this.currentIndex));
         const scale = end.width / start.width;
         this.animationEl.style.width = start.width + 'px';
-        this.animationEl.style.height = start.width + 'px';
+        this.animationEl.style.height = start.height + 'px';
         setScaleAndTranslateStyle(this.animationEl, 1, start.left, start.top);
 
         imgEl.src = url;
         this.event.once(LOAD_IMG_COMPLETE, () => {
             this.animationEl.classList.remove('hide');
-            // 延迟20ms是为了确保动画元素节点完全呈现出来了，避免部分机型因为快速显示和隐藏元素导致的闪烁现象
+            // 延迟20ms是为了确保动画元素节点完全呈现出来了
+            // 避免部分机型因为快速显示和隐藏元素导致的闪烁现象
             setTimeout(() => {
                 this.viewerWrapperEl.style.visibility = 'hidden';
                 this.el.classList.add('animation');
@@ -343,7 +344,7 @@ class ImageViewer {
                     this.el.classList.remove('animation');
                     this.animationEl.classList.add('hide');
                     callback();
-                }, duration + 20);
+                }, duration + 20); // 在原来动画时间的基础上再加20ms，确保动画真正完成(或许该用动画完成事件?)
             }, 20);
         });
     }
