@@ -115,11 +115,6 @@ class Viewer {
             if (imageOption._hasLoadLarge) {
                 // 大图已加载好的情况下
                 src = imageOption.url;
-                this.event.once(LOAD_IMG_COMPLETE, () => {
-                    success(true);
-                });
-                this._setImageUrl(imageOption.url);
-                return;
             } else {
                 src = imageOption.thumbnail;
                 if (src) {
@@ -129,7 +124,6 @@ class Viewer {
                         this.showLoading();
                         // 缩略图存在的情况下，后台加载大图
                         this.loadImg(imageOption.url, () => {
-                            // 判断当前viewer的url是否和当时正在加载的图片一致
                             if (this.isActive()) {
                                 // 当前所展示的图片，加载完之后需要立即初始化尺寸
                                 this.event.once(LOAD_IMG_COMPLETE, () => {
@@ -147,7 +141,7 @@ class Viewer {
                 } else {
                     // 没有缩略图的情况下
                     src = imageOption.url;
-                    this.imageEl.style.display = 'none';
+                    // this.imageEl.style.display = 'none';
                 }
             }
             if (needLoadLarge === 1) {
@@ -161,7 +155,9 @@ class Viewer {
         this.event.once(LOAD_IMG_COMPLETE, success);
         this.event.once(LOAD_IMG_FAIL, fail);
         this._setImageUrl(src);
-        this._initImage(true);
+        // 下面的提前初始化一次，是因为在某些机型上面，img的加载成功回调会有延迟
+        // 实际上图片是已经完全显示出来了的
+        this.panelEl.clientWidth && this.panelEl.clientHeight && this._initImage(true);
     }
 
     /**
@@ -262,11 +258,7 @@ class Viewer {
             this._initImage(false);
         }
         setTimeout(() => {
-            if (this.isScale()) {
-                lock.getLock(LOCK_NAME);
-            } else {
-                lock.releaseLock(LOCK_NAME);
-            }
+            this.isScale() ? lock.getLock(LOCK_NAME) : lock.releaseLock(LOCK_NAME);
         }, 0);
     }
 

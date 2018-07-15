@@ -347,6 +347,9 @@ class ImageViewer {
                 }, duration + 20); // 在原来动画时间的基础上再加20ms，确保动画真正完成(或许该用动画完成事件?)
             }, 20);
         });
+        this.event.once(LOAD_IMG_FAIL, () => {
+            debug('load animation image fail.');
+        });
     }
 
     _fadeIn(callback) {
@@ -360,6 +363,8 @@ class ImageViewer {
 
     _fadeOut(callback) {
         if (this.opt.fadeOutFn) {
+            // 如果图片有缩放，则先重置回默认尺寸再进行开始动画
+            this.reset(false);
             const image = this._getCurrentImage();
             this._animation(image.url, 2, callback);
         } else {
