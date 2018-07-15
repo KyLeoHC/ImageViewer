@@ -115,6 +115,9 @@ class Viewer {
             if (imageOption._hasLoadLarge) {
                 // 大图已加载好的情况下
                 src = imageOption.url;
+                this.event.once(LOAD_IMG_COMPLETE, success);
+                this._setImageUrl(src);
+                return;
             } else {
                 src = imageOption.thumbnail;
                 if (src) {
@@ -157,7 +160,7 @@ class Viewer {
         this._setImageUrl(src);
         // 下面的提前初始化一次，是因为在某些机型上面，img的加载成功回调会有延迟
         // 实际上图片是已经完全显示出来了的
-        this.panelEl.clientWidth && this.panelEl.clientHeight && this._initImage(true);
+        this._initImage(true);
     }
 
     /**

@@ -29,9 +29,8 @@ import template from '../html/template.html';
 const defaultImgOption = {thumbnail: '', url: ''};
 
 class ImageViewer {
-    constructor(images = [], opt = {}) {
-        this.opt = opt;
-        this.duration = this.opt.duration || 333;
+    constructor(images = [], opt) {
+        this._defaultOption(opt);
         this.el = null;
         this.headerEl = null;
         this.bodyEl = null;
@@ -43,9 +42,6 @@ class ImageViewer {
         this.totalNumberEl = null;
         this.images = images; // 图片数据
         this.imagesLength = images.length; // 图片数据
-        this.container = opt.container || 'body';
-        this.enableScale = !!opt.enableScale; // 是否开启图片缩放功能
-        this.currentIndex = opt.startIndex || 0; // 起始坐标，从0开始
         this.viewers = [];
         this.scaleStart = 1;
         this.isScale = false;
@@ -56,6 +52,18 @@ class ImageViewer {
         this.translateX = 0;
         this.touch = null;
         this.event = new Event(false);
+    }
+
+    _defaultOption(opt = {}) {
+        this.opt = opt;
+        this.duration = opt.duration || 333;
+        this.container = opt.container || 'body';
+        // 是否开启图片缩放功能
+        this.enableScale = !!opt.enableScale;
+        // 起始坐标，从0开始
+        this.currentIndex = opt.startIndex || 0;
+        // 是否开启自动加载大图功能
+        this.autoLoadImage = opt.hasOwnProperty('autoLoadImage') ? !!opt.autoLoadImage : true;
     }
 
     _create() {
@@ -296,12 +304,12 @@ class ImageViewer {
     }
 
     _initDuration() {
-        const duration = this.opt.duration;
-        if (duration !== undefined) {
-            if (this.bgEl.style.transitionDuration !== undefined) {
+        if (this.opt.hasOwnProperty('duration')) {
+            const duration = this.opt.duration;
+            if (this.bgEl.style.hasOwnProperty('transitionDuration')) {
                 this.animationEl.style.transitionDuration =
                     this.bgEl.style.transitionDuration = `${duration}ms`;
-            } else if (this.bgEl.style.webkitTransitionDuration !== undefined) {
+            } else if (this.bgEl.style.hasOwnProperty('webkitTransitionDuration')) {
                 this.animationEl.style.webkitTransitionDuration =
                     this.bgEl.style.webkitTransitionDuration = `${duration}ms`;
             } else {
@@ -347,9 +355,9 @@ class ImageViewer {
                 }, duration + 20); // 在原来动画时间的基础上再加20ms，确保动画真正完成(或许该用动画完成事件?)
             }, 20);
         });
-        this.event.once(LOAD_IMG_FAIL, () => {
-            debug('load animation image fail.');
-        });
+        // this.event.once(LOAD_IMG_FAIL, () => {
+        //     debug('load animation image fail.');
+        // });
     }
 
     _fadeIn(callback) {
@@ -478,30 +486,6 @@ class ImageViewer {
         }
     }
 
-    setImageOption(images = [], startIndex = 0) {
-        if (!images.length) {
-            debug('images array can not be empty!');
-        }
-        this.images = images;
-        this.imagesLength = images.length;
-        this.currentIndex = startIndex;
-        this.swipeInByIndex(this.currentIndex);
-    }
-
-    destroy() {
-        this.el && removeElement(this.el);
-    }
-
-    close() {
-        if (this.el) {
-            this._fadeOut(() => {
-                this.animationEl.children[0].src = '';
-                this._getCurrentViewer().clearImg();
-                this.el.style.display = 'none';
-            });
-        }
-    }
-
     open(index) {
         this.currentIndex = isNumber(index) ? index : this.currentIndex;
         if (!this.el) {
@@ -526,6 +510,30 @@ class ImageViewer {
                 this._getCurrentViewer().init(this._getCurrentImage(), CENTER_IMG, true, 1);
             });
         });
+    }
+
+    setImageOption(images = [], startIndex = 0) {
+        if (!images.length) {
+            debug('images array can not be empty!');
+        }
+        this.images = images;
+        this.imagesLength = images.length;
+        this.currentIndex = startIndex;
+        this.swipeInByIndex(this.currentIndex);
+    }
+
+    destroy() {
+        this.el && removeElement(this.el);
+    }
+
+    close() {
+        if (this.el) {
+            this._fadeOut(() => {
+                this.animationEl.children[0].src = '';
+                this._getCurrentViewer().clearImg();
+                this.el.style.display = 'none';
+            });
+        }
     }
 }
 
