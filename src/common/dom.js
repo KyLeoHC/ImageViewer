@@ -1,4 +1,4 @@
-const transformProp = (function getTransformProperty() {
+const transformProp = (function () {
     const style = document.createElement('div').style;
     let props = ['transform', 'webkitTransform', 'MozTransform', 'oTransform', 'msTransform'];
     let availProp = '';
@@ -9,6 +9,18 @@ const transformProp = (function getTransformProperty() {
     });
     return availProp;
 })();
+
+// const transformOriginProp = (function () {
+//     const style = document.createElement('div').style;
+//     let props = ['transformOrigin', 'webkitTransformOrigin'];
+//     let availProp = '';
+//     props.forEach(function (prop) {
+//         if (style[prop] !== undefined) {
+//             availProp = prop;
+//         }
+//     });
+//     return availProp;
+// })();
 
 function query(selector, el) {
     el = el || document;
@@ -21,6 +33,10 @@ function removeElement(element) {
         parentElement.removeChild(element);
     }
 }
+
+// function setTransformOrigin(el, x, y) {
+//     el.style[transformOriginProp] = `${x} ${y}`;
+// }
 
 function setTranslateStyle(el, x, y) {
     el.style[transformProp] = `translate3d(${x + 'px'},${y + 'px'},0)`;

@@ -111,7 +111,7 @@ class Viewer {
         this.imageOption = imageOption;
         this.displayIndex = displayIndex;
         this.hideLoading();
-        if (needLoadLarge) {
+        if (needLoadLarge && imageOption.thumbnail) {
             if (imageOption._hasLoadLarge) {
                 // 大图已加载好的情况下
                 src = imageOption.url;
@@ -120,31 +120,24 @@ class Viewer {
                 return;
             } else {
                 src = imageOption.thumbnail;
-                if (src) {
-                    // 缩略图存在的情况下
-                    // 如果是当前图片则后台加载大图
-                    if (this.isActive() && imageOption.url) {
-                        this.showLoading();
-                        // 缩略图存在的情况下，后台加载大图
-                        this.loadImg(imageOption.url, () => {
-                            if (this.isActive()) {
-                                // 当前所展示的图片，加载完之后需要立即初始化尺寸
-                                this.event.once(LOAD_IMG_COMPLETE, () => {
-                                    success(true);
-                                });
-                                this._setImageUrl(imageOption.url);
-                            }
-                        }, () => {
-                            this.isActive() && fail(true);
-                        }, () => {
-                            this.hideLoading();
-                            imageOption._hasLoadLarge = true;
-                        });
-                    }
-                } else {
-                    // 没有缩略图的情况下
-                    src = imageOption.url;
-                    // this.imageEl.style.display = 'none';
+                // 如果是当前正在展示的图片则后台加载大图
+                if (this.isActive() && imageOption.url) {
+                    this.showLoading();
+                    // 缩略图存在的情况下，后台加载大图
+                    this.loadImg(imageOption.url, () => {
+                        if (this.isActive()) {
+                            // 当前所展示的图片，加载完之后需要立即初始化尺寸
+                            this.event.once(LOAD_IMG_COMPLETE, () => {
+                                success(true);
+                            });
+                            this._setImageUrl(imageOption.url);
+                        }
+                    }, () => {
+                        this.isActive() && fail(true);
+                    }, () => {
+                        this.hideLoading();
+                        imageOption._hasLoadLarge = true;
+                    });
                 }
             }
             if (needLoadLarge === 1) {
@@ -152,7 +145,7 @@ class Viewer {
                 return;
             }
         } else {
-            src = imageOption.thumbnail || imageOption.url;
+            src = imageOption.url;
         }
 
         this.event.once(LOAD_IMG_COMPLETE, success);
@@ -160,7 +153,7 @@ class Viewer {
         this._setImageUrl(src);
         // 下面的提前初始化一次，是因为在某些机型上面，img的加载成功回调会有延迟
         // 实际上图片是已经完全显示出来了的
-        this._initImage(true);
+        // this._initImage(true);
     }
 
     /**
@@ -215,10 +208,10 @@ class Viewer {
 
     _bindEvent() {
         this.imageEl.addEventListener('load', () => {
-            this.isActive() && this.event.emit(LOAD_IMG_COMPLETE);
+            this.event.emit(LOAD_IMG_COMPLETE);
         }, false);
         this.imageEl.addEventListener('error', () => {
-            this.isActive() && this.event.emit(LOAD_IMG_FAIL);
+            this.event.emit(LOAD_IMG_FAIL);
         }, false);
     }
 

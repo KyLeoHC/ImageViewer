@@ -287,8 +287,8 @@ class ImageViewer {
             return {
                 top: value.top || 0,
                 left: value.left || 0,
-                width: value.width || 0,
-                height: value.height || 0
+                width: value.width || 1,
+                height: value.height || 1
             };
         } else if (value && value.getBoundingClientRect) {
             const rect = value.getBoundingClientRect();
@@ -332,7 +332,7 @@ class ImageViewer {
         // 动画起始的position数据
         const start = this._getPositionAndSize(type === 1 ? this.opt.fadeInFn(this.currentIndex) : currentViewer.panelEl);
         // 动画结束的position数据
-        const end = this._getPositionAndSize(type === 1 ? currentViewer.panelEl : this.opt.fadeInFn(this.currentIndex));
+        const end = this._getPositionAndSize(type === 1 ? currentViewer.panelEl : this.opt.fadeOutFn(this.currentIndex));
         const scale = end.width / start.width;
         this.animationEl.style.width = start.width + 'px';
         this.animationEl.style.height = start.height + 'px';
@@ -351,6 +351,7 @@ class ImageViewer {
                 setTimeout(() => {
                     this.el.classList.remove('animation');
                     this.animationEl.classList.add('hide');
+                    imgEl.src = '';
                     callback();
                 }, duration + 20); // 在原来动画时间的基础上再加20ms，确保动画真正完成(或许该用动画完成事件?)
             }, 20);
