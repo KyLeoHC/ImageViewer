@@ -356,9 +356,10 @@ class ImageViewer {
                 }, duration + 20); // 在原来动画时间的基础上再加20ms，确保动画真正完成(或许该用动画完成事件?)
             }, 20);
         });
-        // this.event.once(LOAD_IMG_FAIL, () => {
-        //     debug('load animation image fail.');
-        // });
+        this.event.once(LOAD_IMG_FAIL, () => {
+            debug('load animation image fail.');
+            callback();
+        });
     }
 
     _fadeIn(callback) {
