@@ -30,7 +30,7 @@ const defaultImgOption = {thumbnail: '', url: ''};
 
 class ImageViewer {
     constructor(images = [], opt) {
-        this._defaultOption(opt);
+        this.setOption(opt);
         this.el = null;
         this.headerEl = null;
         this.bodyEl = null;
@@ -52,18 +52,7 @@ class ImageViewer {
         this.translateX = 0;
         this.touch = null;
         this.event = new Event(false);
-    }
-
-    _defaultOption(opt = {}) {
-        this.opt = opt;
-        this.duration = opt.duration || 333;
-        this.container = opt.container || 'body';
-        // 是否开启图片缩放功能
-        this.enableScale = !!opt.enableScale;
-        // 起始坐标，从0开始
-        this.currentIndex = opt.startIndex || 0;
-        // 是否开启自动加载大图功能
-        this.autoLoadImage = opt.hasOwnProperty('autoLoadImage') ? !!opt.autoLoadImage : true;
+        this.isOpen = false;
     }
 
     _create() {
@@ -351,6 +340,7 @@ class ImageViewer {
                 setTimeout(() => {
                     this.el.classList.remove('animation');
                     this.animationEl.classList.add('hide');
+                    this.event.off(LOAD_IMG_FAIL);
                     imgEl.src = '';
                     callback();
                 }, duration + 20); // 在原来动画时间的基础上再加20ms，确保动画真正完成(或许该用动画完成事件?)
@@ -418,6 +408,7 @@ class ImageViewer {
      * @returns {boolean}
      */
     swipeToPrev() {
+        if (!this.isOpen) return;
         if (this._getPrevImage().url) {
             this.currentIndex--;
             this.translateX += this.width;
@@ -443,6 +434,7 @@ class ImageViewer {
      * @returns {boolean}
      */
     swipeToNext() {
+        if (!this.isOpen) return;
         if (this._getNextImage().url) {
             this.currentIndex++;
             this.translateX -= this.width;
@@ -470,6 +462,7 @@ class ImageViewer {
      * @param callback 任务完成时的回调函数
      */
     swipeInByIndex(index, needLoadLarge, callback) {
+        if (!this.isOpen) return;
         if (isNumber(index) && index > -1 && index < this.imagesLength) {
             this.currentIndex = index;
             this.translateX = 0;
@@ -502,6 +495,7 @@ class ImageViewer {
             this.viewerWrapperEl.style.visibility = 'hidden';
         }
         this.el.style.display = 'block';
+        this.isOpen = true;
         this.swipeInByIndex(this.currentIndex, false, () => {
             this._getCurrentViewer().removeAnimation();
             this._fadeIn(() => {
@@ -514,6 +508,11 @@ class ImageViewer {
         });
     }
 
+    /**
+     * 设置图片数据
+     * @param images
+     * @param startIndex
+     */
     setImageOption(images = [], startIndex = 0) {
         if (!images.length) {
             debug('images array can not be empty!');
@@ -524,12 +523,32 @@ class ImageViewer {
         this.swipeInByIndex(this.currentIndex);
     }
 
+    /**
+     * 设置预览参数选项
+     * @param opt
+     */
+    setOption(opt = {}) {
+        this.opt = opt;
+        this.duration = opt.duration || 333;
+        this.container = opt.container || 'body';
+        // 是否开启图片缩放功能
+        this.enableScale = !!opt.enableScale;
+        // 是否开启自动加载大图功能
+        this.autoLoadImage = opt.hasOwnProperty('autoLoadImage') ? !!opt.autoLoadImage : true;
+        if (!this.isOpen) {
+            // 起始坐标，从0开始
+            this.currentIndex = opt.startIndex || this.currentIndex || 0;
+        }
+    }
+
     destroy() {
+        this.isOpen = false;
         this.el && removeElement(this.el);
     }
 
     close() {
         if (this.el) {
+            this.isOpen = false;
             this._fadeOut(() => {
                 this.animationEl.children[0].src = '';
                 this._getCurrentViewer().clearImg();

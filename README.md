@@ -61,6 +61,9 @@ document.addEventListener('DOMContentLoaded', function () {
         {thumbnail: 'thumbnails/7.jpg', url: 'images/7.jpg'},
         {url: 'thumbnails/8.jpg'}
     ];
+    // 也可以先实例化 var imageViewer = new ImageViewer()
+    // 后续再调用'setImageOption'设置图片数据和'setOption'设置预览选项
+    // 最后再调用open函数打开预览
     window.imageViewer = new ImageViewer(images, {
         container: 'body',
         enableScale: true,
@@ -123,6 +126,7 @@ ImageViewer类的实例拥有以下可用的API函数：
 - `close`：关闭图片预览组件；
 - `destroy`：销毁图片预览组件；
 - `setImageOption`：设置图片数据，第一个入参为图片数组，第二个入参为开始预览的第一张图片所在数组下标；
+- `setOption`：设置预览参数，参考使用示例的ImageViewer类第二个入参参数介绍；
 - `swipeInByIndex`：将对应的图片切换到当前显示界面上，入参为所要展示的图片所在数组下标；
 
 ## License

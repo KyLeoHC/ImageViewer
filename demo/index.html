@@ -98,7 +98,9 @@
             {url: 'thumbnails/8.jpg'},
             {url: 'images/233.jpg'}
         ];
-        window.imageViewer = new ImageViewer(images, {
+        window.imageViewer = new ImageViewer();
+        imageViewer.setImageOption(images);
+        imageViewer.setOption({
             // duration: 1000,
             container: 'body',
             autoLoadImage: true,
