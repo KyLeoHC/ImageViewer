@@ -418,7 +418,11 @@ class ImageViewer {
             const image = this._getSpecificImage(this.currentIndex - 1);
             if (image.url || this.currentIndex === 0) {
                 const viewer = this.loopViewers(1);
-                viewer.init(image, viewer.displayIndex - 3, true);
+                viewer.init({
+                    imageOption: image,
+                    displayIndex: viewer.displayIndex - 3,
+                    resetScale: true
+                });
                 this._getCurrentViewer().init();
                 this._updateCountElement();
             }
@@ -444,7 +448,11 @@ class ImageViewer {
             const image = this._getSpecificImage(this.currentIndex + 1);
             if (image.url || this.currentIndex === this.imagesLength - 1) {
                 const viewer = this.loopViewers(0);
-                viewer.init(image, viewer.displayIndex + 3, true);
+                viewer.init({
+                    imageOption: image,
+                    displayIndex: viewer.displayIndex + 3,
+                    resetScale: true
+                });
                 this._getCurrentViewer().init();
                 this._updateCountElement();
             }
@@ -468,12 +476,24 @@ class ImageViewer {
             this.translateX = 0;
             setTranslateStyle(this.viewerWrapperEl, 0, 0);
 
-            this.viewers = this.viewers.sort((a, b) => {
-                return a.index - b.index;
+            this.viewers = this.viewers.sort((a, b) => (a.index - b.index));
+            this.viewers[0].init({
+                imageOption: this._getPrevImage(),
+                displayIndex: LEFT_IMG,
+                resetScale: true
             });
-            this.viewers[0].init(this._getPrevImage(), LEFT_IMG, true);
-            this.viewers[1].init(this._getCurrentImage(), CENTER_IMG, true, needLoadLarge, callback);
-            this.viewers[2].init(this._getNextImage(), RIGHT_IMG, true);
+            this.viewers[1].init({
+                imageOption: this._getCurrentImage(),
+                displayIndex: CENTER_IMG,
+                resetScale: true,
+                needLoadLarge,
+                fn: callback
+            });
+            this.viewers[2].init({
+                imageOption: this._getNextImage(),
+                displayIndex: RIGHT_IMG,
+                resetScale: true
+            });
 
             this._updateCountElement();
         } else {
@@ -490,22 +510,28 @@ class ImageViewer {
             this._bindEvent();
         }
 
-        if (this.opt.fadeInFn) {
+        const currentImageOption = this._getCurrentImage();
+        if (this.opt.fadeInFn && currentImageOption.w && currentImageOption.h) {
             this.bgEl.style.opacity = 0.001;
             this.viewerWrapperEl.style.visibility = 'hidden';
+            setTimeout(() => {
+                this._getCurrentViewer().preInitSize(currentImageOption.w, currentImageOption.h);
+                this._fadeIn(() => {
+                    this.bgEl.style.opacity = 1;
+                    this.viewerWrapperEl.style.visibility = 'visible';
+                    // 下面这个再次调用是为了加载大图
+                    // this.swipeInByIndex(this.currentIndex, true);
+                });
+            }, 0);
+        } else {
+            setTimeout(() => {
+                this.swipeInByIndex(this.currentIndex, true, () => {
+                    this.bgEl.style.opacity = 1;
+                });
+            }, 0);
         }
         this.el.style.display = 'block';
         this.isOpen = true;
-        this.swipeInByIndex(this.currentIndex, false, () => {
-            this._getCurrentViewer().removeAnimation();
-            this._fadeIn(() => {
-                this.bgEl.style.opacity = 1;
-                this.viewerWrapperEl.style.visibility = 'visible';
-                // 下面这个再次调用是为了加载大图
-                this._getCurrentImage().thumbnail &&
-                this._getCurrentViewer().init(this._getCurrentImage(), CENTER_IMG, true, 1);
-            });
-        });
     }
 
     /**
