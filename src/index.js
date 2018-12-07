@@ -3,6 +3,9 @@ import ImageViewer from './core/imageViewer';
 import css from './css/index.styl';
 
 /* eslint no-undef:0 */
-ImageViewer.version = __VERSION__;
+try {
+    ImageViewer.version = __VERSION__;
+} catch (e) {
+}
 
 export default ImageViewer;
