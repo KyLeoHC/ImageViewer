@@ -51,6 +51,12 @@ class Viewer {
 
     _initImage(resetScale, fn = noop) {
         if (resetScale) {
+            const suitableSize = this._calcInitSize(
+                this.imageEl.naturalWidth || this.imageEl.width,
+                this.imageEl.naturalHeight || this.imageEl.height
+            );
+            this.imageEl.setAttribute('width', `${suitableSize.width}px`);
+            this.imageEl.setAttribute('height', `${suitableSize.height}px`);
             this.scale = 1;
             this.allowDistanceX = this.allowDistanceY = 0;
         }
@@ -143,7 +149,8 @@ class Viewer {
                 }
             }
             if (needLoadLarge === 1) {
-                // 直接返回，不执行后续初始化
+                // 直接返回，不执行小图的初始化
+                // 用于刚打开图片预览的时候
                 return;
             }
         } else {
@@ -171,18 +178,32 @@ class Viewer {
      */
     _setImageUrl(url, width, height) {
         this.imageEl.src = this.src = url;
-        width ? this.imageEl.setAttribute('width', `${width}px`)
-            : this.imageEl.removeAttribute('width');
-        height ? this.imageEl.setAttribute('height', `${height}px`)
-            : this.imageEl.removeAttribute('height');
     }
 
+    /**
+     * 根据父容器的尺寸计算出最合适的初始化宽高数值
+     * @param width
+     * @param height
+     * @returns {{width: *, height: *}}
+     * @private
+     */
     _calcInitSize(width, height) {
-        // let result = {};
-        // if (this.realWidth < width) {
-        //     height = (this.realWidth / width) * height;
-        // }
-        // return result;
+        const containerWidth = this.imageViewer.width;
+        const containerHeight = this.imageViewer.height;
+        if (containerWidth < width) {
+            // 先处理宽度，假如宽度超过容器宽度，那就等比例缩小
+            height = (containerWidth / width) * height;
+            width = containerWidth;
+        }
+        if (containerHeight < height) {
+            // 再处理高度，假如高度也超过容器高度，那就再等比例缩小
+            width = (containerHeight / height) * width;
+            height = containerHeight;
+        }
+        return {
+            width: width.toFixed(2),
+            height: height.toFixed(2)
+        };
     }
 
     /**
@@ -191,7 +212,9 @@ class Viewer {
      * @param height
      */
     preInitSize(width, height) {
-        this._setImageUrl('', width, height);
+        const suitableSize = this._calcInitSize(width, height);
+        this.imageEl.setAttribute('width', `${suitableSize.width}px`);
+        this.imageEl.setAttribute('height', `${suitableSize.height}px`);
         this._initImage(true);
     }
 

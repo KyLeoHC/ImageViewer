@@ -338,16 +338,18 @@ class ImageViewer {
                 this.bgEl.style.opacity = type === 1 ? 1 : 0.001;
                 setScaleAndTranslateStyle(this.animationEl, scale, end.left, end.top);
                 setTimeout(() => {
-                    this.el.classList.remove('animation');
-                    this.animationEl.classList.add('hide');
                     this.event.off(LOAD_IMG_FAIL);
-                    imgEl.src = '';
-                    callback();
+                    callback(() => {
+                        this.el.classList.remove('animation');
+                        this.animationEl.classList.add('hide');
+                        imgEl.src = '';
+                    });
                 }, duration + 20); // 在原来动画时间的基础上再加20ms，确保动画真正完成(或许该用动画完成事件?)
             }, 20);
         });
         this.event.once(LOAD_IMG_FAIL, () => {
             debug('load animation image fail.');
+            this.event.off(LOAD_IMG_COMPLETE);
             callback();
         });
     }
@@ -509,29 +511,28 @@ class ImageViewer {
             this._init();
             this._bindEvent();
         }
-
-        const currentImageOption = this._getCurrentImage();
-        if (this.opt.fadeInFn && currentImageOption.w && currentImageOption.h) {
-            this.bgEl.style.opacity = 0.001;
-            this.viewerWrapperEl.style.visibility = 'hidden';
-            setTimeout(() => {
-                this._getCurrentViewer().preInitSize(currentImageOption.w, currentImageOption.h);
-                this._fadeIn(() => {
-                    this.bgEl.style.opacity = 1;
-                    this.viewerWrapperEl.style.visibility = 'visible';
-                    // 下面这个再次调用是为了加载大图
-                    // this.swipeInByIndex(this.currentIndex, true);
-                });
-            }, 0);
-        } else {
-            setTimeout(() => {
-                this.swipeInByIndex(this.currentIndex, true, () => {
-                    this.bgEl.style.opacity = 1;
-                });
-            }, 0);
-        }
+        this.bgEl.style.opacity = 0.001;
+        this.viewerWrapperEl.style.visibility = 'hidden';
         this.el.style.display = 'block';
         this.isOpen = true;
+        const currentImageOption = this._getCurrentImage();
+        if (this.opt.fadeInFn && currentImageOption.w && currentImageOption.h) {
+            this._getCurrentViewer().preInitSize(currentImageOption.w, currentImageOption.h);
+            this._fadeIn(done => {
+                this.bgEl.style.opacity = 1;
+                this._getCurrentViewer().removeAnimation();
+                // 下面这个再次调用是为了加载大图
+                this.swipeInByIndex(this.currentIndex, true, () => {
+                    this.viewerWrapperEl.style.visibility = 'visible';
+                    done();
+                });
+            });
+        } else {
+            this.bgEl.style.opacity = 1;
+            this.swipeInByIndex(this.currentIndex, true, () => {
+                this.viewerWrapperEl.style.visibility = 'visible';
+            });
+        }
     }
 
     /**
@@ -575,10 +576,11 @@ class ImageViewer {
     close() {
         if (this.el) {
             this.isOpen = false;
-            this._fadeOut(() => {
+            this._fadeOut(done => {
                 this.animationEl.children[0].src = '';
                 this._getCurrentViewer().clearImg();
                 this.el.style.display = 'none';
+                done();
             });
         }
     }
