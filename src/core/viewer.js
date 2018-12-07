@@ -23,7 +23,7 @@ class Viewer {
         this.src = ''; // 当前图片的url，会同步赋值到图片标签的src属性
         this.event = new Event(false);
         this.imageViewer = imageViewer;
-        this.el = el; // .viewer类(用于主元素的水平和垂直居中定位)
+        this.el = el; // 绑定当前viewer的dom元素节点(用于主元素的水平和垂直居中定位)
         this.panelEl = el.firstElementChild; // .panel类(图片缩放、放大后的平移都是在这个节点上操作的)
         this.imageEl = query('img', this.el)[0];
         this.tipsEl = query('span', this.el)[0];
@@ -36,8 +36,8 @@ class Viewer {
         this.currentScale = 1; // 当前正在缩放的倍数(临时保存,当事件结束后,会赋值回scale)
         this.realWidth = 0; // 图片缩放后的尺寸
         this.realHeight = 0; // 图片缩放后的尺寸
-        this.translateX = 0; // viewr的位置
-        this.translateY = 0; // viewr的位置
+        this.translateX = 0; // viewer的位置
+        this.translateY = 0; // viewer的位置
         this.translatePanelX = 0; // 最终图片面板所在的X轴坐标
         this.translatePanelY = 0; // 最终图片面板所在的Y轴坐标
         this.currentPanelX = 0; // 当前图片面板所在的X轴坐标（手指尚未离开屏幕）
@@ -79,11 +79,13 @@ class Viewer {
      * @param fn 初始化完成的回调函数
      */
     init(
-        imageOption = this.imageOption,
-        displayIndex = this.displayIndex,
-        resetScale = false,
-        needLoadLarge = true,
-        fn = noop
+        {
+            imageOption = this.imageOption,
+            displayIndex = this.displayIndex,
+            resetScale = false,
+            needLoadLarge = true,
+            fn = noop
+        } = {}
     ) {
         let src = '';
         const success = force => {
@@ -148,8 +150,12 @@ class Viewer {
             src = imageOption.url;
         }
 
+        // if (imageOption.w && imageOption.h) {
+        //     setTimeout(() => success(), 0);
+        // } else {
         this.event.once(LOAD_IMG_COMPLETE, success);
         this.event.once(LOAD_IMG_FAIL, fail);
+        // }
         this._setImageUrl(src);
         // 下面的提前初始化一次，是因为在某些机型上面，img的加载成功回调会有延迟
         // 实际上图片是已经完全显示出来了的
@@ -158,11 +164,35 @@ class Viewer {
 
     /**
      * 设置图片链接
-     * @param url
+     * @param url 图片链接
+     * @param width 图片宽度
+     * @param height 图片高度
      * @private
      */
-    _setImageUrl(url) {
+    _setImageUrl(url, width, height) {
         this.imageEl.src = this.src = url;
+        width ? this.imageEl.setAttribute('width', `${width}px`)
+            : this.imageEl.removeAttribute('width');
+        height ? this.imageEl.setAttribute('height', `${height}px`)
+            : this.imageEl.removeAttribute('height');
+    }
+
+    _calcInitSize(width, height) {
+        // let result = {};
+        // if (this.realWidth < width) {
+        //     height = (this.realWidth / width) * height;
+        // }
+        // return result;
+    }
+
+    /**
+     * 预先初始化宽高
+     * @param width
+     * @param height
+     */
+    preInitSize(width, height) {
+        this._setImageUrl('', width, height);
+        this._initImage(true);
     }
 
     /**
