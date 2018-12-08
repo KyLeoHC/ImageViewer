@@ -72,6 +72,11 @@
             font-size 0
             will-change transform
             backface-visibility hidden
+
+            &.hide {
+                visibility hidden
+                pointer-events none
+            }
         }
 
         .panel {
@@ -113,6 +118,7 @@
         transition none
         transform-origin left top
         backface-visibility hidden
+        pointer-events none
 
         img {
             max-width 100%

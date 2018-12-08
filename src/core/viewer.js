@@ -11,15 +11,13 @@ import {
 } from '../common/profile';
 import lock from '../common/lock';
 import Event from '../common/event';
-import {isNumber} from '../common/utils';
-
-let id = 0;
-const noop = () => {
-};
+import {
+    noop,
+    isNumber
+} from '../common/utils';
 
 class Viewer {
     constructor(imageViewer, el, index) {
-        this.id = ++id;
         this.src = ''; // 当前图片的url，会同步赋值到图片标签的src属性
         this.event = new Event(false);
         this.imageViewer = imageViewer;
@@ -157,16 +155,9 @@ class Viewer {
             src = imageOption.url;
         }
 
-        // if (imageOption.w && imageOption.h) {
-        //     setTimeout(() => success(), 0);
-        // } else {
         this.event.once(LOAD_IMG_COMPLETE, success);
         this.event.once(LOAD_IMG_FAIL, fail);
-        // }
         this._setImageUrl(src);
-        // 下面的提前初始化一次，是因为在某些机型上面，img的加载成功回调会有延迟
-        // 实际上图片是已经完全显示出来了的
-        // this._initImage(true);
     }
 
     /**
@@ -256,7 +247,7 @@ class Viewer {
      * @returns {boolean}
      */
     isActive() {
-        return this.imageViewer._getCurrentViewer().id === this.id;
+        return this.imageViewer._getCurrentViewer().src === this.src;
     }
 
     _bindEvent() {

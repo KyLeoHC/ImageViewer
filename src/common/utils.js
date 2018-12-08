@@ -16,7 +16,14 @@ const isPlainObject = value => {
     return Object.prototype.toString.call(value) === '[object Object]';
 };
 
+/**
+ * 空函数
+ */
+const noop = () => {
+};
+
 export {
     isNumber,
-    isPlainObject
+    isPlainObject,
+    noop
 };

@@ -308,6 +308,18 @@ class ImageViewer {
     }
 
     /**
+     * 显示/隐藏viewer容器
+     * @param type 1:显示 2:隐藏
+     * @private
+     */
+    _toggleViewerWrapper(type = 1) {
+        const className = 'hide';
+        type === 1
+            ? this.viewerWrapperEl.classList.add(className)
+            : this.viewerWrapperEl.classList.remove(className);
+    }
+
+    /**
      * 渐变动画函数
      * @param url 图片链接
      * @param type 1: 渐变打开 2: 渐变关闭
@@ -333,7 +345,7 @@ class ImageViewer {
             // 延迟20ms是为了确保动画元素节点完全呈现出来了
             // 避免部分机型因为快速显示和隐藏元素导致的闪烁现象
             setTimeout(() => {
-                this.viewerWrapperEl.style.visibility = 'hidden';
+                this._toggleViewerWrapper(1);
                 this.el.classList.add('animation');
                 this.bgEl.style.opacity = type === 1 ? 1 : 0.001;
                 setScaleAndTranslateStyle(this.animationEl, scale, end.left, end.top);
@@ -511,26 +523,26 @@ class ImageViewer {
             this._init();
             this._bindEvent();
         }
+        this._toggleViewerWrapper(1);
         this.bgEl.style.opacity = 0.001;
-        this.viewerWrapperEl.style.visibility = 'hidden';
         this.el.style.display = 'block';
         this.isOpen = true;
         const currentImageOption = this._getCurrentImage();
+        this._getCurrentViewer().removeAnimation();
         if (this.opt.fadeInFn && currentImageOption.w && currentImageOption.h) {
             this._getCurrentViewer().preInitSize(currentImageOption.w, currentImageOption.h);
             this._fadeIn(done => {
                 this.bgEl.style.opacity = 1;
-                this._getCurrentViewer().removeAnimation();
                 // 下面这个再次调用是为了加载大图
                 this.swipeInByIndex(this.currentIndex, true, () => {
-                    this.viewerWrapperEl.style.visibility = 'visible';
-                    done();
+                    this._toggleViewerWrapper(2);
+                    done && done();
                 });
             });
         } else {
             this.bgEl.style.opacity = 1;
             this.swipeInByIndex(this.currentIndex, true, () => {
-                this.viewerWrapperEl.style.visibility = 'visible';
+                this._toggleViewerWrapper(2);
             });
         }
     }
@@ -576,11 +588,12 @@ class ImageViewer {
     close() {
         if (this.el) {
             this.isOpen = false;
+            this.viewerWrapperEl.classList.remove(ITEM_ANIMATION_CLASS);
             this._fadeOut(done => {
                 this.animationEl.children[0].src = '';
                 this._getCurrentViewer().clearImg();
                 this.el.style.display = 'none';
-                done();
+                done && done();
             });
         }
     }

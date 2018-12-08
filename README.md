@@ -53,13 +53,14 @@ document.addEventListener('DOMContentLoaded', function () {
     // thumbnail: 缩略图的链接(非必传)
     // url: 原图的链接(必传)
     var images = [
-        {url: 'thumbnails/2.jpg'},
-        {thumbnail: 'thumbnails/3.jpg', url: 'images/3.jpg'},
-        {thumbnail: 'thumbnails/4.jpg', url: 'images/4.jpg'},
-        {thumbnail: 'thumbnails/5.jpg', url: 'images/5.jpg'},
-        {thumbnail: 'thumbnails/6.jpg', url: 'images/6.jpg'},
-        {thumbnail: 'thumbnails/7.jpg', url: 'images/7.jpg'},
-        {url: 'thumbnails/8.jpg'}
+        {url: 'thumbnails/2.jpg', w: 650, h: 347},
+        {thumbnail: 'thumbnails/3.jpg', url: 'images/3.jpg', w: 1024, h: 625},
+        {thumbnail: 'thumbnails/4.jpg', url: 'images/4.jpg', w: 1024, h: 750},
+        {thumbnail: 'thumbnails/5.jpg', url: 'images/5.jpg', w: 1000, h: 879},
+        {thumbnail: 'thumbnails/6.jpg', url: 'images/6.jpg', w: 1000, h: 562},
+        {thumbnail: 'thumbnails/7.jpg', url: 'images/7.jpg', w: 1440, h: 900},
+        {url: 'thumbnails/8.jpg', w: 1024, h: 629},
+        {url: 'images/233.jpg', w: 864, h: 4390}
     ];
     // 也可以先实例化 var imageViewer = new ImageViewer()
     // 后续再调用'setImageOption'设置图片数据和'setOption'设置预览选项
@@ -119,6 +120,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }, false);
 }, false);
 ```
+注意，如果需要渐变打开的动画，不仅仅要提供`fadeInFn`函数，还要提供每一张图片的宽高数据(字段名为`w`和`h`)。
 
 ## 内置API
 ImageViewer类的实例拥有以下可用的API函数：
