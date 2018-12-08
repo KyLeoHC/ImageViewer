@@ -120,7 +120,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }, false);
 }, false);
 ```
-注意，如果需要渐变打开的动画，不仅仅要提供`fadeInFn`函数，还要提供每一张图片的宽高数据(字段名为`w`和`h`)。
+注意，如果需要渐变打开的动画，不仅仅要提供`fadeInFn`函数，还要提供每一张图片(这里是指缩略图，非大图尺寸)的宽高数据(字段名为`w`和`h`)。
 
 ## 内置API
 ImageViewer类的实例拥有以下可用的API函数：
