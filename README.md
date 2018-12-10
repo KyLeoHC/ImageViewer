@@ -14,9 +14,7 @@ ImageViewer是一个用于web移动端的图片预览组件。
 ``` bash
 npm install image-viewer-gallery --save-dev
 ```
-如果目标项目本身就是基于webpack + babel开发的话，可以直接引入`import ImageViewer from 'image-viewer-gallery'`，需要注意的是确保配置好stylus-loader和html-loader。
-
-如果目标项目没有配置babel编译或者也不是用webpack构建的，可以直接require引入dist文件夹下的`imageViewer.common.js`文件(`image-viewer-gallery/dist/imageViewer.common.js`)。
+直接引入`import ImageViewer from 'image-viewer-gallery'`即可。
 
 ## 使用示例
 ImageViewer是这个图片预览组件的核心类，实例化第一个入参是图片数组（必传），第二个为一些可选的选项参数对象。
