@@ -20,7 +20,6 @@ import {
     isNumber,
     isPlainObject
 } from '../common/utils';
-import Event from '../common/event';
 import lock from '../common/lock';
 import Touch from './touch';
 import Viewer from './viewer';
@@ -51,7 +50,6 @@ class ImageViewer {
         this.itemList = []; // 各个图片容器元素的dom节点
         this.translateX = 0;
         this.touch = null;
-        this.event = new Event(false);
         this.isOpen = false;
     }
 
@@ -340,30 +338,22 @@ class ImageViewer {
         setScaleAndTranslateStyle(this.animationEl, 1, start.left, start.top);
 
         imgEl.src = url;
-        this.event.once(LOAD_IMG_COMPLETE, () => {
-            this.animationEl.classList.remove('hide');
-            // 延迟20ms是为了确保动画元素节点完全呈现出来了
-            // 避免部分机型因为快速显示和隐藏元素导致的闪烁现象
+        this.animationEl.classList.remove('hide');
+        // 延迟20ms是为了确保动画元素节点完全呈现出来了
+        // 避免部分机型因为快速显示和隐藏元素导致的闪烁现象
+        setTimeout(() => {
+            this._toggleViewerWrapper(1);
+            this.el.classList.add('animation');
+            this.bgEl.style.opacity = type === 1 ? 1 : 0.001;
+            setScaleAndTranslateStyle(this.animationEl, scale, end.left, end.top);
             setTimeout(() => {
-                this._toggleViewerWrapper(1);
-                this.el.classList.add('animation');
-                this.bgEl.style.opacity = type === 1 ? 1 : 0.001;
-                setScaleAndTranslateStyle(this.animationEl, scale, end.left, end.top);
-                setTimeout(() => {
-                    this.event.off(LOAD_IMG_FAIL);
-                    callback(() => {
-                        this.el.classList.remove('animation');
-                        this.animationEl.classList.add('hide');
-                        imgEl.src = '';
-                    });
-                }, duration + 20); // 在原来动画时间的基础上再加20ms，确保动画真正完成(或许该用动画完成事件?)
-            }, 20);
-        });
-        this.event.once(LOAD_IMG_FAIL, () => {
-            debug('load animation image fail.');
-            this.event.off(LOAD_IMG_COMPLETE);
-            callback();
-        });
+                callback(() => {
+                    this.el.classList.remove('animation');
+                    this.animationEl.classList.add('hide');
+                    imgEl.src = '';
+                });
+            }, duration + 20); // 在原来动画时间的基础上再加20ms，确保动画真正完成(或许该用动画完成事件?)
+        }, 20);
     }
 
     _fadeIn(callback) {
@@ -572,8 +562,6 @@ class ImageViewer {
         this.container = opt.container || 'body';
         // 是否开启图片缩放功能
         this.enableScale = !!opt.enableScale;
-        // 是否开启自动加载大图功能
-        this.autoLoadImage = opt.hasOwnProperty('autoLoadImage') ? !!opt.autoLoadImage : true;
         if (!this.isOpen) {
             // 起始坐标，从0开始
             this.currentIndex = opt.startIndex || this.currentIndex || 0;
