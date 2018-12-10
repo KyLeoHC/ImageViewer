@@ -8,8 +8,6 @@ import {
     setScaleAndTranslateStyle
 } from '../common/dom';
 import {
-    LOAD_IMG_COMPLETE,
-    LOAD_IMG_FAIL,
     LOCK_NAME,
     ITEM_ANIMATION_CLASS,
     LEFT_IMG,
@@ -91,13 +89,6 @@ class ImageViewer {
             this.viewers.push(new Viewer(this, item, i));
         }
         lock.createLock(LOCK_NAME);
-
-        this.animationImgEl.addEventListener('load', () => {
-            this.event.emit(LOAD_IMG_COMPLETE);
-        }, false);
-        this.animationImgEl.addEventListener('error', () => {
-            this.event.emit(LOAD_IMG_FAIL);
-        }, false);
     }
 
     _updateCountElement() {
@@ -326,7 +317,6 @@ class ImageViewer {
      */
     _animation(url, type, callback) {
         const duration = this.duration;
-        const imgEl = this.animationEl.children[0];
         const currentViewer = this._getCurrentViewer();
         // 动画起始的position数据
         const start = this._getPositionAndSize(type === 1 ? this.opt.fadeInFn(this.currentIndex) : currentViewer.panelEl);
@@ -337,7 +327,7 @@ class ImageViewer {
         this.animationEl.style.height = start.height + 'px';
         setScaleAndTranslateStyle(this.animationEl, 1, start.left, start.top);
 
-        imgEl.src = url;
+        this.animationImgEl.src = url;
         this.animationEl.classList.remove('hide');
         // 延迟20ms是为了确保动画元素节点完全呈现出来了
         // 避免部分机型因为快速显示和隐藏元素导致的闪烁现象
@@ -350,7 +340,7 @@ class ImageViewer {
                 callback(() => {
                     this.el.classList.remove('animation');
                     this.animationEl.classList.add('hide');
-                    imgEl.src = '';
+                    this.animationImgEl.src = '';
                 });
             }, duration + 20); // 在原来动画时间的基础上再加20ms，确保动画真正完成(或许该用动画完成事件?)
         }, 20);
@@ -578,7 +568,7 @@ class ImageViewer {
             this.isOpen = false;
             this.viewerWrapperEl.classList.remove(ITEM_ANIMATION_CLASS);
             this._fadeOut(done => {
-                this.animationEl.children[0].src = '';
+                this.animationImgEl.src = '';
                 this._getCurrentViewer().clearImg();
                 this.el.style.display = 'none';
                 done && done();
