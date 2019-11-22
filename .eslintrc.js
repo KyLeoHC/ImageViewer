@@ -1,35 +1,34 @@
-// http://eslint.org/docs/user-guide/configuring
-
 module.exports = {
-    root: true,
-    parser: 'babel-eslint',
-    parserOptions: {
-        sourceType: 'module'
-    },
-    env: {
-        browser: true
-    },
-    // https://github.com/feross/standard/blob/master/RULES.md#javascript-standard-style
-    extends: [
-        'standard'
-    ],
-    plugins: [],
-    // add your custom rules here
-    rules: {
-        'indent': ['error', 4, {'SwitchCase': 1}],
-        'space-before-function-paren': ['error', {
-            'anonymous': 'always',
-            'named': 'never',
-            'asyncArrow': 'ignore'
-        }],
-        'eqeqeq': 'off',
-        'semi': ['error', 'always'],
-        // allow paren-less arrow functions
-        'arrow-parens': 0,
-        // allow async-await
-        'generator-star-spacing': 0,
-        // allow debugger during development
-        'no-debugger': process.env.NODE_ENV === 'production' ? 2 : 0,
-        'standard/no-callback-literal': 0 // Ensures that we strictly follow the callback pattern with undefined, null or an error object in the first position of a callback(disabled)
+  root: true,
+  env: {
+    browser: true
+  },
+  parser: '@typescript-eslint/parser',
+  parserOptions: {
+    ecmaVersion: 2018,
+    sourceType: 'module',
+    ecmaFeatures: {
+      legacyDecorators: true
     }
+  },
+  plugins: [
+    '@typescript-eslint'
+  ],
+  extends: [
+    // add more generic rulesets here, such as:
+    'standard',
+    'plugin:@typescript-eslint/recommended'
+  ],
+  rules: {
+    // typescript-eslint rules
+    '@typescript-eslint/indent': ['error', 2],
+    // once typescript-eslint support these rules, we will remove it
+    'space-before-function-paren': ['error', {
+      'anonymous': 'always',
+      'named': 'never',
+      'asyncArrow': 'ignore'
+    }],
+    'semi': ['error', 'always'],
+    'lines-between-class-members': 0
+  }
 };

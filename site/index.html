@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+  <title>image viewer</title>
+  <script>
+    // var _hmt = _hmt || [];
+    // (function () {
+    //     var hm = document.createElement("script");
+    //     hm.src = "https://hm.baidu.com/hm.js?ea9b206cd1bd71b0e37a6134d4b905e1";
+    //     var s = document.getElementsByTagName("script")[0];
+    //     s.parentNode.insertBefore(hm, s);
+    // })();
+  </script>
+  <style>
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+    }
+
+    .container .tips {
+      margin: 10px 0;
+      text-align: center;
+      overflow: hidden;
+    }
+
+    .img-list {
+      display: flex;
+      flex-wrap: wrap;
+      padding: 10px;
+    }
+
+    .img-list>div {
+      display: inline-block;
+      max-width: 40%;
+      max-height: 200px;
+      margin-left: 10px;
+      overflow: hidden;
+    }
+
+    .img-list>div img {
+      max-width: 100%;
+      max-height: 200px;
+    }
+
+    #close {
+      font-size: 16px;
+      padding: 10px 0 0 10px;
+      z-index: 100;
+    }
+
+    .image-footer {
+      text-align: center;
+      font-size: 16px !important;
+      bottom: 20px !important;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="tips">单击关闭预览(图片没有缩放)</div>
+    <div class="tips">图片放大后，单击还原图片尺寸</div>
+    <div class="img-list">
+      <div><img id="img1" src="thumbnails/2.jpg" data-index="0"></div>
+      <div><img id="img2" src="thumbnails/3.jpg" data-index="1"></div>
+      <div><img id="img3" src="thumbnails/4.jpg" data-index="2"></div>
+      <div><img id="img4" src="thumbnails/5.jpg" data-index="3"></div>
+      <div><img id="img5" src="thumbnails/6.jpg" data-index="4"></div>
+      <div><img id="img6" src="thumbnails/7.jpg" data-index="5"></div>
+      <div><img id="img7" src="thumbnails/8.jpg" data-index="6"></div>
+      <div><img id="img8" src="images/233.jpg" data-index="7"></div>
+    </div>
+    <ul id="logs"></ul>
+  </div>
+  <!--<script src="lib/fastclick.js"></script>-->
+  <script src="build/imageViewer.js"></script>
+  <script type="text/javascript">
+    document.addEventListener('DOMContentLoaded', function () {
+      // FastClick.attach(document.body);
+
+      function getElement(index) {
+        // 可以不返回任何一个值，仅仅传入一个空函数指明要开启渐变动画
+        // 也可以直接返回position数据 {top: 0, left: 0, width: 0, height: 0}
+        // 也可以直接就是一个空函数，不返回任何值(此时只有简单的透明度渐变动画)
+        return document.getElementById('img' + (index + 1));
+      }
+
+      // 图片对象说明:
+      // thumbnail: 缩略图的链接(非必传)
+      // url: 原图的链接(必传)
+      var images = [{
+          url: 'thumbnails/2.jpg',
+          w: 650,
+          h: 347
+        },
+        {
+          thumbnail: 'thumbnails/3.jpg',
+          url: 'images/3.jpg',
+          w: 1024,
+          h: 625
+        },
+        {
+          thumbnail: 'thumbnails/4.jpg',
+          url: 'images/4.jpg',
+          w: 1024,
+          h: 750
+        },
+        {
+          thumbnail: 'thumbnails/5.jpg',
+          url: 'images/5.jpg',
+          w: 1000,
+          h: 879
+        },
+        {
+          thumbnail: 'thumbnails/6.jpg',
+          url: 'images/6.jpg',
+          w: 1000,
+          h: 562
+        },
+        {
+          thumbnail: 'thumbnails/7.jpg',
+          url: 'images/7.jpg',
+          w: 1440,
+          h: 900
+        },
+        {
+          url: 'thumbnails/8.jpg',
+          w: 1024,
+          h: 629
+        },
+        {
+          url: 'images/233.jpg',
+          w: 864,
+          h: 4390
+        }
+      ];
+      window.imageViewer = new ImageViewer();
+      imageViewer.setImageOption(images);
+      imageViewer.setOption({
+        // duration: 1000,
+        container: 'body',
+        autoLoadImage: true,
+        enableScale: true,
+        enableTapClose: true,
+        startIndex: 0,
+        fadeInFn: getElement,
+        fadeOutFn: getElement,
+        headerRender: function () {
+          setTimeout(function () {
+            document.getElementById('close').addEventListener('click', function () {
+              imageViewer.close();
+            }, false);
+          }, 0);
+          return '<div id="close">关闭</div>';
+        },
+        footerRender: function () {
+          return '<span class="number-current"></span>/<span class="number-total"></span>';
+        },
+        beforeSwipe: function (current) {
+          console.info('current-before: ' + current);
+        },
+        afterSwipe: function (current) {
+          console.info('current-after: ' + current);
+        },
+        swipeLastLeft: function (imageViewer, distance) {
+          console.log('swipeLastLeft', distance);
+          // if (distance > 50) {
+          //     imageViewer.setImageOption([{
+          //         thumbnail: 'thumbnails/6.jpg',
+          //         url: 'images/6.jpg'
+          //     }]);
+          //     return true;
+          // }
+        },
+        swipeFirstRight: function (imageViewer, distance) {
+          console.log('swipeFirstRight', distance);
+          // if (distance > 30) {
+          //     imageViewer.setImageOption([
+          //         {thumbnail: 'thumbnails/7.jpg', url: 'images/7.jpg'},
+          //         {thumbnail: 'thumbnails/8.jpg', url: 'images/8.jpg'}
+          //     ]);
+          //     return true;
+          // }
+        }
+      });
+
+      document.getElementsByClassName('img-list')[0].addEventListener('click', function (event) {
+        var index = event.target.getAttribute('data-index');
+        if (index) {
+          imageViewer.open(parseInt(index));
+          // imageViewer.open(0);
+        }
+      }, false);
+    }, false);
+  </script>
+</body>
+</html>
