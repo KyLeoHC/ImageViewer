@@ -1,26 +1,27 @@
 const path = require('path');
 const baseConfig = require('./webpack.config.base');
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const OptimizeCSSAssetsPlugin = require('optimize-css-assets-webpack-plugin');
 
-const umdConfig = Object.assign({
-  output: {
-    path: path.resolve(__dirname, 'dist'),
-    filename: '[name].min.js',
-    library: 'ImageViewer',
-    libraryExport: 'default',
-    libraryTarget: 'umd'
-  },
-  mode: 'production'
-}, baseConfig);
+process.env.BABEL_MODULE = 'es';
 
-const commonConfig = Object.assign({
-  output: {
-    path: path.resolve(__dirname, 'dist'),
-    filename: '[name].common.js',
-    library: 'ImageViewer',
-    libraryExport: 'default',
-    libraryTarget: 'commonjs2'
-  },
-  mode: 'production'
-}, baseConfig);
+baseConfig.entry = {
+  'imageViewer': ['./src/index.ts', './src/style/index.ts']
+};
+baseConfig.output = {
+  path: path.resolve(__dirname, '../dist'),
+  filename: 'imageViewer.min.js',
+  library: 'ImageViewer',
+  libraryTarget: 'umd'
+};
 
-module.exports = [umdConfig, commonConfig];
+baseConfig.plugins = baseConfig.plugins.concat([
+  new OptimizeCSSAssetsPlugin({}),
+  new MiniCssExtractPlugin({
+    filename: 'imageViewer.min.css'
+  })
+]);
+
+baseConfig.mode = 'production';
+
+module.exports = baseConfig;

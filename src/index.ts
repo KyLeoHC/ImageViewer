@@ -1,3 +1,3 @@
-import ImageViewer from './core/imageViewer';
+import { ImageViewer } from './core/imageViewer';
 
 console.log(ImageViewer);

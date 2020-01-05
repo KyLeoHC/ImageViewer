@@ -1,11 +1,11 @@
 const path = require('path');
 const webpack = require('webpack');
+const StyleLintPlugin = require('stylelint-webpack-plugin');
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const packageJson = require('../package.json');
+const devMode = process.env.NODE_ENV === 'development';
 
 const baseConfig = {
-  entry: {
-    imageViewer: './src/index.ts'
-  },
   resolve: {
     extensions: ['.ts', '.js']
   },
@@ -15,8 +15,11 @@ const baseConfig = {
         test: /\.ts$/,
         loader: 'eslint-loader',
         enforce: 'pre',
-        include: [path.resolve(__dirname, './src')],
-        exclude: ['node_modules'],
+        include: [
+          path.resolve(__dirname, './src'),
+          path.resolve(__dirname, './site')
+        ],
+        exclude: [/node_modules/],
         options: {
           formatter: require('eslint-formatter-friendly')
         }
@@ -32,7 +35,7 @@ const baseConfig = {
         test: /\.less/,
         use: [
           {
-            loader: 'style-loader',
+            loader: devMode ? 'style-loader' : MiniCssExtractPlugin.loader,
             options: {
               sourceMap: false
             }
@@ -40,8 +43,7 @@ const baseConfig = {
           {
             loader: 'css-loader',
             options: {
-              sourceMap: false,
-              minimize: true
+              sourceMap: false
             }
           },
           {
@@ -67,7 +69,25 @@ const baseConfig = {
     new webpack.DefinePlugin({
       __VERSION__: JSON.stringify(packageJson.version)
     })
-  ]
+  ],
+  stats: {
+    children: false,
+    chunkModules: false,
+    entrypoints: false,
+    modules: false,
+    // Display bailout reasons
+    optimizationBailout: true
+  }
 };
+
+const fileSuffix = '{html,css,less}';
+baseConfig.plugins.push(
+  new StyleLintPlugin({
+    files: [
+      `site/**/*.${fileSuffix}`,
+      `src/**/*.${fileSuffix}`,
+    ]
+  })
+);
 
 module.exports = baseConfig;

@@ -1,3 +1,5 @@
 class ImageViewer {}
 
-export default ImageViewer;
+export {
+  ImageViewer
+};

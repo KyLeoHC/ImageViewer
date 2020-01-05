@@ -14,52 +14,10 @@
     //     var s = document.getElementsByTagName("script")[0];
     //     s.parentNode.insertBefore(hm, s);
     // })();
+
   </script>
-  <style>
-    html,
-    body {
-      margin: 0;
-      padding: 0;
-    }
-
-    .container .tips {
-      margin: 10px 0;
-      text-align: center;
-      overflow: hidden;
-    }
-
-    .img-list {
-      display: flex;
-      flex-wrap: wrap;
-      padding: 10px;
-    }
-
-    .img-list>div {
-      display: inline-block;
-      max-width: 40%;
-      max-height: 200px;
-      margin-left: 10px;
-      overflow: hidden;
-    }
-
-    .img-list>div img {
-      max-width: 100%;
-      max-height: 200px;
-    }
-
-    #close {
-      font-size: 16px;
-      padding: 10px 0 0 10px;
-      z-index: 100;
-    }
-
-    .image-footer {
-      text-align: center;
-      font-size: 16px !important;
-      bottom: 20px !important;
-    }
-  </style>
 </head>
+
 <body>
   <div class="container">
     <div class="tips">单击关闭预览(图片没有缩放)</div>
@@ -76,8 +34,6 @@
     </div>
     <ul id="logs"></ul>
   </div>
-  <!--<script src="lib/fastclick.js"></script>-->
-  <script src="build/imageViewer.js"></script>
   <script type="text/javascript">
     document.addEventListener('DOMContentLoaded', function () {
       // FastClick.attach(document.body);
@@ -93,50 +49,50 @@
       // thumbnail: 缩略图的链接(非必传)
       // url: 原图的链接(必传)
       var images = [{
-          url: 'thumbnails/2.jpg',
-          w: 650,
-          h: 347
-        },
-        {
-          thumbnail: 'thumbnails/3.jpg',
-          url: 'images/3.jpg',
-          w: 1024,
-          h: 625
-        },
-        {
-          thumbnail: 'thumbnails/4.jpg',
-          url: 'images/4.jpg',
-          w: 1024,
-          h: 750
-        },
-        {
-          thumbnail: 'thumbnails/5.jpg',
-          url: 'images/5.jpg',
-          w: 1000,
-          h: 879
-        },
-        {
-          thumbnail: 'thumbnails/6.jpg',
-          url: 'images/6.jpg',
-          w: 1000,
-          h: 562
-        },
-        {
-          thumbnail: 'thumbnails/7.jpg',
-          url: 'images/7.jpg',
-          w: 1440,
-          h: 900
-        },
-        {
-          url: 'thumbnails/8.jpg',
-          w: 1024,
-          h: 629
-        },
-        {
-          url: 'images/233.jpg',
-          w: 864,
-          h: 4390
-        }
+        url: 'thumbnails/2.jpg',
+        w: 650,
+        h: 347
+      },
+      {
+        thumbnail: 'thumbnails/3.jpg',
+        url: 'images/3.jpg',
+        w: 1024,
+        h: 625
+      },
+      {
+        thumbnail: 'thumbnails/4.jpg',
+        url: 'images/4.jpg',
+        w: 1024,
+        h: 750
+      },
+      {
+        thumbnail: 'thumbnails/5.jpg',
+        url: 'images/5.jpg',
+        w: 1000,
+        h: 879
+      },
+      {
+        thumbnail: 'thumbnails/6.jpg',
+        url: 'images/6.jpg',
+        w: 1000,
+        h: 562
+      },
+      {
+        thumbnail: 'thumbnails/7.jpg',
+        url: 'images/7.jpg',
+        w: 1440,
+        h: 900
+      },
+      {
+        url: 'thumbnails/8.jpg',
+        w: 1024,
+        h: 629
+      },
+      {
+        url: 'images/233.jpg',
+        w: 864,
+        h: 4390
+      }
       ];
       window.imageViewer = new ImageViewer();
       imageViewer.setImageOption(images);
@@ -196,6 +152,8 @@
         }
       }, false);
     }, false);
+
   </script>
 </body>
+
 </html>
